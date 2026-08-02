@@ -1,0 +1,152 @@
+﻿@page "/inicio"
+@using Microsoft.Maui.Storage
+@inject NavigationManager NavManager
+@inject HttpClient Http
+
+<div class="app-container">
+    <div class="feed-content">
+
+        <!-- Top Bar (Forzada a mantenerse en una sola línea) -->
+        <div class="top-bar" style="display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 15px;">
+            <h1 class="greeting-title" style="margin: 0; font-size: 1.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+                ¡Bienvenido, @nombreUsuario!
+            </h1>
+
+            <div class="admin-menu-container" style="position: relative; flex-shrink: 0;">
+                <button type="button" class="hamburger-btn" @onclick="ToggleMenuAdmin" @onclick:stopPropagation="true">
+                    <span class="hamburger-icon">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="10" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </span>
+                </button>
+
+                @if (mostrarMenuAdmin)
+                {
+                    <div class="admin-dropdown glass-dropdown" style="top: 45px; right: 0; position: absolute; z-index: 2000;">
+                        @if (esSuperAdmin || misPermisos.Contains("Gestionar Usuarios"))
+                        {
+                            <a href="/admin/usuarios" class="dropdown-item">
+                                <span class="dd-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </span>
+                                Gestión de Usuarios
+                            </a>
+                            <a href="/admin/tribu" class="dropdown-item">
+                                <span class="dd-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                </span>
+                                Tribu Nómada
+                            </a>
+
+                        }
+                        @if (esSuperAdmin)
+                        {
+                            <a href="/admin/staff" class="dropdown-item">
+                                <span class="dd-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                </span>
+                                Staff y Roles
+                            </a>
+                        }
+                            <div class="divider" style="width: 80%; margin: 5px auto; background-color: rgba(128,128,128,0.2);"></div>
+                        <a href="/perfil" class="dropdown-item">
+                            <span class="dd-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </span>
+                            Mi Perfil
+                        </a>
+                        <button type="button" class="dropdown-item" style="width: 100%; text-align: left; background: none; border: none; cursor: pointer; color: #ff4444 !important;" @onclick="CerrarSesion">
+                            <span class="dd-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            </span>
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Creador de Post -->
+        <div class="modern-row" style="flex-direction: column; align-items: stretch; padding: 20px; margin-top: 15px;">
+            <textarea placeholder="¿Qué entrenamiento rompiste hoy?..." class="search-input" style="border-radius: 12px; min-height: 80px; margin-bottom: 15px; resize: none; width: 100%; box-sizing: border-box; padding: 15px;"></textarea>
+
+            <div class="post-actions" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="media-buttons" style="display: flex; gap: 10px;">
+                    <button class="icon-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        Foto
+                    </button>
+                    <button class="icon-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                        Video
+                    </button>
+                </div>
+                <button class="ink-btn glow-btn" style="width: auto; margin-top: 0; padding: 10px 25px;">PUBLICAR</button>
+            </div>
+        </div>
+
+        <div class="modern-row" style="justify-content: center; border: 2px dashed rgba(128,128,128,0.3); background: transparent; box-shadow: none;">
+            <p style="color: var(--text-muted); font-weight: bold; margin: 20px 0;">Aquí aparecerán las publicaciones de 24 hrs...</p>
+        </div>
+    </div>
+
+    <!-- Menú de Navegación Inferior -->
+    <nav class="bottom-nav">
+        <a href="/inicio" class="nav-item active">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </span>
+            <span class="nav-text">Inicio</span>
+        </a>
+        <a href="/acciones" class="nav-item">
+            <img src="images/logo-nomada.png" alt="Nómada" class="nav-logo" />
+            <span class="nav-text">Box</span>
+        </a>
+        <a href="/comunidad" class="nav-item">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </span>
+            <span class="nav-text">Comunidad</span>
+        </a>
+        <a href="/perfil" class="nav-item">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span>
+            <span class="nav-text">Perfil</span>
+        </a>
+    </nav>
+</div>
+
+@code {
+    private string nombreUsuario = "Atleta";
+    private bool esSuperAdmin = false;
+    private bool mostrarMenuAdmin = false;
+
+    private List<string> misPermisos = new();
+    protected override async Task OnInitializedAsync()
+    {
+        nombreUsuario = Preferences.Get("nombreUsuario", "Atleta");
+        int rolId = Preferences.Get("rolId", 3);
+        esSuperAdmin = (rolId == 1);
+
+        var userId = Preferences.Get("userId", string.Empty);
+        if (!string.IsNullOrEmpty(userId))
+        {
+            misPermisos = await Http.GetFromJsonAsync<List<string>>($"api/admin/mis-permisos/{userId}") ?? new();
+        }
+    }
+
+    private void ToggleMenuAdmin()
+    {
+        mostrarMenuAdmin = !mostrarMenuAdmin;
+    }
+
+    private void CerrarSesion()
+    {
+        Preferences.Clear();
+        NavManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,188 @@
+﻿@page "/admin/staff"
+@using Nomada.Shared.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="app-container">
+    <div class="feed-content" style="padding-top: 10px;">
+        
+        <div style="display: flex; align-items: center; margin-bottom: 25px;">
+            <a href="/inicio" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            </a>
+            <h2 class="greeting-title" style="margin: 0; font-size: 1.6rem; text-shadow: 0 0 15px rgba(255,255,255,0.2);">STAFF Y ROLES</h2>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: var(--text-main);"></span>
+            </div>
+        }
+        else
+        {
+            <!-- Buscador en tiempo real tipo píldora -->
+            <div class="search-wrapper">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" @bind="textoBusqueda" @bind:event="oninput" placeholder="Buscar usuario o coach..." class="search-input" />
+            </div>
+
+            <div class="user-list">
+                @if (UsuariosFiltrados.Any())
+                {
+                    @foreach (var usuario in UsuariosFiltrados)
+                    {
+                        <div class="modern-row" style="flex-wrap: wrap;">
+                            <div class="user-avatar">
+                                @(string.IsNullOrWhiteSpace(usuario.Nombre) ? "N" : usuario.Nombre.Substring(0,1).ToUpper())@(string.IsNullOrWhiteSpace(usuario.ApellidoPaterno) ? "" : usuario.ApellidoPaterno.Substring(0,1).ToUpper())
+                            </div>
+                            
+                            <div class="user-info">
+                                <span class="user-name">@usuario.Nombre @usuario.ApellidoPaterno</span>
+                                <span class="user-email">@usuario.Correo</span>
+                            </div>
+
+                            <!-- Toggle Switch para Coach -->
+                            <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+                                <span style="font-size: 0.8rem; font-weight: 800; color: @(usuario.RolId == 2 ? "#00C851" : "var(--text-muted)")">COACH</span>
+                                <label class="switch">
+                                    <input type="checkbox" checked="@(usuario.RolId == 2)" @onchange="@((ChangeEventArgs e) => ToggleRolCoach(usuario, (bool)e.Value))">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+
+                            <!-- Botón de Permisos (Solo aparece si es Coach) -->
+                            @if (usuario.RolId == 2)
+                            {
+                                <div style="width: 100%; margin-top: 15px; border-top: 1px solid rgba(128,128,128,0.2); padding-top: 15px; display: flex; justify-content: flex-end;">
+                                    <button class="ink-btn-outline" style="margin: 0; padding: 8px 15px; font-size: 0.8rem; width: auto; display: flex; align-items: center; gap: 8px;" @onclick="() => AbrirModalPermisos(usuario)">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                        GESTIONAR PERMISOS
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="text-align: center; padding: 40px 0;">
+                        <span style="font-size: 3rem; opacity: 0.5;">🔍</span>
+                        <p style="color: var(--text-muted); font-size: 1rem; margin-top: 15px; font-weight: 700;">No se encontraron resultados.</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- MODAL DE PERMISOS -->
+@if (showModalPermisos && usuarioSeleccionado != null)
+{
+    <div class="modal-overlay glass-overlay">
+        <div class="login-card modal-content premium-modal">
+            <h3 class="modal-title" style="color: #33b5e5; font-size: 1.1rem;">PERMISOS DE @usuarioSeleccionado.Nombre.ToUpper()</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+                @foreach (var permiso in catalogoPermisos)
+                {
+                    <label style="display: flex; align-items: center; gap: 12px; color: var(--text-main); font-weight: 700; cursor: pointer; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px solid rgba(128,128,128,0.1);">
+                        <input type="checkbox" checked="@usuarioSeleccionado.PermisosIds.Contains(permiso.Id)" @onchange="@((ChangeEventArgs e) => TogglePermiso(permiso.Id, (bool)e.Value))" style="width: 20px; height: 20px; accent-color: #33b5e5;" />
+                        @permiso.Nombre
+                    </label>
+                }
+            </div>
+
+            <div class="modal-actions">
+                <button class="ink-btn-outline" disabled="@isSaving" @onclick="CerrarModal">CANCELAR</button>
+                <button class="ink-btn glow-btn" disabled="@isSaving" @onclick="GuardarPermisos">
+                    @if (isSaving) { <span class="spinner"></span> } else { <span>GUARDAR</span> }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* Switch estilo iOS */
+    .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(128,128,128,0.3); transition: .3s; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .3s; }
+    input:checked + .slider { background-color: #00C851; box-shadow: 0 0 10px rgba(0,200,81,0.5); }
+    input:checked + .slider:before { transform: translateX(24px); }
+    .slider.round { border-radius: 34px; }
+    .slider.round:before { border-radius: 50%; }
+</style>
+
+@code {
+    private bool isPageLoading = true;
+    private bool isSaving = false;
+    private List<UsuarioAdminDto> usuarios = new();
+    private List<PermisoDto> catalogoPermisos = new();
+    
+    private string textoBusqueda = "";
+
+    // Propiedad computada para filtrar en tiempo real
+    private IEnumerable<UsuarioAdminDto> UsuariosFiltrados => usuarios
+        .Where(u => string.IsNullOrWhiteSpace(textoBusqueda) || 
+                    (u.Nombre + " " + u.ApellidoPaterno).Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase));
+
+    private bool showModalPermisos = false;
+    private UsuarioAdminDto usuarioSeleccionado = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Traemos todos los usuarios (Ahora la API sí mandará el RolId y PermisosIds)
+            usuarios = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>("api/admin/usuarios/Aprobado") ?? new();
+            catalogoPermisos = await Http.GetFromJsonAsync<List<PermisoDto>>("api/admin/permisos-catalogo") ?? new();
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isPageLoading = false; }
+    }
+
+    private async Task ToggleRolCoach(UsuarioAdminDto user, bool esCoach)
+    {
+        user.RolId = esCoach ? 2 : 3;
+        if (!esCoach) user.PermisosIds.Clear(); 
+        
+        await GuardarCambiosRolYPermisos(user);
+    }
+
+    private void AbrirModalPermisos(UsuarioAdminDto user)
+    {
+        usuarioSeleccionado = user;
+        showModalPermisos = true;
+    }
+
+    private void TogglePermiso(int permisoId, bool isChecked)
+    {
+        if (isChecked && !usuarioSeleccionado.PermisosIds.Contains(permisoId))
+            usuarioSeleccionado.PermisosIds.Add(permisoId);
+        else if (!isChecked)
+            usuarioSeleccionado.PermisosIds.Remove(permisoId);
+    }
+
+    private async Task GuardarPermisos()
+    {
+        isSaving = true;
+        await GuardarCambiosRolYPermisos(usuarioSeleccionado);
+        isSaving = false;
+        CerrarModal();
+    }
+
+    private void CerrarModal() => showModalPermisos = false;
+
+    private async Task GuardarCambiosRolYPermisos(UsuarioAdminDto user)
+    {
+        var request = new AsignarRolPermisoRequest
+        {
+            UsuarioId = user.Id,
+            RolId = user.RolId ?? 3,
+            PermisosIds = user.PermisosIds
+        };
+        await Http.PutAsJsonAsync("api/admin/staff/roles", request);
+    }
+}

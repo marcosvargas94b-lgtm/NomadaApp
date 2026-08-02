@@ -1,0 +1,7 @@
+﻿namespace Nomada.Shared
+{
+    public class Class1
+    {
+
+    }
+}

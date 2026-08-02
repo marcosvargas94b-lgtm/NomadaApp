@@ -1,0 +1,6 @@
+@Nomada.API_HostAddress = http://localhost:5133
+
+GET {{Nomada.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,309 @@
+﻿@page "/admin/usuarios"
+@using Nomada.Shared.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="app-container">
+    <div class="feed-content" style="padding-top: 10px;">
+
+        <!-- ENCABEZADO PREMIUM -->
+        <div style="display: flex; align-items: center; margin-bottom: 25px;">
+            <a href="/inicio" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center; transition: opacity 0.2s;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </a>
+            <h2 class="greeting-title" style="margin: 0; font-size: 1.6rem; text-shadow: 0 0 15px rgba(255,255,255,0.2);">SOLICITUDES</h2>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <!-- Loader a pantalla completa -->
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: var(--text-main); margin: 0 0 20px 0;"></span>
+                <p style="color: var(--text-muted); font-weight: 800; letter-spacing: 2px;">CARGANDO LISTAS...</p>
+            </div>
+        }
+        else
+        {
+            <!-- SECCIÓN 1: USUARIOS EN ESPERA -->
+            <div class="admin-section" style="margin-bottom: 40px;">
+                <h3 style="color: var(--text-main); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 10px;">En Espera</h3>
+
+                @if (usuariosEnEspera.Any())
+                {
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 5px;">
+                        <label style="color: var(--text-main); font-size: 0.9rem; display: flex; align-items: center; font-weight: 700; cursor: pointer;">
+                            <input type="checkbox" @bind="SeleccionarTodos" style="margin-right: 10px; width: 18px; height: 18px; accent-color: var(--text-main);" />
+                            Seleccionar Todos
+                        </label>
+                        <button class="ink-btn glow-btn" style="width: auto; padding: 8px 15px; font-size: 0.8rem; margin: 0;"
+                                disabled="@(!HaySeleccionados || isMassLoading)" @onclick="AceptarMasivo">
+                            @if (isMassLoading)
+                            {
+                                <span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span>
+                            }
+                            else
+                            {
+                                <span>ACEPTAR MASIVO</span>
+                            }
+                        </button>
+                    </div>
+
+                    <div class="user-list">
+                        @foreach (var user in usuariosEnEspera)
+                        {
+                            <!-- Tarjeta Premium -->
+                            <div class="modern-row" style="padding: 12px 15px;">
+                                <input type="checkbox" @bind="user.Seleccionado" style="margin-right: 15px; width: 20px; height: 20px; accent-color: var(--text-main);" />
+
+                                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 1rem; margin-right: 12px;">
+                                    @ObtenerIniciales(user.Nombre, user.ApellidoPaterno)
+                                </div>
+
+                                <div class="user-info">
+                                    <span class="user-name">@user.Nombre @user.ApellidoPaterno</span>
+                                    <span class="user-email">@user.Correo</span>
+                                </div>
+
+                                <div class="user-actions">
+                                    <button type="button" class="menu-btn" style="color: #00C851;" disabled="@user.IsLoading" @onclick="() => ProcesarUsuario(user, true)">
+                                        @if (user.IsLoading)
+                                        {
+                                            <span class="spinner" style="width:16px;height:16px; border-top-color: #00C851;"></span>
+                                        }
+                                        else
+                                        {
+
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        }
+                                    </button>
+                                    <button type="button" class="menu-btn" style="color: #ff4444;" disabled="@user.IsLoading" @onclick="() => ProcesarUsuario(user, false)">
+                                        @if (user.IsLoading)
+                                        {
+                                            <span class="spinner" style="width:16px;height:16px; border-top-color: #ff4444;"></span>
+                                        }
+                                        else
+                                        {
+
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="text-align: center; padding: 20px 0;">
+                        <span style="font-size: 2.5rem; opacity: 0.5;">✅</span>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px; font-weight: 700;">No hay solicitudes pendientes.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- SECCIÓN 2: USUARIOS RECHAZADOS -->
+            <div class="admin-section">
+                <h3 style="color: #ff4444; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 10px;">Rechazados</h3>
+
+                @if (usuariosRechazados.Any())
+                {
+                    <div class="user-list">
+                        @foreach (var user in usuariosRechazados)
+                        {
+                            <!-- Tarjeta Premium -->
+                            <div class="modern-row" style="padding: 12px 15px; opacity: 0.8;">
+                                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 1rem; margin-right: 12px; background: linear-gradient(135deg, #333, #666);">
+                                    @ObtenerIniciales(user.Nombre, user.ApellidoPaterno)
+                                </div>
+
+                                <div class="user-info">
+                                    <span class="user-name" style="text-decoration: line-through; color: var(--text-muted);">@user.Nombre @user.ApellidoPaterno</span>
+                                    <span class="user-email">@user.Correo</span>
+                                </div>
+
+                                <div class="user-actions">
+                                    <button type="button" class="menu-btn" style="color: #33b5e5;" disabled="@user.IsLoading" @onclick="() => ConfirmarRestauracion(user)">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                                    </button>
+                                    <button type="button" class="menu-btn" style="color: var(--text-muted);" disabled="@user.IsLoading" @onclick="() => EliminarDefinitivo(user)">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="text-align: center; padding: 20px 0;">
+                        <span style="font-size: 2.5rem; opacity: 0.3;">🗑️</span>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px; font-weight: 700;">No hay usuarios rechazados.</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal de Confirmación C# Puro Premium -->
+@if (usuarioARestaurar != null)
+{
+    <div class="modal-overlay glass-overlay">
+        <div class="login-card modal-content premium-modal">
+            <h3 class="modal-title" style="color: #33b5e5;">¿RESTAURAR ATLETA?</h3>
+            <p class="modal-subtitle" style="margin-bottom: 25px;">
+                ¿Deseas ingresar a <strong>@usuarioARestaurar.Nombre.ToUpper()</strong> como usuario aprobado de la app?
+            </p>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="ink-btn-outline" @onclick="CancelarRestauracion">CANCELAR</button>
+                <button class="ink-btn glow-btn" @onclick="EjecutarRestauracion">
+                    @if (isModalLoading)
+                    {
+                        <span class="spinner"></span>
+                    }
+                    else
+                    {
+
+                        <span>APROBAR</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UsuarioAdminDto> usuariosEnEspera = new();
+    private List<UsuarioAdminDto> usuariosRechazados = new();
+    private bool isMassLoading = false;
+    private bool isModalLoading = false;
+    private bool isPageLoading = true;
+    private UsuarioAdminDto usuarioARestaurar = null;
+
+    private bool SeleccionarTodos
+    {
+        get => usuariosEnEspera.Any() && usuariosEnEspera.All(u => u.Seleccionado);
+        set { usuariosEnEspera.ForEach(u => u.Seleccionado = value); }
+    }
+
+    private bool HaySeleccionados => usuariosEnEspera.Any(u => u.Seleccionado);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarListas();
+    }
+
+    private async Task CargarListas()
+    {
+        isPageLoading = true;
+        try
+        {
+            usuariosEnEspera = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>("api/admin/usuarios/En%20Espera") ?? new();
+            usuariosRechazados = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>("api/admin/usuarios/Rechazado") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar usuarios: " + ex.Message);
+        }
+        finally
+        {
+            isPageLoading = false;
+        }
+    }
+
+    private async Task ProcesarUsuario(UsuarioAdminDto user, bool aceptar)
+    {
+        user.IsLoading = true;
+        string nuevoEstatus = aceptar ? "Aprobado" : "Rechazado";
+
+        var request = new ActualizarEstatusRequest
+        {
+            UsuarioIds = new List<Guid> { user.Id },
+            NuevoEstatus = nuevoEstatus
+        };
+
+        var response = await Http.PutAsJsonAsync("api/admin/usuarios/estatus", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            usuariosEnEspera.Remove(user);
+            if (!aceptar) usuariosRechazados.Add(user);
+        }
+        user.IsLoading = false;
+    }
+
+    private async Task AceptarMasivo()
+    {
+        isMassLoading = true;
+        var seleccionados = usuariosEnEspera.Where(u => u.Seleccionado).ToList();
+        var ids = seleccionados.Select(u => u.Id).ToList();
+
+        var request = new ActualizarEstatusRequest
+        {
+            UsuarioIds = ids,
+            NuevoEstatus = "Aprobado"
+        };
+
+        var response = await Http.PutAsJsonAsync("api/admin/usuarios/estatus", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            usuariosEnEspera.RemoveAll(u => u.Seleccionado);
+        }
+        isMassLoading = false;
+    }
+
+    private void ConfirmarRestauracion(UsuarioAdminDto user)
+    {
+        usuarioARestaurar = user;
+    }
+
+    private void CancelarRestauracion()
+    {
+        usuarioARestaurar = null;
+    }
+
+    private async Task EjecutarRestauracion()
+    {
+        isModalLoading = true;
+
+        var request = new ActualizarEstatusRequest
+        {
+            UsuarioIds = new List<Guid> { usuarioARestaurar.Id },
+            NuevoEstatus = "Aprobado"
+        };
+
+        var response = await Http.PutAsJsonAsync("api/admin/usuarios/estatus", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            usuariosRechazados.Remove(usuarioARestaurar);
+        }
+
+        isModalLoading = false;
+        usuarioARestaurar = null;
+    }
+
+    private async Task EliminarDefinitivo(UsuarioAdminDto user)
+    {
+        user.IsLoading = true;
+        var response = await Http.DeleteAsync($"api/admin/usuarios/{user.Id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            usuariosRechazados.Remove(user);
+        }
+        user.IsLoading = false;
+    }
+
+    // Helper de Avatares
+    private string ObtenerIniciales(string n, string a)
+    {
+        var ini = "";
+        if (!string.IsNullOrWhiteSpace(n)) ini += n.Substring(0, 1).ToUpper();
+        if (!string.IsNullOrWhiteSpace(a)) ini += a.Substring(0, 1).ToUpper();
+        return ini == "" ? "N" : ini;
+    }
+}

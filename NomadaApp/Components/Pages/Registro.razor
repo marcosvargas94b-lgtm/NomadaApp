@@ -1,0 +1,215 @@
+﻿@page "/registro"
+@using Nomada.Shared.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="login-container">
+    <div class="login-card registro-card" style="border-radius: 20px; padding: 40px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid rgba(128,128,128,0.2);">
+        
+        @if (registroExitoso)
+        {
+            <!-- Pantalla de Éxito Premium -->
+            <div class="success-message" style="text-align: center; padding: 30px 0;">
+                <span style="color: #00C851; display: flex; justify-content: center; margin-bottom: 20px;">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 0px 10px rgba(0, 200, 81, 0.4));">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </span>
+                <h3 style="color: var(--text-main); font-weight: 900; margin-bottom: 15px; letter-spacing: 2px;">¡SOLICITUD ENVIADA!</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
+                    Tu cuenta ha sido creada con éxito. Actualmente estás en <strong style="color: var(--text-main);">Lista de Espera</strong>. 
+                    Un administrador de Nómada revisará tu solicitud pronto.
+                </p>
+                <a href="/" class="ink-btn glow-btn" style="text-decoration: none; display: block; border-radius: 12px; padding: 15px;">VOLVER AL INICIO</a>
+            </div>
+        }
+        else
+        {
+            <!-- Formulario de Registro -->
+            <h2 class="title" style="font-size: 1.4rem; letter-spacing: 3px; margin-bottom: 35px;">NUEVO USUARIO</h2>
+
+            <!-- Fila 1: Nombre y Apellido Paterno -->
+            <div class="form-row">
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Nombre(s)</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
+                    <input type="text" @bind="modelo.Nombre" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box;" placeholder="Juan" />
+                </div>
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Apellido Paterno</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
+                    <input type="text" @bind="modelo.ApellidoPaterno" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box;" placeholder="Pérez" />
+                </div>
+            </div>
+
+            <!-- Fila 2: Apellido Materno y Sexo -->
+            <div class="form-row">
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Apellido Materno</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
+                    <input type="text" @bind="modelo.ApellidoMaterno" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box;" placeholder="López" />
+                </div>
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Sexo</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </span>
+                    <select @bind="modelo.Sexo" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box; appearance: none; -webkit-appearance: none;">
+                        <option value="">Selecciona...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="No binario">No binario</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Fila 3: Fecha de Nacimiento y Correo -->
+            <div class="form-row">
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Fecha de Nacimiento</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    </span>
+                    <input type="date" @bind="modelo.FechaNacimiento" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box;" />
+                </div>
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Correo Electrónico</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    </span>
+                    <input type="email" @bind="modelo.Correo" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box;" placeholder="atleta@nomada.com" />
+                </div>
+            </div>
+
+            <!-- Fila 4: Contraseñas -->
+            <div class="form-row">
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Contraseña</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <input type="password" @bind="modelo.Password" @bind:event="oninput" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box;" placeholder="••••••••" />
+                </div>
+                <div class="input-group modern-input" style="position: relative;">
+                    <label>Confirmar</label>
+                    <span style="position: absolute; left: 15px; top: 39px; color: var(--text-muted);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <input type="password" @bind="modelo.ConfirmPassword" @bind:event="oninput" class="search-input" style="padding-left: 42px; border-radius: 12px; margin-top: 5px; box-sizing: border-box;" placeholder="••••••••" />
+                </div>
+            </div>
+
+            <!-- Validaciones Dinámicas (Con SVGs) -->
+            <div class="validation-list" style="background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);">
+                <div class="validation-item @(TieneMayuscula ? "valid" : "invalid")" style="font-size: 0.8rem; margin-bottom: 8px;">
+                    <span class="icon" style="display: flex; align-items: center;">
+                        @if (TieneMayuscula) { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> }
+                        else { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> }
+                    </span> 
+                    <span style="margin-left: 8px;">Una letra mayúscula</span>
+                </div>
+                <div class="validation-item @(TieneNumero ? "valid" : "invalid")" style="font-size: 0.8rem; margin-bottom: 8px;">
+                    <span class="icon" style="display: flex; align-items: center;">
+                        @if (TieneNumero) { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> }
+                        else { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> }
+                    </span> 
+                    <span style="margin-left: 8px;">Un número</span>
+                </div>
+                <div class="validation-item @(TieneEspecial ? "valid" : "invalid")" style="font-size: 0.8rem; margin-bottom: 8px;">
+                    <span class="icon" style="display: flex; align-items: center;">
+                        @if (TieneEspecial) { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> }
+                        else { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> }
+                    </span> 
+                    <span style="margin-left: 8px;">Un carácter especial (ej. !@@#$)</span>
+                </div>
+                <div class="validation-item @(Coinciden ? "valid" : "invalid")" style="font-size: 0.8rem;">
+                    <span class="icon" style="display: flex; align-items: center;">
+                        @if (Coinciden && !string.IsNullOrEmpty(modelo.Password)) { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> }
+                        else { <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> }
+                    </span> 
+                    <span style="margin-left: 8px;">Las contraseñas coinciden</span>
+                </div>
+            </div>
+
+            <!-- Mensaje de Error (API) -->
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div style="color: #ff4444; font-size: 0.9rem; text-align: center; margin-bottom: 15px; font-weight: bold;">
+                    @mensajeError
+                </div>
+            }
+
+            <!-- Botones -->
+            <button class="ink-btn glow-btn" disabled="@(!FormularioValido || isLoading)" @onclick="CrearUsuario" style="margin-top: 10px; border-radius: 12px;">
+                @if (isLoading)
+                {
+                    <span class="spinner"></span> <span>CREANDO...</span>
+                }
+                else
+                {
+                    <span>REGISTRARSE</span>
+                }
+            </button>
+
+            <a href="/" class="ink-btn-outline" style="border-radius: 12px;">VOLVER AL LOGIN</a>
+        }
+    </div>
+</div>
+
+@code {
+    private RegistroRequest modelo = new RegistroRequest();
+    private bool isLoading = false;
+    private bool registroExitoso = false;
+    private string mensajeError = string.Empty;
+
+    // Evaluaciones en tiempo real
+    private bool TieneMayuscula => !string.IsNullOrEmpty(modelo.Password) && modelo.Password.Any(char.IsUpper);
+    private bool TieneNumero => !string.IsNullOrEmpty(modelo.Password) && modelo.Password.Any(char.IsDigit);
+    private bool TieneEspecial => !string.IsNullOrEmpty(modelo.Password) && modelo.Password.Any(ch => !char.IsLetterOrDigit(ch));
+    private bool Coinciden => !string.IsNullOrEmpty(modelo.Password) && modelo.Password == modelo.ConfirmPassword;
+
+    // El botón solo se habilita si la contraseña cumple todo y los datos básicos no están vacíos
+    private bool FormularioValido => 
+        TieneMayuscula && TieneNumero && TieneEspecial && Coinciden &&
+        !string.IsNullOrWhiteSpace(modelo.Nombre) &&
+        !string.IsNullOrWhiteSpace(modelo.ApellidoPaterno) &&
+        !string.IsNullOrWhiteSpace(modelo.Correo) &&
+        !string.IsNullOrWhiteSpace(modelo.Sexo);
+
+   private async Task CrearUsuario()
+    {
+        if (!FormularioValido) return;
+
+        isLoading = true;
+        mensajeError = string.Empty;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/auth/registro", modelo);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                registroExitoso = true;
+            }
+            else
+            {
+                mensajeError = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "Ocurrió un error al conectar con el servidor. Verifica que la API esté corriendo.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
