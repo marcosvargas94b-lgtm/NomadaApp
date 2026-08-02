@@ -1,0 +1,121 @@
+﻿@page "/comunidad/ranking"
+@using Nomada.Shared.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="app-container">
+    <div class="feed-content">
+
+        <div style="display: flex; align-items: center; margin-bottom: 25px;">
+            <a href="/comunidad" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            </a>
+            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">Ranking @anioActual</h2>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+        }
+        else if (!ranking.Any())
+        {
+            <div style="text-align: center; padding: 50px 20px;">
+                <span style="font-size: 3rem; display: block; margin-bottom: 15px;">👻</span>
+                <p style="color: var(--text-muted); font-weight: bold;">Aún no hay likes registrados este año.</p>
+                <p style="color: var(--text-main); font-size: 0.85rem; margin-top: 10px;">¡Sube una foto y sé el primero!</p>
+            </div>
+        }
+        else
+        {
+            <!-- ================= PODIUM (Top 3) ================= -->
+            <div class="podium-container" style="display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin-bottom: 40px; margin-top: 20px;">
+
+                <!-- PLATA (Posición 2) -->
+                @if (ranking.Count > 1)
+                {
+                    <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 30%;">
+                        <div class="user-avatar" style="width: 50px; height: 50px; margin: 0 0 10px 0; border: 3px solid #C0C0C0; box-shadow: 0 0 15px rgba(192, 192, 192, 0.5);">@ranking[1].Iniciales</div>
+                        <span style="color: var(--text-main); font-size: 0.75rem; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@ranking[1].Nombre</span>
+                        <span style="color: #ff4444; font-size: 0.7rem; font-weight: 900; margin-bottom: 8px;">@ranking[1].TotalLikes ❤️</span>
+                        <div style="background: linear-gradient(180deg, #e0e0e0, #a0a0a0); width: 100%; height: 60px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px;">
+                            <span style="color: black; font-weight: 900; font-size: 1.2rem;">2</span>
+                        </div>
+                    </div>
+                }
+
+                <!-- ORO (Posición 1) -->
+                @if (ranking.Count > 0)
+                {
+                    <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 34%; z-index: 10;">
+                        <div style="font-size: 1.5rem; margin-bottom: -5px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);">👑</div>
+                        <div class="user-avatar" style="width: 65px; height: 65px; margin: 0 0 10px 0; border: 4px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);">@ranking[0].Iniciales</div>
+                        <span style="color: var(--text-main); font-size: 0.85rem; font-weight: 900; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@ranking[0].Nombre</span>
+                        <span style="color: #ff4444; font-size: 0.8rem; font-weight: 900; margin-bottom: 8px;">@ranking[0].TotalLikes ❤️</span>
+                        <div style="background: linear-gradient(180deg, #ffe066, #ffb300); width: 100%; height: 90px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px; box-shadow: 0 -5px 15px rgba(255, 215, 0, 0.3);">
+                            <span style="color: black; font-weight: 900; font-size: 1.5rem;">1</span>
+                        </div>
+                    </div>
+                }
+
+                <!-- BRONCE (Posición 3) -->
+                @if (ranking.Count > 2)
+                {
+                    <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 30%;">
+                        <div class="user-avatar" style="width: 45px; height: 45px; margin: 0 0 10px 0; border: 3px solid #CD7F32; box-shadow: 0 0 15px rgba(205, 127, 50, 0.5);">@ranking[2].Iniciales</div>
+                        <span style="color: var(--text-main); font-size: 0.75rem; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@ranking[2].Nombre</span>
+                        <span style="color: #ff4444; font-size: 0.7rem; font-weight: 900; margin-bottom: 8px;">@ranking[2].TotalLikes ❤️</span>
+                        <div style="background: linear-gradient(180deg, #e6a87c, #b36b39); width: 100%; height: 45px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px;">
+                            <span style="color: black; font-weight: 900; font-size: 1rem;">3</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- ================= RESTO DE USUARIOS (Del 4 en adelante) ================= -->
+            @if (ranking.Count > 3)
+            {
+                <div class="user-list">
+                    @for (int i = 3; i < ranking.Count; i++)
+                    {
+                        var user = ranking[i];
+                        <div class="modern-row" style="padding: 12px 20px;">
+                            <span style="font-weight: 900; color: var(--text-muted); width: 25px;">@user.Posicion</span>
+                            <div class="user-avatar" style="width: 35px; height: 35px; font-size: 0.8rem; margin: 0 15px;">@user.Iniciales</div>
+                            <span class="user-name" style="flex: 1;">@user.Nombre @user.ApellidoPaterno</span>
+                            <span style="font-weight: 900; color: #ff4444;">@user.TotalLikes ❤️</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Frase Motivacional -->
+            <div style="text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid rgba(128,128,128,0.2);">
+                <span style="font-size: 1.5rem; display: block; margin-bottom: 10px;">📸</span>
+                <p style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; margin-bottom: 5px;">¿Quieres subir de posición?</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">¡Sube más contenido en el Inicio de la aplicación para que la tribu interactúe contigo!</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool isPageLoading = true;
+    private int anioActual = DateTime.Now.Year;
+    private List<RankingUsuarioDto> ranking = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            ranking = await Http.GetFromJsonAsync<List<RankingUsuarioDto>>($"api/comunidad/ranking/{anioActual}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isPageLoading = false;
+        }
+    }
+}

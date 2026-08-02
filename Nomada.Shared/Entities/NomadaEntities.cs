@@ -44,4 +44,38 @@ namespace Nomada.Shared.Entities
         public Guid UsuarioId { get; set; }
         public int PermisoId { get; set; }
     }
+
+    public class Post
+    {
+        public int Id { get; set; }
+        public Guid UsuarioId { get; set; }
+        public string? Texto { get; set; }
+        public string? MediaUrl { get; set; }
+        public bool EsVideo { get; set; }
+        public DateTime FechaCreacion { get; set; }
+    }
+
+    public class Like
+    {
+        public int Id { get; set; }
+        public int PostId { get; set; }
+        public Guid UsuarioId { get; set; }
+        public DateTime FechaCreacion { get; set; }
+    }
+
+    public class Notificacion
+    {
+        public int Id { get; set; }
+        public Guid UsuarioId { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public bool Leida { get; set; }
+        public DateTime FechaCreacion { get; set; }
+    }
+
+    public class FraseMotivacional
+    {
+        public int Id { get; set; }
+        public string Texto { get; set; } = string.Empty;
+        public string? Autor { get; set; }
+    }
 }

@@ -17,7 +17,10 @@ namespace Nomada.API.Data
         public DbSet<Asistencia> Asistencias { get; set; }
         public DbSet<Permiso> Permisos { get; set; }
         public DbSet<UsuarioPermiso> UsuarioPermisos { get; set; }
-
+        public DbSet<Post> Posts { get; set; }
+        public DbSet<Like> Likes { get; set; }
+        public DbSet<Notificacion> Notificaciones { get; set; }
+        public DbSet<FraseMotivacional> FrasesMotivacionales { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Siempre es buena práctica llamar al método base
@@ -28,7 +31,16 @@ namespace Nomada.API.Data
             modelBuilder.Entity<Asistencia>().ToTable("Asistencias");
             modelBuilder.Entity<Permiso>().ToTable("Permisos");
 
-            // Mapeo explícito de la tabla Roles
+            modelBuilder.Entity<Post>().ToTable("Posts");
+            modelBuilder.Entity<Like>().ToTable("Likes");
+            modelBuilder.Entity<Notificacion>().ToTable("Notificaciones");
+            modelBuilder.Entity<FraseMotivacional>().ToTable("FrasesMotivacionales");
+
+
+            modelBuilder.Entity<Like>()
+                .HasIndex(l => new { l.PostId, l.UsuarioId })
+                .IsUnique();
+
             modelBuilder.Entity<Rol>(entity =>
             {
                 entity.ToTable("Roles");

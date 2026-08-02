@@ -1,0 +1,36 @@
+﻿@page "/comunidad"
+
+<div class="app-container">
+    <div class="feed-content">
+
+        <div class="top-bar" style="margin-bottom: 30px;">
+            <h1 class="greeting-title" style="margin: 0; font-size: 1.6rem; text-shadow: 0 0 15px rgba(255,255,255,0.2);">COMUNIDAD</h1>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">Conecta con tus compañeros.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+
+            <a href="/comunidad/ranking" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; cursor: pointer; text-decoration: none;">
+                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M8 21h8m-4-4v4m-5-4h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v1H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4z"></path><path d="M4 11h3m10 0h3"></path></svg>
+                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">RANKING LIKES</h3>
+                <span style="color: #ffbb33; font-weight: 900; font-size: 1.1rem;">2026</span>
+            </a>
+
+            <!-- Tarjeta Placeholder -->
+            <div class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; opacity: 0.5;">
+                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; color: var(--text-muted);"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">ESTADÍSTICAS</h3>
+                <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Próximamente</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Menú Inferior -->
+    <nav class="bottom-nav">
+        <a href="/inicio" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span><span class="nav-text">Inicio</span></a>
+        <a href="/acciones" class="nav-item"><img src="images/logo-nomada.png" alt="Nómada" class="nav-logo" /><span class="nav-text">Box</span></a>
+        <a href="/comunidad" class="nav-item active"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span><span class="nav-text">Comunidad</span></a>
+        <a href="/perfil" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span><span class="nav-text">Perfil</span></a>
+    </nav>
+</div>
