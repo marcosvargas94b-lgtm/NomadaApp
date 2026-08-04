@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Nomada.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,7 @@ builder.Services.AddOpenApi();
 // ---> ¡AQUÍ VA EL DBCONTEXT! (Siempre ANTES del Build) <---
 builder.Services.AddDbContext<Nomada.API.Data.NomadaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddHostedService<MotorNotificacionesService>();
 // Ensamblamos la aplicación
 var app = builder.Build();
 

@@ -1,0 +1,123 @@
+﻿@page "/wod-hoy"
+@using Nomada.Shared.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="app-container">
+    <div class="feed-content" style="padding-top: 10px;">
+
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            </a>
+            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">CLASE DE HOY</h2>
+        </div>
+
+        <!-- SELECTOR DE DÍA -->
+        <div class="modern-row" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 25px;">
+            <button style="background: none; border: none; color: var(--text-main); cursor: pointer;" @onclick="() => CambiarDia(-1)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div style="text-align: center;">
+                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; display: block;">@fechaSeleccionada.ToString("dddd")</span>
+                <span style="color: var(--text-main); font-size: 1.2rem; font-weight: 900;">@fechaSeleccionada.ToString("dd MMM yyyy")</span>
+            </div>
+            <button style="background: none; border: none; color: var(--text-main); cursor: pointer;" @onclick="() => CambiarDia(1)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+        }
+        else if (!wodsDelDia.Any())
+        {
+            <div style="text-align: center; padding: 50px 20px;">
+                <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><path d="M6 4h12M6 20h12M4 9h16M4 15h16M6 4v16M18 4v16M9 9v6M15 9v6"></path></svg>
+                <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700;">Aún no se ha publicado el WOD para este día.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var wod in wodsDelDia)
+            {
+                <!-- NOTA: Forzamos align-items: stretch y text-align: left para matar el centrado heredado -->
+                <div class="modern-row fade-in-up" style="flex-direction: column; align-items: stretch; text-align: left; padding: 0; margin-bottom: 25px; overflow: hidden; border: 1px solid rgba(128,128,128,0.2); width: 100%;">
+
+                    <!-- ENCABEZADO Y MARCA DE AGUA DEL COACH -->
+                    <!-- Un gradiente a la derecha y un borde azul sólido a la izquierda -->
+                    <div style="background: linear-gradient(90deg, rgba(51, 181, 229, 0.15), transparent); padding: 20px; border-bottom: 1px solid rgba(128,128,128,0.1); border-left: 4px solid #33b5e5; width: 100%;">
+                        <h3 style="color: var(--text-main); font-size: 1.4rem; font-weight: 900; margin: 0 0 5px 0;">@wod.Titulo</h3>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700;">By Coach @wod.NombreCoach</span>
+                        </div>
+                    </div>
+
+                    <!-- CUERPO DEL WOD (SECCIONES) -->
+                    <div style="padding: 20px; width: 100%;">
+                        @foreach (var sec in wod.Secciones)
+                        {
+                            <div style="margin-bottom: 20px;">
+                                @if (!string.IsNullOrEmpty(sec.Subtitulo))
+                                {
+                                    <h4 style="color: #33b5e5; font-size: 1.1rem; font-weight: 900; margin: 0 0 10px 0; text-transform: uppercase;">@sec.Subtitulo</h4>
+                                }
+                                <div style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; font-weight: 600;">@sec.Contenido</div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- VIDEOS / LINKS ANEXADOS -->
+                    @if (wod.Ejercicios.Any())
+                    {
+                        <div style="background-color: rgba(128,128,128,0.03); border-top: 1px dashed rgba(128,128,128,0.2); padding: 15px 20px; width: 100%;">
+                            <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 10px; text-transform: uppercase;">Movimientos del WOD</span>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                @foreach (var ej in wod.Ejercicios)
+                                {
+                                    <a href="@ej.UrlVideo" target="_blank" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: var(--card-bg); border-radius: 10px; text-decoration: none; border: 1px solid rgba(128,128,128,0.1);">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+                                            <span style="color: var(--text-main); font-size: 0.85rem; font-weight: 800;">@ej.Nombre</span>
+                                        </div>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool isPageLoading = true;
+    private DateTime fechaSeleccionada = DateTime.Today;
+    private List<WodGeneralDto> wodsDelDia = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarWods();
+    }
+
+    private async Task CambiarDia(int dias)
+    {
+        fechaSeleccionada = fechaSeleccionada.AddDays(dias);
+        await CargarWods();
+    }
+
+    private async Task CargarWods()
+    {
+        isPageLoading = true;
+        try
+        {
+            string fStr = fechaSeleccionada.ToString("yyyy-MM-dd");
+            wodsDelDia = await Http.GetFromJsonAsync<List<WodGeneralDto>>($"api/wod/dia/{fStr}") ?? new();
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isPageLoading = false; }
+    }
+}

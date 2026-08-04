@@ -1,0 +1,178 @@
+﻿@page "/admin/horarios"
+@using Nomada.Shared.Entities
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="app-container">
+    <div class="feed-content" style="padding-top: 10px;">
+
+        <!-- TOP BAR -->
+        <div style="display: flex; align-items: center; margin-bottom: 25px;">
+            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center; transition: opacity 0.2s;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            </a>
+            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem; text-transform: uppercase;">Gestión de Horarios</h2>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+        }
+        else
+        {
+            <!-- AFORO MÁXIMO -->
+            <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span style="color: var(--text-main); font-weight: 800; font-size: 0.9rem;">AFORO GLOBAL DEL BOX</span>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" @bind="aforoMaximo" class="search-input" style="flex: 1; text-align: center; font-size: 1.2rem; font-weight: 900;" />
+                    <button class="ink-btn glow-btn" style="margin: 0; padding: 0 25px; width: auto;" @onclick="GuardarAforo">GUARDAR</button>
+                </div>
+                @if (mostrarExitoAforo)
+                {
+                    <span style="color: #00C851; font-size: 0.75rem; margin-top: 10px; font-weight: 700;">¡Aforo actualizado con éxito!</span>
+                }
+            </div>
+
+            <!-- CREAR NUEVO HORARIO -->
+            <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px; border-style: dashed;">
+                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 15px;">AGREGAR NUEVA CLASE</span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <!-- Selector de reloj que abarca todo el espacio sin cortarse -->
+                    <input type="time" @bind="nuevoHoraOrden" class="search-input" style="flex: 1; text-align: center; font-size: 1.1rem;" />
+
+                    <button class="ink-btn-outline" style="margin: 0; padding: 0 20px; height: 45px; border-color: #00C851; color: #00C851;" @onclick="CrearHorario">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- LISTA DE HORARIOS -->
+            <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; display: block;">HORARIOS ESTABLECIDOS</span>
+            <div class="user-list">
+                @foreach (var horario in horarios)
+                {
+                    <div class="modern-row" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 10px; opacity: @(horario.Activo ? "1" : "0.5");">
+                        <div>
+                            <h3 style="color: var(--text-main); margin: 0 0 5px 0; font-size: 1.1rem; font-weight: 900;">@horario.HoraTexto</h3>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">Orden interno: @horario.HoraOrden.ToString(@"hh\:mm")</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <!-- Botón Toggle Activo/Inactivo -->
+                            <button style="background: none; border: 1px solid @(horario.Activo ? "#00C851" : "var(--text-muted)"); border-radius: 8px; padding: 8px 12px; color: @(horario.Activo ? "#00C851" : "var(--text-muted)"); cursor: pointer;" @onclick="() => ToggleHorario(horario.Id)">
+                                @if (horario.Activo)
+                                {
+                                    <span style="font-weight: 800; font-size: 0.75rem;">ACTIVO</span>
+                                }
+                                else
+                                {
+                                    <span style="font-weight: 800; font-size: 0.75rem;">PAUSADO</span>
+                                }
+                            </button>
+
+                            <!-- Botón Eliminar -->
+                            <button style="background: none; border: none; padding: 8px; color: #ff4444; cursor: pointer;" @onclick="() => EliminarHorario(horario.Id)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool isPageLoading = true;
+    private int aforoMaximo = 20;
+    private bool mostrarExitoAforo = false;
+
+    // Lo inicializamos a las 7:00 AM para que no empiece en "12:00"
+    private DateTime nuevoHoraOrden = DateTime.Today.AddHours(7);
+
+    private class HorarioClaseModel
+    {
+        public int Id { get; set; }
+        public string HoraTexto { get; set; } = string.Empty;
+        public TimeSpan HoraOrden { get; set; }
+        public bool Activo { get; set; }
+    }
+    private class ConfigModel { public int AforoMaximo { get; set; } }
+
+    private List<HorarioClaseModel> horarios = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        isPageLoading = true;
+        try
+        {
+            var config = await Http.GetFromJsonAsync<ConfigModel>("api/reservas/config");
+            if (config != null) aforoMaximo = config.AforoMaximo;
+
+            horarios = await Http.GetFromJsonAsync<List<HorarioClaseModel>>("api/reservas/admin/horarios") ?? new();
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isPageLoading = false; }
+    }
+
+    private async Task GuardarAforo()
+    {
+        try
+        {
+            await Http.PutAsJsonAsync("api/reservas/config", new ConfigModel { AforoMaximo = aforoMaximo });
+            mostrarExitoAforo = true;
+            await Task.Delay(3000);
+            mostrarExitoAforo = false;
+        }
+        catch { }
+    }
+
+    private async Task CrearHorario()
+    {
+        // 1. Extraemos el texto bonito (Ej. "07:00 AM" o "06:00 PM") automáticamente usando formato de 12 horas ("hh:mm tt")
+        string textoGenerado = nuevoHoraOrden.ToString("hh:mm tt", new System.Globalization.CultureInfo("en-US"));
+
+        var nuevo = new HorarioClaseModel
+        {
+            HoraTexto = textoGenerado,
+            HoraOrden = nuevoHoraOrden.TimeOfDay
+        };
+
+        try
+        {
+            await Http.PostAsJsonAsync("api/reservas/admin/horarios", nuevo);
+
+            // Le sumamos 1 hora al input para que sea fácil agregar el siguiente (Ej. de 7:00 AM salta a 8:00 AM)
+            nuevoHoraOrden = nuevoHoraOrden.AddHours(1);
+            await CargarDatos();
+        }
+        catch { }
+    }
+
+    private async Task ToggleHorario(int id)
+    {
+        try
+        {
+            await Http.PutAsync($"api/reservas/admin/horarios/{id}/toggle", null);
+            await CargarDatos();
+        }
+        catch { }
+    }
+
+    private async Task EliminarHorario(int id)
+    {
+        try
+        {
+            await Http.DeleteAsync($"api/reservas/admin/horarios/{id}");
+            await CargarDatos();
+        }
+        catch { }
+    }
+}

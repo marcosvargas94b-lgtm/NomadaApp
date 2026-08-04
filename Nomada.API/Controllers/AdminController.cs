@@ -4,6 +4,7 @@ using Nomada.API.Data;
 using Nomada.Shared.Models;
 using Nomada.Shared.Entities; // Agregamos la referencia a las Entidades
 using System;
+using System.Collections.Generic; // Para usar List<>
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -80,11 +81,11 @@ namespace Nomada.API.Controllers
             }
         }
 
-        // 2. Lógica Matemática para Pagos Adelantados y Cortes
+        // 2. Lógica Matemática para Pagos Adelantados, Cortes y SUSTITUCIÓN DE PLANES
         [HttpPost("cobrar")]
         public async Task<IActionResult> RegistrarCobro([FromBody] RegistrarCobroRequest request)
         {
-            // A. Registrar el dinero en caja
+            // A. Registrar el dinero en caja (IngresoDto)
             var ingreso = new Ingreso
             {
                 UsuarioId = request.AtletaId,
@@ -99,16 +100,48 @@ namespace Nomada.API.Controllers
             // B. Actualizar las fechas de corte o clases (Solo si NO es Clase Especial)
             if (request.TipoCobro != "Especial")
             {
-                var subActual = await _context.Suscripciones.FirstOrDefaultAsync(s => s.UsuarioId == request.AtletaId && s.Activa);
+                // [NÓMADA FIX] Lógica de Sustitución Automática de Planes
+
+                // 1. Identificamos la suscripción activa principal o creamos una nueva
+                var subActual = await _context.Suscripciones
+                    .FirstOrDefaultAsync(s => s.UsuarioId == request.AtletaId && s.Activa);
 
                 if (subActual == null)
                 {
-                    subActual = new Suscripcion { UsuarioId = request.AtletaId, Activa = true, FechaInicio = DateTime.UtcNow };
+                    subActual = new Suscripcion
+                    {
+                        UsuarioId = request.AtletaId,
+                        Activa = true,
+                        FechaInicio = DateTime.UtcNow
+                    };
                     _context.Suscripciones.Add(subActual);
                 }
 
+                // --- BLOQUE DE SEGURIDAD: SUSTITUCIÓN DE PLAN ---
+
+                // 2. Buscamos CUALQUIER OTRA suscripción activa (error del sistema) y la desactivamos
+                var otrasSubsActivas = await _context.Suscripciones
+                    .Where(s => s.UsuarioId == request.AtletaId && s.Activa && s.Id != subActual.Id)
+                    .ToListAsync();
+
+                foreach (var otraSub in otrasSubsActivas)
+                {
+                    otraSub.Activa = false;
+                }
+
+                // 3. Si el atleta cambia drásticamente de plan (ejemplo: de Clases a Mensual),
+                // reseteamos los contadores de clases para que no se sumen al nuevo plan de tiempo.
+                if (subActual.TipoSuscripcion == "PaqueteClases" &&
+                    (request.TipoCobro == "Mensual" || request.TipoCobro == "Semanal"))
+                {
+                    subActual.ClasesRestantes = null;
+                }
+
+                // Actualizamos el tipo al nuevo cobro efectuado
                 subActual.TipoSuscripcion = request.TipoCobro;
 
+
+                // C. Lógica Matemática de Fechas y Clases (Heredada y Verificada)
                 if (request.TipoCobro == "Mensual" || request.TipoCobro == "Semanal")
                 {
                     DateTime fechaBase = (subActual.FechaFin.HasValue && subActual.FechaFin > DateTime.UtcNow)
@@ -123,13 +156,24 @@ namespace Nomada.API.Controllers
                     {
                         subActual.FechaFin = fechaBase.AddDays((request.NumeroSemanas ?? 1) * 7);
                     }
+
+                    // Aseguramos que los planes de tiempo no tengan clases restantes
                     subActual.ClasesRestantes = null;
                 }
                 else if (request.TipoCobro == "PaqueteClases")
                 {
+                    // Al recargar clases, heredamos las restantes (recargo de paquete)
+                    // y limpiamos FechaFin (que pudo haber sellado el motor de notificaciones).
                     subActual.ClasesRestantes = (subActual.ClasesRestantes ?? 0) + (request.NumeroClases ?? 1);
                     subActual.FechaFin = null;
                 }
+            }
+
+            // D. Si el usuario estaba dado de baja temporal, al pagar lo reactivamos
+            var usuario = await _context.Usuarios.FindAsync(request.AtletaId);
+            if (usuario != null && usuario.EstatusAprobacion == "Baja Temporal")
+            {
+                usuario.EstatusAprobacion = "Aprobado";
             }
 
             await _context.SaveChangesAsync();
@@ -164,7 +208,6 @@ namespace Nomada.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok();
-        
         }
 
         // --- MÓDULO DE STAFF Y PERMISOS ---
@@ -218,6 +261,5 @@ namespace Nomada.API.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
-
     }
 }

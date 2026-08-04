@@ -1,0 +1,270 @@
+﻿@page "/agendar"
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="app-container">
+    <div class="feed-content" style="padding-top: 10px;">
+
+        <!-- TOP BAR -->
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            </a>
+            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">AGENDAR CLASE</h2>
+        </div>
+
+        @if (isPageLoading && !diasDisponibles.Any())
+        {
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+        }
+        else
+        {
+            <!-- SELECTOR HORIZONTAL DE 7 DÍAS -->
+            <div style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 15px; margin-bottom: 15px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                @foreach (var dia in diasDisponibles)
+                {
+                    bool esSeleccionado = dia.Fecha.Date == fechaSeleccionada.Date;
+
+                    <div style="min-width: 60px; height: 75px; border-radius: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s;
+                                        background: @(esSeleccionado ? "linear-gradient(145deg, #33b5e5, #00C851)" : "var(--card-bg)");
+                                        border: 1px solid @(esSeleccionado ? "transparent" : "rgba(128,128,128,0.2)");
+                                        box-shadow: @(esSeleccionado ? "0 4px 15px rgba(51, 181, 229, 0.3)" : "none");"
+                         @onclick="() => SeleccionarDia(dia.Fecha)">
+
+                        <span style="font-size: 0.75rem; font-weight: 800; color: @(esSeleccionado ? "white" : "var(--text-muted)"); margin-bottom: 4px;">@dia.DiaSemana</span>
+                        <span style="font-size: 1.3rem; font-weight: 900; color: @(esSeleccionado ? "white" : "var(--text-main)");">@dia.NumeroDia</span>
+                    </div>
+                }
+            </div>
+
+            <!-- BANNER DE ERRORES DEL SERVIDOR -->
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="fade-in-up" style="background-color: rgba(255, 68, 68, 0.1); border-left: 4px solid #ff4444; color: var(--text-main); padding: 12px 15px; margin-bottom: 15px; border-radius: 0 8px 8px 0; display: flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span style="font-size: 0.85rem; font-weight: 700;">@mensajeError</span>
+                </div>
+            }
+
+            <!-- CARGADOR INTERNO DE HORARIOS -->
+            @if (isHorariosLoading)
+            {
+                <div style="display: flex; justify-content: center; padding: 40px;"><span class="spinner" style="width: 30px; height: 30px; border-width: 3px;"></span></div>
+            }
+            else if (!horariosDelDia.Any())
+            {
+                <div style="text-align: center; padding: 40px 20px;">
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700;">No hay clases programadas para este día.</p>
+                </div>
+            }
+            else
+            {
+                <!-- LISTA DE HORARIOS -->
+                <div class="user-list">
+                    @foreach (var horario in horariosDelDia)
+                    {
+                        bool mostrarAtletas = atletasExpandidos.ContainsKey(horario.HorarioId) && atletasExpandidos[horario.HorarioId];
+
+                        <!-- CONTENEDOR PRINCIPAL: Aquí aplicamos el fondo a toda la tarjeta -->
+                        <div class="modern-row" style="flex-direction: column; padding: 0; margin-bottom: 15px; background-color: @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.05)" : "var(--card-bg)"); border: 1px solid @(horario.YoEstoyAgendado ? "#00C851" : "rgba(128,128,128,0.2)"); overflow: hidden; box-shadow: @(horario.YoEstoyAgendado ? "0 4px 15px rgba(0, 200, 81, 0.1)" : "none"); transition: all 0.3s;">
+
+                            <!-- Cabecera de la Clase -->
+                            <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center; background-color: transparent;">
+
+                                <div style="flex: 1;">
+                                    <h3 style="color: var(--text-main); margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 900;">@horario.HoraTexto</h3>
+
+                                    <!-- Aforo e Indicador -->
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="@(horario.EstaLleno ? "#ff4444" : "var(--text-muted)")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                        <span style="color: @(horario.EstaLleno ? "#ff4444" : "var(--text-muted)"); font-size: 0.85rem; font-weight: 800;">
+                                            @horario.OcupacionActual / @horario.AforoMaximo Atletas
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Lógica UX: Botones Condicionales -->
+                                <div style="flex-shrink: 0; margin-left: 15px; display: flex; align-items: center; justify-content: flex-end; min-width: 90px;">
+                                    @if (horario.YoEstoyAgendado)
+                                    {
+                                        <button class="ink-btn-outline" style="margin: 0; padding: 8px 15px; border-color: #ff4444; color: #ff4444; font-size: 0.8rem; background-color: transparent;" @onclick="() => ProcesarReserva(horario.HorarioId)" disabled="@isProcessing">
+                                            CANCELAR
+                                        </button>
+                                    }
+                                    else if (YaTengoClaseHoy)
+                                    {
+                                        <span style="color: var(--text-muted); font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Máx. 1 al día</span>
+                                    }
+                                    else if (horario.EstaLleno)
+                                    {
+                                        <button class="ink-btn-outline" style="margin: 0; padding: 8px 15px; border-color: var(--text-muted); color: var(--text-muted); font-size: 0.8rem;" disabled>
+                                            LLENO
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="ink-btn glow-btn" style="margin: 0; padding: 8px 15px; font-size: 0.8rem;" @onclick="() => ProcesarReserva(horario.HorarioId)" disabled="@isProcessing">
+                                            RESERVAR
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Botón para expandir lista de atletas -->
+                            @if (horario.OcupacionActual > 0)
+                            {
+                                <div style="border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)"); padding: 10px 20px; background-color: transparent; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px;" @onclick="() => ToggleAtletas(horario.HorarioId)">
+                                    <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">
+                                        @(mostrarAtletas ? "Ocultar Atletas" : "Ver Atletas Agendados")
+                                    </span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(@(mostrarAtletas ? "180deg" : "0deg")); transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </div>
+
+                                <!-- Lista desplegable de atletas (Alineada a la izquierda) -->
+                                @if (mostrarAtletas)
+                                {
+                                    <div style="padding: 15px 20px; background-color: transparent; border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)");">
+                                        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start;">
+                                            @foreach (var atleta in horario.AtletasAgendados)
+                                            {
+                                                <div style="display: flex; align-items: center; gap: 8px; background: @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.1)" : "rgba(128,128,128,0.1)"); padding: 5px 12px; border-radius: 20px;">
+                                                    <div style="width: 24px; height: 24px; font-size: 0.65rem; margin: 0; background-color: #333; color: #fff; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 800; letter-spacing: 0.5px;">
+                                                        @atleta.Iniciales
+                                                    </div>
+                                                    <span style="color: var(--text-main); font-size: 0.8rem; font-weight: 700;">@atleta.NombreCompleto</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool isPageLoading = true;
+    private bool isHorariosLoading = false;
+    private bool isProcessing = false;
+    private Guid currentUserId;
+
+    private string mensajeError = "";
+
+    private DateTime fechaSeleccionada = DateTime.Today;
+    private List<DiaReservaDto> diasDisponibles = new();
+    private List<HorarioDisponibleDto> horariosDelDia = new();
+
+    private bool YaTengoClaseHoy => horariosDelDia.Any(h => h.YoEstoyAgendado);
+
+    private Dictionary<int, bool> atletasExpandidos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userIdStr = Preferences.Get("userId", string.Empty);
+        if (Guid.TryParse(userIdStr, out currentUserId))
+        {
+            await CargarDiasYHorarios();
+        }
+    }
+
+    private async Task CargarDiasYHorarios()
+    {
+        isPageLoading = true;
+        try
+        {
+            diasDisponibles = await Http.GetFromJsonAsync<List<DiaReservaDto>>("api/reservas/dias-disponibles") ?? new();
+            if (diasDisponibles.Any())
+            {
+                fechaSeleccionada = diasDisponibles.First().Fecha;
+                await CargarHorariosDelDia();
+            }
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isPageLoading = false; }
+    }
+
+    private async Task SeleccionarDia(DateTime nuevaFecha)
+    {
+        if (fechaSeleccionada.Date == nuevaFecha.Date) return;
+
+        fechaSeleccionada = nuevaFecha;
+        atletasExpandidos.Clear();
+        mensajeError = "";
+        await CargarHorariosDelDia();
+    }
+
+    private async Task CargarHorariosDelDia()
+    {
+        isHorariosLoading = true;
+        try
+        {
+            string fechaStr = fechaSeleccionada.ToString("yyyy-MM-dd");
+            horariosDelDia = await Http.GetFromJsonAsync<List<HorarioDisponibleDto>>($"api/reservas/horarios/{fechaStr}/{currentUserId}") ?? new();
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isHorariosLoading = false; }
+    }
+
+    private void ToggleAtletas(int horarioId)
+    {
+        if (atletasExpandidos.ContainsKey(horarioId))
+        {
+            atletasExpandidos[horarioId] = !atletasExpandidos[horarioId];
+        }
+        else
+        {
+            atletasExpandidos[horarioId] = true;
+        }
+    }
+
+    private async Task ProcesarReserva(int horarioId)
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        mensajeError = "";
+
+        var req = new HacerReservaRequest
+        {
+            UsuarioId = currentUserId,
+            HorarioId = horarioId,
+            FechaReserva = fechaSeleccionada
+        };
+
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/reservas/agendar", req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                await CargarHorariosDelDia();
+            }
+            else
+            {
+                mensajeError = await res.Content.ReadAsStringAsync();
+                StateHasChanged();
+                await Task.Delay(4000);
+                mensajeError = "";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "No se pudo conectar con el servidor.";
+            StateHasChanged();
+            await Task.Delay(4000);
+            mensajeError = "";
+            StateHasChanged();
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+}

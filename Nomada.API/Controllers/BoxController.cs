@@ -47,5 +47,59 @@ namespace Nomada.API.Controllers
 
             return Ok(frase);
         }
+
+        // 2. Obtener Banner de Alerta de Suscripción para el Home
+        [HttpGet("alerta-suscripcion/{usuarioId}")]
+        public async Task<IActionResult> GetAlertaSuscripcion(Guid usuarioId)
+        {
+            var sub = await _context.Suscripciones.FirstOrDefaultAsync(s => s.UsuarioId == usuarioId && s.Activa);
+
+            if (sub == null)
+                return Ok(new AlertaSuscripcionDto { Mostrar = false });
+
+            var alerta = new AlertaSuscripcionDto { Mostrar = false };
+            DateTime hoyMexico = DateTime.UtcNow.Add(TimeSpan.FromHours(-6)).Date;
+
+            if (sub.TipoSuscripcion == "PaqueteClases")
+            {
+                if (sub.ClasesRestantes == 2)
+                {
+                    alerta.Mostrar = true;
+                    alerta.NivelRiesgo = "Warning";
+                    alerta.Mensaje = "Te quedan 2 clases en tu paquete.";
+                }
+                else if (sub.ClasesRestantes <= 0)
+                {
+                    alerta.Mostrar = true;
+                    alerta.NivelRiesgo = "Danger";
+                    alerta.Mensaje = "Última clase tomada. Renueva hoy para no perder tu acceso.";
+                }
+            }
+            else if (sub.FechaFin.HasValue)
+            {
+                int diasDiferencia = (sub.FechaFin.Value.Date - hoyMexico).Days;
+
+                if (diasDiferencia == 2 || diasDiferencia == 1)
+                {
+                    alerta.Mostrar = true;
+                    alerta.NivelRiesgo = "Warning";
+                    alerta.Mensaje = $"Tu plan vence en {diasDiferencia} día(s).";
+                }
+                else if (diasDiferencia == 0)
+                {
+                    alerta.Mostrar = true;
+                    alerta.NivelRiesgo = "Danger";
+                    alerta.Mensaje = "Tu plan vence HOY. Evita interrupciones en tu servicio.";
+                }
+                else if (diasDiferencia < 0)
+                {
+                    alerta.Mostrar = true;
+                    alerta.NivelRiesgo = "Danger";
+                    alerta.Mensaje = $"Plan vencido. Tienes {Math.Abs(diasDiferencia)} día(s) de retraso.";
+                }
+            }
+
+            return Ok(alerta);
+        }
     }
 }

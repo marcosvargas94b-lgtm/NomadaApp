@@ -76,6 +76,11 @@ namespace Nomada.API.Controllers
                 return BadRequest("Tu cuenta aún está en lista de espera.");
             }
 
+            if (usuario.EstatusAprobacion == "Baja Temporal")
+            {
+                return BadRequest("Tu cuenta ha sido suspendida temporalmente por falta de pago. Por favor, acércate a recepción.");
+            }
+
             if (usuario.EstatusAprobacion == "Rechazado")
             {
                 return BadRequest("Tu solicitud ha sido rechazada. Contacta a un administrador.");
@@ -95,6 +100,17 @@ namespace Nomada.API.Controllers
                 nombre = usuario.Nombre,
                 rolId = usuario.RolId
             });
+        }
+
+        [HttpGet("estatus/{usuarioId}")]
+        public async Task<IActionResult> GetEstatus(Guid usuarioId)
+        {
+            var estatus = await _context.Usuarios
+                .Where(u => u.Id == usuarioId)
+                .Select(u => u.EstatusAprobacion)
+                .FirstOrDefaultAsync();
+
+            return Ok(new { Estatus = estatus ?? "Baja" });
         }
     }
 }

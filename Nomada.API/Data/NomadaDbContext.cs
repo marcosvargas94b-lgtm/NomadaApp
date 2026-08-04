@@ -21,6 +21,13 @@ namespace Nomada.API.Data
         public DbSet<Like> Likes { get; set; }
         public DbSet<Notificacion> Notificaciones { get; set; }
         public DbSet<FraseMotivacional> FrasesMotivacionales { get; set; }
+        public DbSet<HorarioClase> HorariosClases { get; set; }
+        public DbSet<Reserva> Reservas { get; set; }
+        public DbSet<ConfiguracionBox> ConfiguracionBox { get; set; }
+        public DbSet<WodGeneral> WodsGenerales { get; set; }
+        public DbSet<WodSeccion> WodsSecciones { get; set; }
+        public DbSet<CatalogoEjercicio> CatalogoEjercicios { get; set; }
+        public DbSet<WodEjercicio> WodEjercicios { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Siempre es buena práctica llamar al método base
@@ -30,12 +37,21 @@ namespace Nomada.API.Data
             modelBuilder.Entity<Ingreso>().ToTable("Ingresos");
             modelBuilder.Entity<Asistencia>().ToTable("Asistencias");
             modelBuilder.Entity<Permiso>().ToTable("Permisos");
-
+            modelBuilder.Entity<CatalogoEjercicio>().ToTable("CatalogoEjercicios");
+            modelBuilder.Entity<WodEjercicio>().ToTable("WodEjercicios");
             modelBuilder.Entity<Post>().ToTable("Posts");
             modelBuilder.Entity<Like>().ToTable("Likes");
             modelBuilder.Entity<Notificacion>().ToTable("Notificaciones");
             modelBuilder.Entity<FraseMotivacional>().ToTable("FrasesMotivacionales");
+            modelBuilder.Entity<HorarioClase>().ToTable("HorariosClases");
+            modelBuilder.Entity<Reserva>().ToTable("Reservas");
+            modelBuilder.Entity<ConfiguracionBox>().ToTable("ConfiguracionBox");
+            modelBuilder.Entity<WodGeneral>().ToTable("WodsGenerales");
+            modelBuilder.Entity<WodSeccion>().ToTable("WodsSecciones");
 
+            modelBuilder.Entity<ConfiguracionBox>()
+                .Property(c => c.AforoMaximo)
+                .HasDefaultValue(20);
 
             modelBuilder.Entity<Like>()
                 .HasIndex(l => new { l.PostId, l.UsuarioId })

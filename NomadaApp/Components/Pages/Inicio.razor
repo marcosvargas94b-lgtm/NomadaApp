@@ -41,18 +41,27 @@
                         {
                             <div class="admin-dropdown glass-dropdown" style="top: 45px; right: -50px; position: absolute; z-index: 2000; min-width: 250px;">
                                 <h4 style="color: var(--text-main); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin: 0; padding: 15px 20px; border-bottom: 1px solid rgba(128,128,128,0.2);">Tus Avisos</h4>
-                                
+
                                 @if (notificaciones.Any())
                                 {
                                     @foreach (var noti in notificaciones)
                                     {
-                                        <div class="dropdown-item" style="flex-direction: column; align-items: flex-start; gap: 5px; opacity: @(noti.Leida ? "0.6" : "1");">
-                                            <span style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff4444" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                        <button type="button" class="dropdown-item" style="flex-direction: column; align-items: flex-start; gap: 5px; opacity: @(noti.Leida ? "0.6" : "1"); background: transparent; border: none; width: 100%; text-align: left; cursor: pointer;" @onclick="() => ProcesarClickNotificacion(noti)">
+                                            <span style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: flex-start; gap: 8px; line-height: 1.3;">
+                                                @if (noti.Tipo == "AlertaPago" || noti.Tipo == "Baja")
+                                                {
+                                                    <!-- SVG de Advertencia Financiera -->
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                                }
+                                                else
+                                                {
+                                                    <!-- SVG de Like de Comunidad -->
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4444" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                                }
                                                 @noti.Mensaje
                                             </span>
-                                            <span style="font-size: 0.75rem; color: var(--text-muted);">@noti.TiempoTranscurrido</span>
-                                        </div>
+                                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 26px;">@noti.TiempoTranscurrido</span>
+                                        </button>
                                     }
                                 }
                                 else
@@ -99,6 +108,26 @@
             </div>
 
             <!-- ================= CREADOR O AVISO DE PUBLICADO ================= -->
+            <!-- BANNER DE VENCIMIENTO -->
+            @if (alertaBanner != null && alertaBanner.Mostrar)
+            {
+                string borderColor = alertaBanner.NivelRiesgo == "Danger" ? "#ff4444" : "#ffbb33";
+                string bgColor = alertaBanner.NivelRiesgo == "Danger" ? "rgba(255, 68, 68, 0.1)" : "rgba(255, 187, 51, 0.1)";
+
+                <div class="modern-row fade-in-up" style="flex-direction: row; align-items: center; justify-content: space-between; padding: 15px 20px; margin-top: 15px; border-left: 4px solid @borderColor; background-color: @bgColor; box-shadow: none;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="@borderColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <div>
+                            <span style="color: var(--text-main); font-size: 0.85rem; font-weight: 800; display: block; text-transform: uppercase;">AVISO DE SUSCRIPCIÓN</span>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700;">@alertaBanner.Mensaje</span>
+                        </div>
+                    </div>
+                </div>
+            }
             @if (!yaPublicoHoy)
             {
                 <!-- Creador de Post -->
@@ -280,21 +309,42 @@
         }
     }
 
+    private AlertaSuscripcionDto alertaBanner = new();
     private async Task CargarDatosIniciales()
     {
         isPageLoading = true;
         try
         {
+            // 1. VERIFICACIÓN DE EXPULSIÓN AUTOMÁTICA
+            var validacion = await Http.GetFromJsonAsync<EstatusResponse>($"api/auth/estatus/{currentUserId}");
+
+            if (validacion != null && (validacion.Estatus == "Baja Temporal" || validacion.Estatus == "Baja" || validacion.Estatus == "Rechazado"))
+            {
+                Preferences.Clear();
+
+                // Puedes mostrar una alerta nativa del sistema antes de expulsarlo
+                await App.Current.MainPage.DisplayAlert(
+                    "Servicio Suspendido",
+                    "Tu cuenta ha sido suspendida temporalmente por falta de pago. Acércate a recepción para reactivar tu acceso.",
+                    "Entendido"
+                );
+
+                NavManager.NavigateTo("/");
+                return; // Detenemos la carga
+            }
+
             misPermisos = await Http.GetFromJsonAsync<List<string>>($"api/admin/mis-permisos/{currentUserId}") ?? new();
             yaPublicoHoy = await Http.GetFromJsonAsync<bool>($"api/comunidad/ya-publico-hoy/{currentUserId}");
             feed = await Http.GetFromJsonAsync<List<PostFeedDto>>($"api/comunidad/feed/{currentUserId}") ?? new();
             notificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"api/comunidad/notificaciones/{currentUserId}") ?? new();
 
             hayNotificacionesNuevas = notificaciones.Any(n => !n.Leida);
+            alertaBanner = await Http.GetFromJsonAsync<AlertaSuscripcionDto>($"api/box/alerta-suscripcion/{currentUserId}") ?? new();
         }
         catch (Exception) { /* Ignorar errores de red temporales */ }
         finally { isPageLoading = false; }
     }
+    public class EstatusResponse { public string Estatus { get; set; } = ""; }
 
     private void ToggleMenuAdmin() { mostrarMenuAdmin = !mostrarMenuAdmin; mostrarNotificaciones = false; }
     private void ToggleNotificaciones() { mostrarNotificaciones = !mostrarNotificaciones; mostrarMenuAdmin = false; hayNotificacionesNuevas = false; }
@@ -378,6 +428,28 @@
                 await CargarDatosIniciales();
             }
             catch (Exception) { }
+        }
+    }
+
+    private async Task ProcesarClickNotificacion(NotificacionDto noti)
+    {
+        // 1. Cambiamos el estado visual inmediatamente para que se vea fluida la interfaz
+        noti.Leida = true;
+
+        // 2. (Opcional) Llamar a la API en el fondo para marcarla como leída en la BD
+        try
+        {
+            // await Http.PutAsync($"api/comunidad/notificacion-leida/{noti.Id}", null);
+        }
+        catch { }
+
+        // 3. Cerramos el panel de notificaciones
+        mostrarNotificaciones = false;
+
+        // 4. Navegamos a la vista que indique la base de datos
+        if (!string.IsNullOrEmpty(noti.RutaNavegacion))
+        {
+            NavManager.NavigateTo(noti.RutaNavegacion);
         }
     }
 
