@@ -9,7 +9,7 @@ namespace Nomada.API.Data
         public NomadaDbContext(DbContextOptions<NomadaDbContext> options) : base(options)
         {
         }
-
+        public DbSet<AvisoBox> AvisosBox { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Rol> Roles { get; set; }
         public DbSet<Suscripcion> Suscripciones { get; set; }
@@ -28,6 +28,7 @@ namespace Nomada.API.Data
         public DbSet<WodSeccion> WodsSecciones { get; set; }
         public DbSet<CatalogoEjercicio> CatalogoEjercicios { get; set; }
         public DbSet<WodEjercicio> WodEjercicios { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Siempre es buena práctica llamar al método base
@@ -49,9 +50,24 @@ namespace Nomada.API.Data
             modelBuilder.Entity<WodGeneral>().ToTable("WodsGenerales");
             modelBuilder.Entity<WodSeccion>().ToTable("WodsSecciones");
 
+            // ================= ÍNDICES DE RENDIMIENTO (MULTI-TENANT) =================
+            // Esto hace que las consultas filtradas por sucursal sean instantáneas
+            modelBuilder.Entity<Usuario>().HasIndex(u => u.GymCode);
+            modelBuilder.Entity<Suscripcion>().HasIndex(s => s.GymCode);
+            modelBuilder.Entity<Ingreso>().HasIndex(i => i.GymCode);
+            modelBuilder.Entity<Post>().HasIndex(p => p.GymCode);
+            modelBuilder.Entity<Reserva>().HasIndex(r => r.GymCode);
+            modelBuilder.Entity<HorarioClase>().HasIndex(h => h.GymCode);
+            modelBuilder.Entity<WodGeneral>().HasIndex(w => w.GymCode);
+            modelBuilder.Entity<AvisoBox>().ToTable("AvisosBox");
+            modelBuilder.Entity<AvisoBox>().HasIndex(a => a.GymCode);
+
+            // ================= CONFIGURACIONES ESPECÍFICAS =================
             modelBuilder.Entity<ConfiguracionBox>()
                 .Property(c => c.AforoMaximo)
                 .HasDefaultValue(20);
+
+            modelBuilder.Entity<AvisoBox>().HasIndex(a => a.FechaVencimiento);
 
             modelBuilder.Entity<Like>()
                 .HasIndex(l => new { l.PostId, l.UsuarioId })

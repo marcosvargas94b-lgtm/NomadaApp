@@ -1,10 +1,12 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Nomada.Shared.Entities
 {
     public class Suscripcion
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty; // Neutro y Obligatorio
         public Guid UsuarioId { get; set; }
         public string TipoSuscripcion { get; set; } = string.Empty;
         public DateTime FechaInicio { get; set; }
@@ -16,6 +18,7 @@ namespace Nomada.Shared.Entities
     public class Ingreso
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public Guid UsuarioId { get; set; }
         public Guid RecibidoPorId { get; set; }
         public string TipoCobro { get; set; } = string.Empty;
@@ -27,6 +30,7 @@ namespace Nomada.Shared.Entities
     public class Asistencia
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public Guid UsuarioId { get; set; }
         public DateTime FechaHora { get; set; }
         public string MetodoRegistro { get; set; } = string.Empty;
@@ -48,6 +52,7 @@ namespace Nomada.Shared.Entities
     public class Post
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public Guid UsuarioId { get; set; }
         public string? Texto { get; set; }
         public string? MediaUrl { get; set; }
@@ -58,6 +63,7 @@ namespace Nomada.Shared.Entities
     public class Like
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public int PostId { get; set; }
         public Guid UsuarioId { get; set; }
         public DateTime FechaCreacion { get; set; }
@@ -66,10 +72,11 @@ namespace Nomada.Shared.Entities
     public class Notificacion
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public Guid UsuarioId { get; set; }
         public string Mensaje { get; set; } = string.Empty;
-        public string Tipo { get; set; } = "General"; // "Like", "AlertaPago", "Baja"
-        public string? RutaNavegacion { get; set; } // Ejemplo: "/mis-pagos" o "/inicio"
+        public string Tipo { get; set; } = "General";
+        public string? RutaNavegacion { get; set; }
         public bool Leida { get; set; }
         public DateTime FechaCreacion { get; set; }
     }
@@ -77,6 +84,7 @@ namespace Nomada.Shared.Entities
     public class FraseMotivacional
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public string Texto { get; set; } = string.Empty;
         public string? Autor { get; set; }
     }
@@ -86,24 +94,27 @@ namespace Nomada.Shared.Entities
     public class HorarioClase
     {
         public int Id { get; set; }
-        public string HoraTexto { get; set; } = string.Empty; // Ej. "07:00 AM"
-        public TimeSpan HoraOrden { get; set; } // Para que SQL los ordene correctamente
+        public string GymCode { get; set; } = string.Empty;
+        public string HoraTexto { get; set; } = string.Empty;
+        public TimeSpan HoraOrden { get; set; }
         public bool Activo { get; set; } = true;
     }
 
     public class Reserva
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public Guid UsuarioId { get; set; }
         public int HorarioId { get; set; }
-        public DateTime FechaReserva { get; set; } // Ej. 04-Agosto-2026
+        public DateTime FechaReserva { get; set; }
         public DateTime FechaOperacion { get; set; } = DateTime.UtcNow;
     }
 
     public class ConfiguracionBox
     {
         public int Id { get; set; }
-        public int AforoMaximo { get; set; } = 20; // Límite por defecto
+        public string GymCode { get; set; } = string.Empty;
+        public int AforoMaximo { get; set; } = 20;
     }
 
     // ================= MÓDULO DE ENTRENAMIENTO (WOD) =================
@@ -111,10 +122,11 @@ namespace Nomada.Shared.Entities
     public class WodGeneral
     {
         public int Id { get; set; }
-        public string Titulo { get; set; } = string.Empty; // Ej. "Viernes de Murph" o "Clase Coach Juan"
-        public DateTime Fecha { get; set; } // El día al que pertenece este WOD
+        public string GymCode { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public DateTime Fecha { get; set; }
         public Guid CoachId { get; set; }
-        public string NombreCoach { get; set; } = string.Empty; // Marca de agua
+        public string NombreCoach { get; set; } = string.Empty;
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     }
 
@@ -122,14 +134,15 @@ namespace Nomada.Shared.Entities
     {
         public int Id { get; set; }
         public int WodGeneralId { get; set; }
-        public string Subtitulo { get; set; } = string.Empty; // Ej. "Calentamiento", "AMRAP 15 Min"
-        public string Contenido { get; set; } = string.Empty; // Ej. "10 saltos\n10 burpees"
-        public int Orden { get; set; } // Para que no se revuelvan las secciones
+        public string Subtitulo { get; set; } = string.Empty;
+        public string Contenido { get; set; } = string.Empty;
+        public int Orden { get; set; }
     }
 
     public class CatalogoEjercicio
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
         public string UrlVideo { get; set; } = string.Empty;
     }
@@ -139,5 +152,28 @@ namespace Nomada.Shared.Entities
         public int Id { get; set; }
         public int WodGeneralId { get; set; }
         public int EjercicioId { get; set; }
+    }
+
+    public class AvisoBox
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        [MaxLength(20)]
+        public string GymCode { get; set; } = string.Empty; // Nuestro candado maestro
+
+        [Required]
+        [MaxLength(50)]
+        public string Titulo { get; set; } = string.Empty; // Ej. "¡Fiesta Patrias!"
+
+        [Required]
+        public string Mensaje { get; set; } = string.Empty; // El texto principal del aviso
+
+        public Guid CoachId { get; set; } // Quién lo publicó
+        public string NombreCoach { get; set; } = string.Empty; // Firma del coach
+
+        public DateTime FechaPublicacion { get; set; } = DateTime.UtcNow;
+        public DateTime FechaVencimiento { get; set; } // Cuándo deja de aparecer en el pizarrón
     }
 }

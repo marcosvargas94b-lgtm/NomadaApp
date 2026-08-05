@@ -7,10 +7,7 @@ namespace Nomada.Shared.Models
         public Guid Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public string ApellidoPaterno { get; set; } = string.Empty;
-
-        // El signo "?" permite que C# acepte el NULL de la base de datos
         public string? ApellidoMaterno { get; set; }
-
         public DateTime FechaNacimiento { get; set; }
         public string Sexo { get; set; } = string.Empty;
         public string Correo { get; set; } = string.Empty;
@@ -19,14 +16,24 @@ namespace Nomada.Shared.Models
         public byte[] PasswordSalt { get; set; }
 
         public int RolId { get; set; }
-        public Rol? Rol { get; set; } // Opcional al momento de hacer el Login
+        public Rol? Rol { get; set; }
 
         public bool Activo { get; set; } = true;
 
-        // Agregamos el "?" porque al crear el usuario, el token es NULL en SQL
         public string? ResetToken { get; set; }
         public DateTime? ResetTokenExpiracion { get; set; }
-
+        public string GymCode { get; set; } = string.Empty;
         public string EstatusAprobacion { get; set; } = "En Espera";
+
+        // ================= NUEVOS CAMPOS DEL PERFIL =================
+        public string? FotoPerfil { get; set; }
+        public string? FrasePersonal { get; set; }
+        public string? EjercicioFavorito { get; set; }
+        public string? EjercicioMenosFavorito { get; set; }
+        public decimal? Peso { get; set; }
+        public decimal? Estatura { get; set; }
+        public string? FotoDestacada1 { get; set; }
+        public string? FotoDestacada2 { get; set; }
+        public string? FotoDestacada3 { get; set; }
     }
 }

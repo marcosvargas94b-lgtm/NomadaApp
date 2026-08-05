@@ -8,7 +8,6 @@
 <div class="app-container">
     @if (isPageLoading)
     {
-        <!-- Loader a pantalla completa -->
         <div style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <span class="spinner" style="width: 60px; height: 60px; border-width: 5px; border-top-color: var(--text-main);"></span>
             <p style="margin-top: 20px; color: var(--text-muted); font-weight: 800; letter-spacing: 2px;">CARGANDO EL BOX...</p>
@@ -21,10 +20,9 @@
             <!-- ================= TOP BAR ================= -->
             <div class="top-bar" style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 25px;">
                 <h1 class="greeting-title" style="margin: 0; font-size: 1.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    NÓMADA
+                    @gymCode
                 </h1>
 
-                <!-- MENÚ HAMBURGUESA DEL BOX -->
                 <div class="admin-menu-container" style="position: relative; flex-shrink: 0;">
                     <button type="button" class="hamburger-btn" @onclick="ToggleMenu" @onclick:stopPropagation="true">
                         <span class="hamburger-icon">
@@ -35,20 +33,19 @@
                     @if (mostrarMenu)
                     {
                         <div class="admin-dropdown glass-dropdown" style="top: 45px; right: 0; position: absolute; z-index: 2000; min-width: 220px;">
-                            
-                            <!-- SOLO PARA ADMINS O COACHES CON PERMISO -->
+
                             @if (esSuperAdmin)
                             {
                                 <a href="/admin/finanzas" class="dropdown-item">
                                     <span class="dd-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
-                                    </span> 
+                                    </span>
                                     Historial de Ingresos
                                 </a>
                             }
                             @if (esSuperAdmin || misPermisos.Contains("Gestionar Horarios"))
-                            {                                
-                            <a href="/admin/horarios" class="dropdown-item">
+                            {
+                                <a href="/admin/horarios" class="dropdown-item">
                                     <span class="dd-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     </span>
@@ -56,22 +53,32 @@
                                 </a>
                             }
                             @if (esSuperAdmin || misPermisos.Contains("Armar WOD"))
-                                {
-                                    
+                            {
                                 <a href="/admin/armar-clase" class="dropdown-item">
                                     <span class="dd-icon">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                     </span>
                                     Armar Clase (WOD)
                                 </a>
-                                }
-                                <div class="divider" style="width: 80%; margin: 5px auto; background-color: rgba(128,128,128,0.2);"></div>
+                            }
 
-                            <!-- PARA TODOS LOS USUARIOS -->
+                            <!-- NUEVO PERMISO PARA CREAR AVISOS -->
+                            @if (esSuperAdmin || misPermisos.Contains("Crear Avisos"))
+                            {
+                                <a href="/admin/avisos" class="dropdown-item">
+                                    <span class="dd-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 15h10M2 9h14M2 21h20M2 3h20"></path></svg>
+                                    </span>
+                                    Pizarrón de Avisos
+                                </a>
+                            }
+
+                            <div class="divider" style="width: 80%; margin: 5px auto; background-color: rgba(128,128,128,0.2);"></div>
+
                             <a href="/mis-pagos" class="dropdown-item">
                                 <span class="dd-icon">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                </span> 
+                                </span>
                                 Mi Historial de Pagos
                             </a>
                         </div>
@@ -84,28 +91,65 @@
             {
                 <div class="modern-row phrase-banner" style="flex-direction: column; align-items: center; justify-content: center; padding: 35px 20px; text-align: center; margin-bottom: 25px;">
                     <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path></svg>
-                    
                     <h3 class="fade-in-up" style="color: var(--text-main); font-size: 1.1rem; font-weight: 800; line-height: 1.5; margin-bottom: 15px; letter-spacing: 0.5px;">
                         "@fraseDelDia.Texto"
                     </h3>
-                    
                     <span class="fade-in-up" style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; animation-delay: 0.2s;">
                         - @(string.IsNullOrWhiteSpace(fraseDelDia.Autor) ? "Nómada" : fraseDelDia.Autor) -
                     </span>
                 </div>
             }
 
+            <!-- ================= EL PIZARRÓN DE AVISOS (CHALKBOARD) ================= -->
+            @if (avisosPizarron.Any())
+            {
+                var avisoActual = avisosPizarron[indiceAvisoActual];
+
+                <div class="chalkboard fade-in-up" style="margin-bottom: 25px; position: relative;">
+                    <!-- Cabecera del Pizarrón -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 10px;">
+                        <span class="chalk-font" style="font-size: 1.4rem; color: #ffeb3b; transform: rotate(-2deg); display: inline-block;">@avisoActual.Titulo</span>
+                        <!-- SVG Campana de Alerta -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.8; transform: rotate(15deg);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </div>
+
+                    <!-- Mensaje del Aviso -->
+                    <div class="chalk-font" style="color: #ffffff; font-size: 1.1rem; line-height: 1.5; white-space: pre-wrap; min-height: 80px; margin-bottom: 15px;">
+                        @avisoActual.Mensaje
+                    </div>
+
+                    <!-- Pie del Pizarrón y Controles (SIN VENCIMIENTO) -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span class="chalk-font" style="color: #ffaaaa; font-size: 0.9rem;">- Coach @avisoActual.NombreCoach</span>
+                        </div>
+
+                        <!-- Flechas de navegación (solo si hay más de 1 aviso) -->
+                        @if (avisosPizarron.Count > 1)
+                        {
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                <button style="background: none; border: none; color: #fff; cursor: pointer; opacity: 0.8;" @onclick="AvisoAnterior">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                </button>
+                                <span class="chalk-font" style="color: #fff; font-size: 1.2rem;">@(indiceAvisoActual + 1)/@avisosPizarron.Count</span>
+                                <button style="background: none; border: none; color: #fff; cursor: pointer; opacity: 0.8;" @onclick="AvisoSiguiente">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             <!-- ================= TARJETAS DEL BOX ================= -->
+            <!-- ... TODO TU BLOQUE DE TARJETAS EXISTENTE SE QUEDA EXACTAMENTE IGUAL ... -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                
-                <!-- IMPACTO DEL WOD (Mapa de calor futuro - Abarca 2 columnas) -->
                 <div class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 30px 15px; margin: 0; opacity: 0.5; border: 1px dashed rgba(128,128,128,0.4); box-shadow: none;">
                     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; color: var(--text-muted);"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                     <h3 style="color: var(--text-main); font-size: 0.85rem; font-weight: 800; margin-bottom: 5px;">IMPACTO DEL WOD</h3>
                     <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Mapa de Calor (Próximamente)</span>
                 </div>
 
-                <!-- AGENDAR CLASE (Abarca 2 columnas, diseño premium) -->
                 <a href="/agendar" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 30px 15px; margin: 0; text-decoration: none; border-color: #33b5e5; background: linear-gradient(145deg, rgba(51, 181, 229, 0.05), transparent);">
                     <div style="background-color: rgba(51, 181, 229, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
@@ -114,7 +158,6 @@
                     <span style="color: var(--text-muted); font-size: 0.8rem;">Reserva tu lugar en el WOD</span>
                 </a>
 
-                <!-- ENTRENAMIENTO DE HOY (Abarca 2 columnas) -->
                 <a href="/wod-hoy" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #00C851; background: linear-gradient(145deg, rgba(0, 200, 81, 0.05), transparent);">
                     <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M6 4h12M6 20h12M4 9h16M4 15h16M6 4v16M18 4v16M9 9v6M15 9v6"></path></svg>
                     <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">CLASE DE HOY</h3>
@@ -122,7 +165,6 @@
                 </a>
             </div>
 
-            <!-- MI HISTORIAL DE PAGOS (Tarjeta completa) -->
             <a href="/mis-pagos" class="modern-row" style="display: flex; align-items: center; padding: 20px; text-decoration: none; cursor: pointer;">
                 <div style="background-color: rgba(128,128,128,0.1); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -137,44 +179,71 @@
         </div>
     }
 
-    <!-- Menú de Navegación Inferior (Con Box activo) -->
+    <!-- Menú de Navegación Inferior -->
+    <!-- ... SE QUEDA EXACTAMENTE IGUAL ... -->
     <nav class="bottom-nav">
         <a href="/inicio" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span><span class="nav-text">Inicio</span></a>
-        
-        <a href="/acciones" class="nav-item active">
-            <img src="images/logo-nomada.png" alt="Nómada" class="nav-logo" />
-            <span class="nav-text">Box</span>
-        </a>
-
+        <a href="/acciones" class="nav-item active"><img src="images/logo-nomada.png" alt="Nómada" class="nav-logo" /><span class="nav-text">Box</span></a>
         <a href="/comunidad" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span><span class="nav-text">Comunidad</span></a>
         <a href="/perfil" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span><span class="nav-text">Perfil</span></a>
     </nav>
 </div>
 
+<!-- Estilos para la Pizarra -->
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap');
+
+    .chalk-font {
+        font-family: 'Caveat', cursive;
+    }
+
+    .chalkboard {
+        background-color: #2c3e2f; /* Verde oscuro clásico de pizarrón */
+        background-image: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 100%), linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 20px 20px, 20px 20px;
+        border: 12px solid #5d4037; /* Marco de madera */
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.8), /* Sombra interna para dar profundidad */
+        0 10px 20px rgba(0,0,0,0.5); /* Sombra externa */
+    }
+</style>
+
 @code {
+    private string gymCode = "NOMADA";
     private bool isPageLoading = true;
     private bool mostrarMenu = false;
-    
+
     private bool esSuperAdmin = false;
     private List<string> misPermisos = new();
     private FraseDto? fraseDelDia;
 
+    // AVISOS
+    private List<AvisoBoxDto> avisosPizarron = new();
+    private int indiceAvisoActual = 0;
+
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
         int rolId = Preferences.Get("rolId", 3);
         esSuperAdmin = (rolId == 1);
         var userId = Preferences.Get("userId", string.Empty);
 
         try
         {
-            // 1. Validamos los permisos del usuario para ver si le mostramos el Corte de Caja Global
             if (!string.IsNullOrEmpty(userId))
             {
                 misPermisos = await Http.GetFromJsonAsync<List<string>>($"api/admin/mis-permisos/{userId}") ?? new();
             }
 
-            // 2. Traemos la frase aleatoria de la API
-            fraseDelDia = await Http.GetFromJsonAsync<FraseDto>("api/box/frase-aleatoria");
+            // Consultamos la Frase y los Avisos al mismo tiempo
+            var taskFrase = Http.GetFromJsonAsync<FraseDto>($"api/box/{gymCode}/frase-aleatoria");
+            var taskAvisos = Http.GetFromJsonAsync<List<AvisoBoxDto>>($"api/avisos/{gymCode}/pizarron");
+
+            await Task.WhenAll(taskFrase, taskAvisos);
+
+            fraseDelDia = taskFrase.Result;
+            avisosPizarron = taskAvisos.Result ?? new();
         }
         catch (Exception ex)
         {
@@ -189,5 +258,22 @@
     private void ToggleMenu()
     {
         mostrarMenu = !mostrarMenu;
+    }
+
+    // Funciones del Carrusel de Avisos
+    private void AvisoAnterior()
+    {
+        if (indiceAvisoActual > 0)
+            indiceAvisoActual--;
+        else
+            indiceAvisoActual = avisosPizarron.Count - 1; // Carrusel circular
+    }
+
+    private void AvisoSiguiente()
+    {
+        if (indiceAvisoActual < avisosPizarron.Count - 1)
+            indiceAvisoActual++;
+        else
+            indiceAvisoActual = 0; // Carrusel circular
     }
 }

@@ -10,5 +10,6 @@ namespace Nomada.Shared.Models
     {
         public string Correo { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public string GymCode { get; set; } = string.Empty;
     }
 }

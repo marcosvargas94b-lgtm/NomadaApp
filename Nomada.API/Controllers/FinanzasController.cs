@@ -19,12 +19,12 @@ namespace Nomada.API.Controllers
             _context = context;
         }
 
-        // 1. Obtener Totales y Gráfica del Año
-        [HttpGet("resumen/{anio}")]
-        public async Task<IActionResult> GetResumen(int anio)
+        // 1. Obtener Totales y Gráfica del Año (Filtrado por Sucursal)
+        [HttpGet("{gymCode}/resumen/{anio}")]
+        public async Task<IActionResult> GetResumen(string gymCode, int anio)
         {
             var ingresosAnio = await _context.Ingresos
-                .Where(i => i.FechaCobro.Year == anio)
+                .Where(i => i.GymCode == gymCode && i.FechaCobro.Year == anio)
                 .ToListAsync();
 
             var dto = new ResumenFinanzasDto();
@@ -44,11 +44,11 @@ namespace Nomada.API.Controllers
             return Ok(dto);
         }
 
-        // 2. Obtener Historial (Lista y Filtros)
-        [HttpGet("historial")]
-        public async Task<IActionResult> GetHistorial([FromQuery] int mes, [FromQuery] int anio)
+        // 2. Obtener Historial (Lista y Filtros de Sucursal)
+        [HttpGet("{gymCode}/historial")]
+        public async Task<IActionResult> GetHistorial(string gymCode, [FromQuery] int mes, [FromQuery] int anio)
         {
-            var query = _context.Ingresos.Where(i => i.FechaCobro.Year == anio);
+            var query = _context.Ingresos.Where(i => i.GymCode == gymCode && i.FechaCobro.Year == anio);
 
             // Si el mes es mayor a 0, filtramos por ese mes. Si es 0, trae todo el año.
             if (mes > 0)
@@ -73,12 +73,12 @@ namespace Nomada.API.Controllers
             return Ok(lista);
         }
 
-        // 3. Obtener el historial de un atleta específico (Mis Pagos)
-        [HttpGet("mis-pagos/{usuarioId}")]
-        public async Task<IActionResult> GetMisPagos(Guid usuarioId)
+        // 3. Obtener el historial de un atleta específico
+        [HttpGet("{gymCode}/mis-pagos/{usuarioId}")]
+        public async Task<IActionResult> GetMisPagos(string gymCode, Guid usuarioId)
         {
             var pagos = await _context.Ingresos
-                .Where(i => i.UsuarioId == usuarioId)
+                .Where(i => i.GymCode == gymCode && i.UsuarioId == usuarioId)
                 .OrderByDescending(i => i.FechaCobro)
                 .Select(i => new IngresoDto
                 {

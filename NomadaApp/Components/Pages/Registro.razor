@@ -19,7 +19,7 @@
                 <h3 style="color: var(--text-main); font-weight: 900; margin-bottom: 15px; letter-spacing: 2px;">¡SOLICITUD ENVIADA!</h3>
                 <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
                     Tu cuenta ha sido creada con éxito. Actualmente estás en <strong style="color: var(--text-main);">Lista de Espera</strong>. 
-                    Un administrador de Nómada revisará tu solicitud pronto.
+                    Un administrador de la sucursal revisará tu solicitud pronto.
                 </p>
                 <a href="/" class="ink-btn glow-btn" style="text-decoration: none; display: block; border-radius: 12px; padding: 15px;">VOLVER AL INICIO</a>
             </div>
@@ -106,7 +106,7 @@
                 </div>
             </div>
 
-            <!-- Validaciones Dinámicas (Con SVGs) -->
+            <!-- Validaciones Dinámicas -->
             <div class="validation-list" style="background-color: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);">
                 <div class="validation-item @(TieneMayuscula ? "valid" : "invalid")" style="font-size: 0.8rem; margin-bottom: 8px;">
                     <span class="icon" style="display: flex; align-items: center;">
@@ -164,6 +164,9 @@
 </div>
 
 @code {
+    // ESTA ES LA VARIABLE MAESTRA QUE DEFINE PARA QUÉ GIMNASIO ESTÁ COMPILADA ESTA APP
+    private readonly string APP_GYM_CODE = "NOMADA";
+
     private RegistroRequest modelo = new RegistroRequest();
     private bool isLoading = false;
     private bool registroExitoso = false;
@@ -187,6 +190,9 @@
     {
         if (!FormularioValido) return;
 
+        // Le inyectamos el código del gimnasio al modelo antes de enviarlo
+        modelo.GymCode = APP_GYM_CODE;
+
         isLoading = true;
         mensajeError = string.Empty;
 
@@ -203,7 +209,7 @@
                 mensajeError = await response.Content.ReadAsStringAsync();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             mensajeError = "Ocurrió un error al conectar con el servidor. Verifica que la API esté corriendo.";
         }

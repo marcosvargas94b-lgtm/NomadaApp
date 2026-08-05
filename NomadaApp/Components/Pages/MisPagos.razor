@@ -47,7 +47,6 @@
 
                             <!-- Cuerpo del ticket -->
                             <div style="padding: 20px;">
-                                <!-- CORRECCIÓN AQUÍ: gap: 15px, flex: 1 para texto y flex-shrink: 0 para el monto -->
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; gap: 15px;">
                                     <h3 style="color: var(--text-main); margin: 0; font-size: 1.1rem; font-weight: 900; flex: 1; word-wrap: break-word; line-height: 1.2;">@FormatearTipoCobro(ticket.TipoCobro)</h3>
                                     <h3 style="color: #00C851; margin: 0; font-size: 1.2rem; font-weight: 900; flex-shrink: 0;">$@ticket.Monto.ToString("N2")</h3>
@@ -90,6 +89,8 @@
 </div>
 
 @code {
+    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+
     private bool isPageLoading = true;
     private string tabActual = "Suscripciones";
     private List<IngresoDto> misPagos = new();
@@ -101,13 +102,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS SUCURSAL
         var userIdStr = Preferences.Get("userId", string.Empty);
 
         if (!string.IsNullOrEmpty(userIdStr))
         {
             try
             {
-                misPagos = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/mis-pagos/{userIdStr}") ?? new();
+                // INYECTAMOS EL GYMCODE EN LA CONSULTA
+                misPagos = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/{gymCode}/mis-pagos/{userIdStr}") ?? new();
             }
             catch (Exception ex)
             {

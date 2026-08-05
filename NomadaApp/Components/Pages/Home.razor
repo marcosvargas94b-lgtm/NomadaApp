@@ -60,6 +60,9 @@
 </div>
 
 @code {
+    // ESTA ES LA VARIABLE MAESTRA QUE DEFINE PARA QUÉ GIMNASIO ESTÁ COMPILADA ESTA APP
+    private readonly string APP_GYM_CODE = "NOMADA"; 
+
     private LoginRequest modelo = new LoginRequest();
     private bool isLoading = false;
     private string mensajeError = string.Empty;
@@ -80,6 +83,9 @@
             return;
         }
 
+        // Le inyectamos el código del gimnasio a la petición antes de enviarla
+        modelo.GymCode = APP_GYM_CODE;
+
         isLoading = true;
         mensajeError = string.Empty;
 
@@ -96,6 +102,9 @@
                     Preferences.Set("userId", resultado.Id.ToString());
                     Preferences.Set("nombreUsuario", resultado.Nombre);
                     Preferences.Set("rolId", resultado.RolId);
+                    
+                    // Guardamos el GymCode en memoria para que las demás vistas lo usen
+                    Preferences.Set("gymCode", resultado.GymCode); 
 
                     NavManager.NavigateTo("/inicio");
                 }
@@ -120,5 +129,6 @@
         public Guid Id { get; set; }
         public string Nombre { get; set; }
         public int RolId { get; set; }
+        public string GymCode { get; set; } // Añadimos esto para recibirlo del backend
     }
 }

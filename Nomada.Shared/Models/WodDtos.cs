@@ -9,6 +9,7 @@ namespace Nomada.Shared.Models
         public string Nombre { get; set; } = string.Empty;
         public string UrlVideo { get; set; } = string.Empty;
     }
+
     public class WodSeccionDto
     {
         public string Subtitulo { get; set; } = string.Empty;
@@ -21,7 +22,7 @@ namespace Nomada.Shared.Models
         public int Id { get; set; }
         public string Titulo { get; set; } = string.Empty;
         public DateTime Fecha { get; set; }
-        public Guid CoachId { get; set; } // <--- ESTO ES LO NUEVO
+        public Guid CoachId { get; set; }
         public string NombreCoach { get; set; } = string.Empty;
         public List<WodSeccionDto> Secciones { get; set; } = new();
         public List<EjercicioDto> Ejercicios { get; set; } = new();
@@ -29,15 +30,18 @@ namespace Nomada.Shared.Models
 
     public class CrearWodRequest
     {
+        public string GymCode { get; set; } = string.Empty; // <--- ESTO ES LO NUEVO
         public string Titulo { get; set; } = string.Empty;
         public DateTime Fecha { get; set; }
         public Guid CoachId { get; set; }
         public List<WodSeccionDto> Secciones { get; set; } = new();
-        public List<int> EjerciciosIds { get; set; } = new(); // IDs seleccionados del catálogo
+        public List<int> EjerciciosIds { get; set; } = new();
     }
+
     public class ActualizarWodRequest
     {
         public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty; // <--- AÑADIDO POR SEGURIDAD MULTI-SUCURSAL
         public string Titulo { get; set; } = string.Empty;
         public DateTime Fecha { get; set; }
         public Guid CoachId { get; set; }

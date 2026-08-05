@@ -22,7 +22,7 @@ namespace Nomada.API.Controllers
             _context = context;
         }
 
-        // 1. Obtener los 7 días a partir de hoy
+        // 1. Obtener los 7 días a partir de hoy (No requiere DB)
         [HttpGet("dias-disponibles")]
         public IActionResult GetDiasDisponibles()
         {
@@ -43,31 +43,31 @@ namespace Nomada.API.Controllers
             return Ok(dias);
         }
 
-        // 2. Obtener horarios y aforo de un día específico
-        [HttpGet("horarios/{fechaStr}/{usuarioId}")]
-        public async Task<IActionResult> GetHorarios(string fechaStr, Guid usuarioId)
+        // 2. Obtener horarios y aforo de un día específico por Gimnasio
+        [HttpGet("{gymCode}/horarios/{fechaStr}/{usuarioId}")]
+        public async Task<IActionResult> GetHorarios(string gymCode, string fechaStr, Guid usuarioId)
         {
             if (!DateTime.TryParse(fechaStr, out DateTime fecha)) return BadRequest();
             fecha = fecha.Date;
 
-            // Obtener o crear configuración de aforo
-            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync();
+            // Obtener o crear configuración de aforo específica de esta sucursal
+            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync(c => c.GymCode == gymCode);
             if (config == null)
             {
-                config = new ConfiguracionBox { AforoMaximo = 20 };
+                config = new ConfiguracionBox { GymCode = gymCode, AforoMaximo = 20 };
                 _context.ConfiguracionBox.Add(config);
                 await _context.SaveChangesAsync();
             }
 
-            // Obtener horarios activos
+            // Obtener horarios activos de este gimnasio
             var horarios = await _context.HorariosClases
-                .Where(h => h.Activo)
+                .Where(h => h.GymCode == gymCode && h.Activo)
                 .OrderBy(h => h.HoraOrden)
                 .ToListAsync();
 
             // Obtener reservas de ese día
             var reservasDelDia = await _context.Reservas
-                .Where(r => r.FechaReserva.Date == fecha)
+                .Where(r => r.GymCode == gymCode && r.FechaReserva.Date == fecha)
                 .Join(_context.Usuarios, r => r.UsuarioId, u => u.Id, (r, u) => new { r, u })
                 .ToListAsync();
 
@@ -103,9 +103,9 @@ namespace Nomada.API.Controllers
         {
             request.FechaReserva = request.FechaReserva.Date;
 
-            // Buscar si ya está agendado
+            // Buscar si ya está agendado en ese horario
             var reservaExistente = await _context.Reservas
-                .FirstOrDefaultAsync(r => r.UsuarioId == request.UsuarioId && r.HorarioId == request.HorarioId && r.FechaReserva == request.FechaReserva);
+                .FirstOrDefaultAsync(r => r.GymCode == request.GymCode && r.UsuarioId == request.UsuarioId && r.HorarioId == request.HorarioId && r.FechaReserva == request.FechaReserva);
 
             if (reservaExistente != null)
             {
@@ -116,20 +116,21 @@ namespace Nomada.API.Controllers
             }
 
             // Si NO está agendado, validamos Aforo
-            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync() ?? new ConfiguracionBox { AforoMaximo = 20 };
-            int ocupacion = await _context.Reservas.CountAsync(r => r.HorarioId == request.HorarioId && r.FechaReserva == request.FechaReserva);
+            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync(c => c.GymCode == request.GymCode) ?? new ConfiguracionBox { AforoMaximo = 20 };
+            int ocupacion = await _context.Reservas.CountAsync(r => r.GymCode == request.GymCode && r.HorarioId == request.HorarioId && r.FechaReserva == request.FechaReserva);
 
             if (ocupacion >= config.AforoMaximo)
             {
                 return BadRequest("El horario ya alcanzó su máxima capacidad.");
             }
 
-            // Validamos que el usuario no esté en otra clase ese mismo día (Regla de negocio opcional)
-            var agendadoOtroHorario = await _context.Reservas.AnyAsync(r => r.UsuarioId == request.UsuarioId && r.FechaReserva == request.FechaReserva);
+            // Validamos que el usuario no esté en otra clase ese mismo día
+            var agendadoOtroHorario = await _context.Reservas.AnyAsync(r => r.GymCode == request.GymCode && r.UsuarioId == request.UsuarioId && r.FechaReserva == request.FechaReserva);
             if (agendadoOtroHorario) return BadRequest("Ya tienes una clase agendada para este día.");
 
             var nuevaReserva = new Reserva
             {
+                GymCode = request.GymCode,
                 UsuarioId = request.UsuarioId,
                 HorarioId = request.HorarioId,
                 FechaReserva = request.FechaReserva,
@@ -143,21 +144,21 @@ namespace Nomada.API.Controllers
 
         // ================= MÓDULO ADMINISTRATIVO (COACH/ADMIN) =================
 
-        [HttpGet("config")]
-        public async Task<IActionResult> GetConfiguracion()
+        [HttpGet("{gymCode}/admin/config")]
+        public async Task<IActionResult> GetConfiguracion(string gymCode)
         {
-            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync();
+            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync(c => c.GymCode == gymCode);
             if (config == null) return Ok(new { AforoMaximo = 20 });
             return Ok(new { AforoMaximo = config.AforoMaximo });
         }
 
-        [HttpPut("config")]
-        public async Task<IActionResult> UpdateConfiguracion([FromBody] ConfiguracionBox nuevaConfig)
+        [HttpPut("{gymCode}/admin/config")]
+        public async Task<IActionResult> UpdateConfiguracion(string gymCode, [FromBody] ConfiguracionBox nuevaConfig)
         {
-            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync();
+            var config = await _context.ConfiguracionBox.FirstOrDefaultAsync(c => c.GymCode == gymCode);
             if (config == null)
             {
-                _context.ConfiguracionBox.Add(new ConfiguracionBox { AforoMaximo = nuevaConfig.AforoMaximo });
+                _context.ConfiguracionBox.Add(new ConfiguracionBox { GymCode = gymCode, AforoMaximo = nuevaConfig.AforoMaximo });
             }
             else
             {
@@ -167,10 +168,10 @@ namespace Nomada.API.Controllers
             return Ok();
         }
 
-        [HttpGet("admin/horarios")]
-        public async Task<IActionResult> GetAllHorarios()
+        [HttpGet("{gymCode}/admin/horarios")]
+        public async Task<IActionResult> GetAllHorarios(string gymCode)
         {
-            var horarios = await _context.HorariosClases.OrderBy(h => h.HoraOrden).ToListAsync();
+            var horarios = await _context.HorariosClases.Where(h => h.GymCode == gymCode).OrderBy(h => h.HoraOrden).ToListAsync();
             return Ok(horarios);
         }
 
@@ -178,6 +179,7 @@ namespace Nomada.API.Controllers
         public async Task<IActionResult> CrearHorario([FromBody] HorarioClase horario)
         {
             horario.Activo = true;
+            // El GymCode viene dentro del objeto horario enviado desde el frontend
             _context.HorariosClases.Add(horario);
             await _context.SaveChangesAsync();
             return Ok();
@@ -186,6 +188,7 @@ namespace Nomada.API.Controllers
         [HttpPut("admin/horarios/{id}/toggle")]
         public async Task<IActionResult> ToggleHorarioActivo(int id)
         {
+            // El Id autoincremental de SQL ya nos da el registro único a editar.
             var horario = await _context.HorariosClases.FindAsync(id);
             if (horario == null) return NotFound();
 
@@ -200,18 +203,15 @@ namespace Nomada.API.Controllers
             var horario = await _context.HorariosClases.FindAsync(id);
             if (horario == null) return NotFound();
 
-            // 1. Buscamos y CARGAMOS (ToListAsync) todas las reservas huérfanas de este horario
             var reservasAsociadas = await _context.Reservas
                 .Where(r => r.HorarioId == id)
                 .ToListAsync();
 
-            // 2. Si hay reservas, las destruimos primero
             if (reservasAsociadas.Any())
             {
                 _context.Reservas.RemoveRange(reservasAsociadas);
             }
 
-            // 3. Ahora que el horario está limpio, lo borramos con seguridad
             _context.HorariosClases.Remove(horario);
             await _context.SaveChangesAsync();
 

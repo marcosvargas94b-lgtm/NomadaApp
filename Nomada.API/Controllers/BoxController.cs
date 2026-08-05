@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Nomada.API.Data;
 using Nomada.Shared.Models;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Nomada.API.Controllers
@@ -18,12 +19,14 @@ namespace Nomada.API.Controllers
             _context = context;
         }
 
-        // 1. Obtener Frase Aleatoria
-        [HttpGet("frase-aleatoria")]
-        public async Task<IActionResult> GetFraseAleatoria()
+        // 1. Obtener Frase Aleatoria (Filtrado por Gimnasio)
+        [HttpGet("{gymCode}/frase-aleatoria")]
+        public async Task<IActionResult> GetFraseAleatoria(string gymCode)
         {
-            // Contamos cuántas frases existen en la base de datos
-            int totalFrases = await _context.FrasesMotivacionales.CountAsync();
+            // Contamos cuántas frases existen en la base de datos de ESTA sucursal
+            int totalFrases = await _context.FrasesMotivacionales
+                .Where(f => f.GymCode == gymCode)
+                .CountAsync();
 
             if (totalFrases == 0)
             {
@@ -36,6 +39,7 @@ namespace Nomada.API.Controllers
 
             // Traemos solo esa frase específica
             var frase = await _context.FrasesMotivacionales
+                .Where(f => f.GymCode == gymCode)
                 .Skip(indiceAleatorio)
                 .Select(f => new FraseDto
                 {
@@ -48,11 +52,12 @@ namespace Nomada.API.Controllers
             return Ok(frase);
         }
 
-        // 2. Obtener Banner de Alerta de Suscripción para el Home
-        [HttpGet("alerta-suscripcion/{usuarioId}")]
-        public async Task<IActionResult> GetAlertaSuscripcion(Guid usuarioId)
+        // 2. Obtener Banner de Alerta de Suscripción para el Home (Filtrado por Gimnasio)
+        [HttpGet("{gymCode}/alerta-suscripcion/{usuarioId}")]
+        public async Task<IActionResult> GetAlertaSuscripcion(string gymCode, Guid usuarioId)
         {
-            var sub = await _context.Suscripciones.FirstOrDefaultAsync(s => s.UsuarioId == usuarioId && s.Activa);
+            var sub = await _context.Suscripciones
+                .FirstOrDefaultAsync(s => s.UsuarioId == usuarioId && s.GymCode == gymCode && s.Activa);
 
             if (sub == null)
                 return Ok(new AlertaSuscripcionDto { Mostrar = false });

@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Nomada.API.Data;
 using Nomada.Shared.Models;
-using Nomada.Shared.Entities; // Agregamos la referencia a las Entidades
+using Nomada.Shared.Entities;
 using System;
-using System.Collections.Generic; // Para usar List<>
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,15 +21,15 @@ namespace Nomada.API.Controllers
             _context = context;
         }
 
-        // 1. Obtener usuarios (Optimizado según el estatus)
-        [HttpGet("usuarios/{estatus}")]
-        public async Task<IActionResult> GetUsuariosPorEstatus(string estatus)
+        // 1. Obtener usuarios (Filtrado por GIMNASIO y Estatus)
+        [HttpGet("{gymCode}/usuarios/{estatus}")]
+        public async Task<IActionResult> GetUsuariosPorEstatus(string gymCode, string estatus)
         {
             // A. Si es para la Tribu Nómada, calculamos fechas de suscripción y clases
             if (estatus == "Aprobado")
             {
                 var usuarios = await _context.Usuarios
-                    .Where(u => u.EstatusAprobacion == estatus)
+                    .Where(u => u.GymCode == gymCode && u.EstatusAprobacion == estatus)
                     .Select(u => new UsuarioAdminDto
                     {
                         Id = u.Id,
@@ -66,7 +66,7 @@ namespace Nomada.API.Controllers
             else
             {
                 var usuarios = await _context.Usuarios
-                    .Where(u => u.EstatusAprobacion == estatus)
+                    .Where(u => u.GymCode == gymCode && u.EstatusAprobacion == estatus)
                     .Select(u => new UsuarioAdminDto
                     {
                         Id = u.Id,
@@ -85,9 +85,10 @@ namespace Nomada.API.Controllers
         [HttpPost("cobrar")]
         public async Task<IActionResult> RegistrarCobro([FromBody] RegistrarCobroRequest request)
         {
-            // A. Registrar el dinero en caja (IngresoDto)
+            // A. Registrar el dinero en caja sellado con el GymCode
             var ingreso = new Ingreso
             {
+                GymCode = request.GymCode, // <--- SEPARACIÓN DE FINANZAS
                 UsuarioId = request.AtletaId,
                 RecibidoPorId = request.CoachId,
                 TipoCobro = request.TipoCobro,
@@ -100,8 +101,6 @@ namespace Nomada.API.Controllers
             // B. Actualizar las fechas de corte o clases (Solo si NO es Clase Especial)
             if (request.TipoCobro != "Especial")
             {
-                // [NÓMADA FIX] Lógica de Sustitución Automática de Planes
-
                 // 1. Identificamos la suscripción activa principal o creamos una nueva
                 var subActual = await _context.Suscripciones
                     .FirstOrDefaultAsync(s => s.UsuarioId == request.AtletaId && s.Activa);
@@ -110,6 +109,7 @@ namespace Nomada.API.Controllers
                 {
                     subActual = new Suscripcion
                     {
+                        GymCode = request.GymCode, // <--- ANCLAMOS LA SUSCRIPCIÓN AL GYM
                         UsuarioId = request.AtletaId,
                         Activa = true,
                         FechaInicio = DateTime.UtcNow

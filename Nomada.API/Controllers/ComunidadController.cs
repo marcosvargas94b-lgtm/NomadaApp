@@ -22,15 +22,14 @@ namespace Nomada.API.Controllers
             _context = context;
         }
 
-        // 1. Obtener el Feed (Posts de las últimas 24 hrs)
-        [HttpGet("feed/{usuarioId}")]
-        public async Task<IActionResult> GetFeed(Guid usuarioId)
+        // 1. Obtener el Feed (Posts de las últimas 24 hrs de este GIMNASIO)
+        [HttpGet("{gymCode}/feed/{usuarioId}")]
+        public async Task<IActionResult> GetFeed(string gymCode, Guid usuarioId)
         {
             var hace24Horas = DateTime.UtcNow.AddHours(-24);
 
-            // Traemos los posts con sus autores y likes
             var posts = await _context.Posts
-                .Where(p => p.FechaCreacion >= hace24Horas)
+                .Where(p => p.GymCode == gymCode && p.FechaCreacion >= hace24Horas)
                 .OrderByDescending(p => p.FechaCreacion)
                 .Join(_context.Usuarios, p => p.UsuarioId, u => u.Id, (p, u) => new { p, u })
                 .Select(x => new PostFeedDto
@@ -43,7 +42,6 @@ namespace Nomada.API.Controllers
                     MediaUrl = x.p.MediaUrl,
                     EsVideo = x.p.EsVideo,
                     EsMio = x.p.UsuarioId == usuarioId,
-                    // Lógica para mostrar "Hace 2 hrs" (Calculado localmente en C#)
                     TiempoTranscurrido = CalcularTiempo(x.p.FechaCreacion),
                     CantidadLikes = _context.Likes.Count(l => l.PostId == x.p.Id),
                     YoLeDiLike = _context.Likes.Any(l => l.PostId == x.p.Id && l.UsuarioId == usuarioId)
@@ -53,14 +51,14 @@ namespace Nomada.API.Controllers
             return Ok(posts);
         }
 
-        // 2. Verificar si el usuario ya publicó HOY (En horario de México)
-        [HttpGet("ya-publico-hoy/{usuarioId}")]
-        public async Task<IActionResult> YaPublicoHoy(Guid usuarioId)
+        // 2. Verificar si el usuario ya publicó HOY 
+        [HttpGet("{gymCode}/ya-publico-hoy/{usuarioId}")]
+        public async Task<IActionResult> YaPublicoHoy(string gymCode, Guid usuarioId)
         {
             DateTime horaMexicoActual = DateTime.UtcNow.Add(_mexicoOffset);
 
             var ultimoPost = await _context.Posts
-                .Where(p => p.UsuarioId == usuarioId)
+                .Where(p => p.GymCode == gymCode && p.UsuarioId == usuarioId)
                 .OrderByDescending(p => p.FechaCreacion)
                 .FirstOrDefaultAsync();
 
@@ -68,22 +66,22 @@ namespace Nomada.API.Controllers
 
             DateTime horaMexicoPost = ultimoPost.FechaCreacion.Add(_mexicoOffset);
 
-            // Si la fecha coincide (día, mes, año), ya publicó hoy
             bool publicoHoy = horaMexicoActual.Date == horaMexicoPost.Date;
 
             return Ok(publicoHoy);
         }
 
-        // 3. Crear una nueva publicación
+        // 3. Crear una nueva publicación (Sellada con el GymCode)
         [HttpPost("publicar")]
         public async Task<IActionResult> Publicar([FromBody] CrearPostRequest request)
         {
             var post = new Post
             {
+                GymCode = request.GymCode, // <--- SEPARACIÓN POR SUCURSAL
                 UsuarioId = request.UsuarioId,
                 Texto = request.Texto,
                 EsVideo = request.EsVideo,
-                MediaUrl = request.MediaBase64, // Temporalmente guardaremos base64 directo aquí
+                MediaUrl = request.MediaBase64,
                 FechaCreacion = DateTime.UtcNow
             };
 
@@ -96,19 +94,28 @@ namespace Nomada.API.Controllers
         [HttpPost("like/{postId}/{usuarioId}")]
         public async Task<IActionResult> DarLike(int postId, Guid usuarioId)
         {
-            // Verificamos que no exista el like (para evitar errores de duplicidad)
             var existe = await _context.Likes.AnyAsync(l => l.PostId == postId && l.UsuarioId == usuarioId);
             if (existe) return BadRequest("Ya diste like a esta publicación");
 
-            var like = new Like { PostId = postId, UsuarioId = usuarioId, FechaCreacion = DateTime.UtcNow };
+            // Buscamos el post para extraer su GymCode de forma inteligente
+            var post = await _context.Posts.FindAsync(postId);
+            if (post == null) return NotFound();
+
+            var like = new Like
+            {
+                GymCode = post.GymCode, // Hereda el GymCode del Post
+                PostId = postId,
+                UsuarioId = usuarioId,
+                FechaCreacion = DateTime.UtcNow
+            };
             _context.Likes.Add(like);
 
-            // Creamos la notificación para el dueño del post
-            var post = await _context.Posts.FindAsync(postId);
-            if (post != null && post.UsuarioId != usuarioId)
+            // Notificación sellada con el mismo GymCode
+            if (post.UsuarioId != usuarioId)
             {
                 _context.Notificaciones.Add(new Notificacion
                 {
+                    GymCode = post.GymCode,
                     UsuarioId = post.UsuarioId,
                     Mensaje = "❤️ Alguien ha reaccionado a tu entrenamiento.",
                     Leida = false,
@@ -120,7 +127,7 @@ namespace Nomada.API.Controllers
             return Ok();
         }
 
-        // 5. Borrar Post (y sus likes en cascada por SQL)
+        // 5. Borrar Post (Sin cambios, usa ID único)
         [HttpDelete("borrar/{postId}")]
         public async Task<IActionResult> BorrarPost(int postId)
         {
@@ -133,11 +140,11 @@ namespace Nomada.API.Controllers
         }
 
         // 6. Obtener Notificaciones
-        [HttpGet("notificaciones/{usuarioId}")]
-        public async Task<IActionResult> GetNotificaciones(Guid usuarioId)
+        [HttpGet("{gymCode}/notificaciones/{usuarioId}")]
+        public async Task<IActionResult> GetNotificaciones(string gymCode, Guid usuarioId)
         {
             var notis = await _context.Notificaciones
-                .Where(n => n.UsuarioId == usuarioId)
+                .Where(n => n.GymCode == gymCode && n.UsuarioId == usuarioId)
                 .OrderByDescending(n => n.FechaCreacion)
                 .Take(20)
                 .Select(n => new NotificacionDto
@@ -161,28 +168,27 @@ namespace Nomada.API.Controllers
             return "Ayer";
         }
 
-        // 7. Obtener Ranking de Likes
-        [HttpGet("ranking/{anio}")]
-        public async Task<IActionResult> GetRanking(int anio)
+        // 7. Obtener Ranking de Likes (Separado por Sucursal)
+        [HttpGet("{gymCode}/ranking/{anio}")]
+        public async Task<IActionResult> GetRanking(string gymCode, int anio)
         {
             var ranking = await _context.Usuarios
-                .Where(u => u.EstatusAprobacion == "Aprobado" || u.RolId == 1 || u.RolId == 2)
+                .Where(u => u.GymCode == gymCode && (u.EstatusAprobacion == "Aprobado" || u.RolId == 1 || u.RolId == 2))
                 .Select(u => new RankingUsuarioDto
                 {
                     Id = u.Id,
                     Nombre = u.Nombre,
                     ApellidoPaterno = u.ApellidoPaterno,
                     Iniciales = (u.Nombre.Substring(0, 1) + u.ApellidoPaterno.Substring(0, 1)).ToUpper(),
-                    // Cuenta los likes de todos los posts que pertenecen a este usuario en este año
-                    TotalLikes = _context.Likes.Count(l =>
+                    // Cuenta los likes SOLO de los posts de esta sucursal
+                    TotalLikes = _context.Likes.Count(l => l.GymCode == gymCode &&
                         _context.Posts.Any(p => p.Id == l.PostId && p.UsuarioId == u.Id)
                         && l.FechaCreacion.Year == anio)
                 })
-                .Where(r => r.TotalLikes > 0) // Opcional: Solo mostramos a los que tienen al menos 1 like
+                .Where(r => r.TotalLikes > 0)
                 .OrderByDescending(r => r.TotalLikes)
                 .ToListAsync();
 
-            // Asignamos la posición (1ero, 2do, 3ro...)
             int pos = 1;
             foreach (var user in ranking)
             {

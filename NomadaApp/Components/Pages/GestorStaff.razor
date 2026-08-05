@@ -1,11 +1,12 @@
 ﻿@page "/admin/staff"
 @using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
 @using System.Net.Http.Json
 @inject HttpClient Http
 
 <div class="app-container">
     <div class="feed-content" style="padding-top: 10px;">
-        
+
         <div style="display: flex; align-items: center; margin-bottom: 25px;">
             <a href="/inicio" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
@@ -34,9 +35,9 @@
                     {
                         <div class="modern-row" style="flex-wrap: wrap;">
                             <div class="user-avatar">
-                                @(string.IsNullOrWhiteSpace(usuario.Nombre) ? "N" : usuario.Nombre.Substring(0,1).ToUpper())@(string.IsNullOrWhiteSpace(usuario.ApellidoPaterno) ? "" : usuario.ApellidoPaterno.Substring(0,1).ToUpper())
+                                @(string.IsNullOrWhiteSpace(usuario.Nombre) ? "N" : usuario.Nombre.Substring(0, 1).ToUpper())@(string.IsNullOrWhiteSpace(usuario.ApellidoPaterno) ? "" : usuario.ApellidoPaterno.Substring(0, 1).ToUpper())
                             </div>
-                            
+
                             <div class="user-info">
                                 <span class="user-name">@usuario.Nombre @usuario.ApellidoPaterno</span>
                                 <span class="user-email">@usuario.Correo</span>
@@ -82,7 +83,7 @@
     <div class="modal-overlay glass-overlay">
         <div class="login-card modal-content premium-modal">
             <h3 class="modal-title" style="color: #33b5e5; font-size: 1.1rem;">PERMISOS DE @usuarioSeleccionado.Nombre.ToUpper()</h3>
-            
+
             <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
                 @foreach (var permiso in catalogoPermisos)
                 {
@@ -96,7 +97,15 @@
             <div class="modal-actions">
                 <button class="ink-btn-outline" disabled="@isSaving" @onclick="CerrarModal">CANCELAR</button>
                 <button class="ink-btn glow-btn" disabled="@isSaving" @onclick="GuardarPermisos">
-                    @if (isSaving) { <span class="spinner"></span> } else { <span>GUARDAR</span> }
+                    @if (isSaving)
+                    {
+                        <span class="spinner"></span>
+                    }
+                    else
+                    {
+
+                        <span>GUARDAR</span>
+                    }
                 </button>
             </div>
         </div>
@@ -105,27 +114,72 @@
 
 <style>
     /* Switch estilo iOS */
-    .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(128,128,128,0.3); transition: .3s; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .3s; }
-    input:checked + .slider { background-color: #00C851; box-shadow: 0 0 10px rgba(0,200,81,0.5); }
-    input:checked + .slider:before { transform: translateX(24px); }
-    .slider.round { border-radius: 34px; }
-    .slider.round:before { border-radius: 50%; }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(128,128,128,0.3);
+        transition: .3s;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+        }
+
+    input:checked + .slider {
+        background-color: #00C851;
+        box-shadow: 0 0 10px rgba(0,200,81,0.5);
+    }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+    .slider.round {
+        border-radius: 34px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
 </style>
 
 @code {
+    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+
     private bool isPageLoading = true;
     private bool isSaving = false;
     private List<UsuarioAdminDto> usuarios = new();
     private List<PermisoDto> catalogoPermisos = new();
-    
+
     private string textoBusqueda = "";
 
     // Propiedad computada para filtrar en tiempo real
     private IEnumerable<UsuarioAdminDto> UsuariosFiltrados => usuarios
-        .Where(u => string.IsNullOrWhiteSpace(textoBusqueda) || 
+        .Where(u => string.IsNullOrWhiteSpace(textoBusqueda) ||
                     (u.Nombre + " " + u.ApellidoPaterno).Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase));
 
     private bool showModalPermisos = false;
@@ -133,10 +187,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS LA SUCURSAL
+
         try
         {
-            // Traemos todos los usuarios (Ahora la API sí mandará el RolId y PermisosIds)
-            usuarios = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>("api/admin/usuarios/Aprobado") ?? new();
+            // INYECTAMOS EL GYM CODE PARA VER SOLO STAFF DE ESTA SUCURSAL
+            usuarios = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/admin/{gymCode}/usuarios/Aprobado") ?? new();
+
+            // Este endpoint NO lleva gymCode porque los permisos son universales del sistema
             catalogoPermisos = await Http.GetFromJsonAsync<List<PermisoDto>>("api/admin/permisos-catalogo") ?? new();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
@@ -146,8 +204,8 @@
     private async Task ToggleRolCoach(UsuarioAdminDto user, bool esCoach)
     {
         user.RolId = esCoach ? 2 : 3;
-        if (!esCoach) user.PermisosIds.Clear(); 
-        
+        if (!esCoach) user.PermisosIds.Clear();
+
         await GuardarCambiosRolYPermisos(user);
     }
 

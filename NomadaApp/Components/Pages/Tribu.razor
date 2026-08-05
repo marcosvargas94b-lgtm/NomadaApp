@@ -1,5 +1,6 @@
 ﻿@page "/admin/tribu"
 @using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
 @using System.Net.Http.Json
 @inject HttpClient Http
 
@@ -48,7 +49,6 @@
                             <!-- Modificamos la tarjeta para darle un z-index altísimo si su menú está abierto -->
                             <div class="user-row modern-row" style="@(menuAbiertoId == atleta.Id ? "z-index: 50;" : "z-index: 1;")">
 
-                                <!-- (Aquí mantienes tu código del avatar y la información del usuario igual) -->
                                 <div class="user-avatar">@ObtenerIniciales(atleta.Nombre, atleta.ApellidoPaterno)</div>
                                 <div class="user-info">
                                     <span class="user-name">@atleta.Nombre @atleta.ApellidoPaterno</span>
@@ -268,6 +268,8 @@
 }
 
 @code {
+    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+
     private bool isPageLoading = true;
     private bool isSavingPayment = false; // <-- LOADER DEL BOTÓN
     private List<UsuarioAdminDto> atletas = new();
@@ -306,6 +308,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS LA SUCURSAL
+
         await CargarListas();
 
         int rolId = Preferences.Get("rolId", 3);
@@ -323,7 +327,8 @@
         isPageLoading = true;
         try
         {
-            atletas = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>("api/admin/usuarios/Aprobado") ?? new();
+            // INYECTAMOS EL GYM CODE EN LA CONSULTA
+            atletas = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/admin/{gymCode}/usuarios/Aprobado") ?? new();
         }
         catch (Exception ex)
         {
@@ -396,6 +401,7 @@
 
             var request = new RegistrarCobroRequest
             {
+                GymCode = gymCode, // <--- ENVIAMOS EL GYM CODE PARA SEPARAR EL INGRESO
                 AtletaId = atletaSeleccionado.Id,
                 CoachId = coachId,
                 TipoCobro = tipoCobro,

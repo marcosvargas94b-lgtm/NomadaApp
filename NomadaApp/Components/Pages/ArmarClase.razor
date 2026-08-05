@@ -2,6 +2,7 @@
 @using Nomada.Shared.Models
 @using Microsoft.Maui.Storage
 @using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
 @inject HttpClient Http
 @inject NavigationManager NavManager
 
@@ -24,40 +25,52 @@
             <!-- 1. SELECTOR DE FECHA -->
             <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 20px;">
                 <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase;">Selecciona el Día</span>
-                <input type="date" @bind="fechaWod" @bind:after="VerificarWodExistente" class="search-input" />
+                <input type="date" @bind="fechaWod" @bind:after="VerificarWodsExistentes" class="search-input" />
             </div>
 
-            <!-- 2. CONTROL DE FLUJO: VISTA AVISO VS FORMULARIO -->
-            @if (wodExistente != null && !modoEdicion)
+            <!-- 2. CONTROL DE FLUJO: LISTA DE WODS VS FORMULARIO -->
+            @if (!mostrandoFormulario)
             {
-                <div class="modern-row fade-in-up" style="flex-direction: column; align-items: center; text-align: center; padding: 30px 20px; border: 1px solid rgba(0,200,81,0.3); background: rgba(0,200,81,0.05);">
-                    <div style="background-color: rgba(0,200,81,0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
-                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <div class="modern-row" style="flex-direction: column; padding: 20px; background: transparent; border: none; box-shadow: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin: 0;">Clases Programadas</h3>
+                        <span style="background: rgba(51, 181, 229, 0.2); color: #33b5e5; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 800;">
+                            @misWodsDelDia.Count WOD(s)
+                        </span>
                     </div>
-                    <h3 style="color: var(--text-main); font-size: 1.2rem; font-weight: 900; margin-bottom: 5px;">¡Clase Programada!</h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">Ya armaste la clase <strong>"@wodExistente.Titulo"</strong> para este día.</p>
 
-                    <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                        <button class="ink-btn glow-btn" style="background: #33b5e5; color: white;" @onclick="CargarParaEdicion">
-                            EDITAR CLASE
-                        </button>
-                        <button class="ink-btn-outline" style="border-color: #ff4444; color: #ff4444;" @onclick="EliminarWodExistente">
-                            ELIMINAR WOD
-                        </button>
-                    </div>
+                    @foreach (var w in misWodsDelDia)
+                    {
+                        <div style="background: var(--card-bg); border: 1px solid rgba(128,128,128,0.2); border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1; overflow: hidden;">
+                                <h4 style="color: var(--text-main); margin: 0 0 5px 0; font-size: 1.05rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@w.Titulo</h4>
+                                <span style="color: var(--text-muted); font-size: 0.8rem;">@w.Secciones.Count secciones | @w.Ejercicios.Count videos anexados</span>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                                <button style="background: rgba(51,181,229,0.1); border: none; color: #33b5e5; padding: 10px; border-radius: 8px; cursor: pointer;" @onclick="() => CargarParaEdicion(w)">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                                <button style="background: rgba(255,68,68,0.1); border: none; color: #ff4444; padding: 10px; border-radius: 8px; cursor: pointer;" @onclick="() => EliminarWodExistente(w.Id)">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <button class="ink-btn-outline" style="border-style: dashed; border-color: #00C851; color: #00C851; margin-top: 10px;" @onclick="PrepararNuevoWod">
+                        + ARMAR OTRO WOD PARA ESTE DÍA
+                    </button>
                 </div>
             }
             else
             {
                 <div class="fade-in-up">
-                    <input type="text" @bind="tituloWod" placeholder="Título de la clase (Ej. Viernes de Murph)" class="search-input" style="font-size: 1.1rem; font-weight: 900; margin-bottom: 20px; border-color: #33b5e5;" />
+                    <input type="text" @bind="tituloWod" placeholder="Título de la clase (Ej. WOD 7:00 AM)" class="search-input" style="font-size: 1.1rem; font-weight: 900; margin-bottom: 20px; border-color: #33b5e5;" />
 
                     <!-- SECCIONES DINÁMICAS -->
                     @foreach (var seccion in secciones)
                     {
                         <div class="modern-row" style="flex-direction: column; padding: 15px; margin-bottom: 15px; border-left: 4px solid #33b5e5;">
-
-                            <!-- AHORA EL SUBTÍTULO TIENE EL MISMO ESTILO QUE LOS DEMÁS INPUTS -->
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
                                 <input type="text" @bind="seccion.Subtitulo" placeholder="Subtítulo (Ej. AMRAP 15 Min)"
                                        class="search-input" style="flex: 1; padding: 10px 15px; margin: 0; font-size: 0.95rem; font-weight: 800; color: #33b5e5;" />
@@ -66,7 +79,6 @@
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                             </div>
-
                             <textarea @bind="seccion.Contenido" placeholder="Ej.&#10;10 Burpees&#10;15 Pull-ups" class="search-input" style="min-height: 100px; resize: none; font-size: 0.95rem; line-height: 1.5; font-weight: 600;"></textarea>
                         </div>
                     }
@@ -79,7 +91,7 @@
                     <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">Movimientos (@ejerciciosSeleccionados.Count)</span>
-                            <button class="ink-btn glow-btn" style="margin: 0; padding: 5px 15px; font-size: 0.75rem; width: auto; background-color: #333;" @onclick="AbrirCatalogo">CATÁLOGO</button>
+                            <button class="ink-btn glow-btn" style="margin: 0; margin-left:10px; padding: 5px 15px; font-size: 0.75rem; width: auto; background-color: #333;" @onclick="AbrirCatalogo">CATÁLOGO</button>
                         </div>
                         @if (ejerciciosSeleccionados.Any())
                         {
@@ -100,29 +112,32 @@
                         }
                     </div>
 
-                    @if (modoEdicion)
-                    {
-                        <div style="display: flex; gap: 10px;">
-                            <button class="ink-btn-outline" style="flex: 1; border-color: var(--text-muted); color: var(--text-main);" @onclick="CancelarEdicion" disabled="@isProcessing">
+                    <div style="display: flex; gap: 10px;">
+                        <!-- Si el coach ya tiene clases este día, el botón dice Cancelar, para volver a la lista -->
+                        @if (misWodsDelDia.Any())
+                        {
+                            <button class="ink-btn-outline" style="flex: 1; border-color: var(--text-muted); color: var(--text-main);" @onclick="CancelarFormulario" disabled="@isProcessing">
                                 CANCELAR
                             </button>
-                            <button class="ink-btn glow-btn" style="flex: 1; background: linear-gradient(135deg, #33b5e5, #0099CC);" @onclick="GuardarWod" disabled="@isProcessing">
-                                @(isProcessing ? "GUARDANDO..." : "ACTUALIZAR CLASE")
-                            </button>
-                        </div>
-                    }
-                    else
-                    {
-                        <button class="ink-btn glow-btn" style="background: linear-gradient(135deg, #00C851, #007E33);" @onclick="GuardarWod" disabled="@isProcessing">
-                            @(isProcessing ? "GUARDANDO..." : "PUBLICAR CLASE")
+                        }
+                        
+                        <button class="ink-btn glow-btn" style="flex: 1; background: linear-gradient(135deg, #00C851, #007E33);" @onclick="GuardarWod" disabled="@isProcessing">
+                            @if (isProcessing)
+                            {
+                                <span class="spinner"></span>
+                            }
+                            else
+                            {
+                                @(modoEdicion ? "ACTUALIZAR CLASE" : "PUBLICAR CLASE")
+                            }
                         </button>
-                    }
+                    </div>
                 </div>
             }
         }
     </div>
 
-    <!-- MODAL: CATÁLOGO DE EJERCICIOS -->
+    <!-- MODAL: CATÁLOGO DE EJERCICIOS (CON AZURE BLOB STORAGE) -->
     @if (mostrarModalCatalogo)
     {
         <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px;">
@@ -135,11 +150,30 @@
                     </button>
                 </div>
 
+                <!-- SUBIDA DE ARCHIVO A AZURE -->
                 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed rgba(255,255,255,0.2);">
                     <input type="text" @bind="nuevoEjNombre" placeholder="Nombre (Ej. Bar Muscle Up)" class="search-input" style="margin-bottom: 10px; font-size: 0.9rem; background-color: rgba(0,0,0,0.2); color: white;" />
-                    <input type="text" @bind="nuevoEjUrl" placeholder="Link (Ej. https://youtube...)" class="search-input" style="margin-bottom: 10px; font-size: 0.9rem; background-color: rgba(0,0,0,0.2); color: white;" />
-                    <button class="ink-btn-outline" style="margin: 0; padding: 8px; border-color: #33b5e5; color: #33b5e5; font-size: 0.8rem;" @onclick="GuardarEnCatalogo">
-                        GUARDAR EN CATÁLOGO
+                    
+                    <label class="ink-btn-outline" style="margin: 0 0 10px 0; border-color: rgba(255,255,255,0.5); color: white; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                        <InputFile OnChange="SeleccionarVideo" accept="video/*" style="display: none;" />
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        SELECCIONAR VIDEO
+                    </label>
+
+                    @if (!string.IsNullOrEmpty(nombreVideoSeleccionado))
+                    {
+                        <span style="color: #00C851; font-size: 0.75rem; display: block; margin-bottom: 10px; text-align: center;">Archivo: @nombreVideoSeleccionado</span>
+                    }
+
+                    <button class="ink-btn glow-btn" style="margin: 0; padding: 10px; background: #33b5e5; font-size: 0.8rem;" @onclick="SubirVideoAzure" disabled="@isUploadingVideo">
+                        @if (isUploadingVideo)
+                        {
+                            <span class="spinner" style="width: 14px; height: 14px;"></span> <span> SUBIENDO A LA NUBE...</span>
+                        }
+                        else
+                        {
+                            <span>GUARDAR EN CATÁLOGO</span>
+                        }
                     </button>
                 </div>
 
@@ -168,90 +202,114 @@
 </div>
 
 @code {
+    private string gymCode = "NOMADA";
+
     private bool isPageLoading = true;
     private bool isProcessing = false;
+    private bool isUploadingVideo = false;
     private Guid currentUserId;
 
     private DateTime fechaWod = DateTime.Today;
-    private string tituloWod = "";
-    private List<WodSeccionDto> secciones = new();
-
-    private WodGeneralDto? wodExistente = null;
+    
+    // Lista de WODs para el día (Múltiples WODs)
+    private List<WodGeneralDto> misWodsDelDia = new();
+    
+    // Controles de estado del formulario
+    private bool mostrandoFormulario = false;
     private bool modoEdicion = false;
     private int wodEditandoId = 0;
 
-    private bool mostrarModalCatalogo = false;
-    private List<EjercicioDto> catalogo = new();
+    // Campos del formulario
+    private string tituloWod = "";
+    private List<WodSeccionDto> secciones = new();
     private HashSet<int> ejerciciosSeleccionados = new();
 
+    // Catálogo
+    private bool mostrarModalCatalogo = false;
+    private List<EjercicioDto> catalogo = new();
+    
+    // Variables para subida a Azure
     private string nuevoEjNombre = "";
-    private string nuevoEjUrl = "";
+    private IBrowserFile? videoSeleccionado;
+    private string nombreVideoSeleccionado = "";
 
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
         var userIdStr = Preferences.Get("userId", string.Empty);
+
         if (Guid.TryParse(userIdStr, out currentUserId))
         {
-            await VerificarWodExistente();
+            await VerificarWodsExistentes();
             await CargarCatalogo();
         }
     }
 
-    private async Task VerificarWodExistente()
+    private async Task VerificarWodsExistentes()
     {
         isPageLoading = true;
-        wodExistente = null;
-        modoEdicion = false;
         try
         {
             string fStr = fechaWod.ToString("yyyy-MM-dd");
-            var wodsDelDia = await Http.GetFromJsonAsync<List<WodGeneralDto>>($"api/wod/dia/{fStr}") ?? new();
+            var wodsDelDia = await Http.GetFromJsonAsync<List<WodGeneralDto>>($"api/wod/{gymCode}/dia/{fStr}") ?? new();
 
-            wodExistente = wodsDelDia.FirstOrDefault(w => w.CoachId == currentUserId);
+            // Filtramos solo los WODs armados por el Coach actual
+            misWodsDelDia = wodsDelDia.Where(w => w.CoachId == currentUserId).ToList();
 
-            if (wodExistente == null)
+            if (!misWodsDelDia.Any())
             {
-                tituloWod = "";
-                secciones.Clear();
-                AgregarSeccion();
-                ejerciciosSeleccionados.Clear();
+                // Si no tiene ninguno, abrimos automáticamente el formulario en blanco
+                PrepararNuevoWod();
+            }
+            else
+            {
+                // Si tiene, ocultamos el formulario para mostrar la lista
+                mostrandoFormulario = false;
             }
         }
         catch { }
         finally { isPageLoading = false; }
     }
 
-    private void CargarParaEdicion()
+    private void PrepararNuevoWod()
     {
-        if (wodExistente == null) return;
+        modoEdicion = false;
+        tituloWod = "";
+        secciones.Clear();
+        AgregarSeccion();
+        ejerciciosSeleccionados.Clear();
+        mostrandoFormulario = true;
+    }
 
+    private void CargarParaEdicion(WodGeneralDto w)
+    {
         modoEdicion = true;
-        wodEditandoId = wodExistente.Id;
-        tituloWod = wodExistente.Titulo;
+        wodEditandoId = w.Id;
+        tituloWod = w.Titulo;
 
-        secciones = wodExistente.Secciones.Select(s => new WodSeccionDto
+        secciones = w.Secciones.Select(s => new WodSeccionDto
         {
             Subtitulo = s.Subtitulo,
             Contenido = s.Contenido,
             Orden = s.Orden
         }).ToList();
 
-        ejerciciosSeleccionados = new HashSet<int>(wodExistente.Ejercicios.Select(e => e.Id));
+        ejerciciosSeleccionados = new HashSet<int>(w.Ejercicios.Select(e => e.Id));
+        mostrandoFormulario = true;
     }
 
-    private void CancelarEdicion()
+    private void CancelarFormulario()
     {
-        modoEdicion = false;
+        mostrandoFormulario = false;
     }
 
-    private async Task EliminarWodExistente()
+    private async Task EliminarWodExistente(int idWod)
     {
-        if (wodExistente == null) return;
         isPageLoading = true;
         try
         {
-            await Http.DeleteAsync($"api/wod/{wodExistente.Id}");
-            await VerificarWodExistente();
+            await Http.DeleteAsync($"api/wod/{idWod}");
+            await VerificarWodsExistentes();
         }
         catch { isPageLoading = false; }
     }
@@ -266,6 +324,7 @@
         secciones.Remove(sec);
     }
 
+    // ================== MÓDULO CATÁLOGO Y AZURE BLOB ==================
     private void AbrirCatalogo()
     {
         mostrarModalCatalogo = true;
@@ -273,20 +332,58 @@
 
     private async Task CargarCatalogo()
     {
-        try { catalogo = await Http.GetFromJsonAsync<List<EjercicioDto>>("api/wod/catalogo") ?? new(); }
+        try { catalogo = await Http.GetFromJsonAsync<List<EjercicioDto>>($"api/wod/{gymCode}/catalogo") ?? new(); }
         catch { }
     }
 
-    private async Task GuardarEnCatalogo()
+    private void SeleccionarVideo(InputFileChangeEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(nuevoEjNombre) || string.IsNullOrWhiteSpace(nuevoEjUrl)) return;
+        videoSeleccionado = e.File;
+        nombreVideoSeleccionado = e.File.Name;
+    }
+
+    private async Task SubirVideoAzure()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoEjNombre) || videoSeleccionado == null) return;
+        
+        isUploadingVideo = true;
+
         try
         {
-            await Http.PostAsJsonAsync("api/wod/catalogo", new EjercicioDto { Nombre = nuevoEjNombre, UrlVideo = nuevoEjUrl });
-            nuevoEjNombre = ""; nuevoEjUrl = "";
-            await CargarCatalogo();
+            using var content = new MultipartFormDataContent();
+            
+            // Agregamos el texto normal
+            content.Add(new StringContent(gymCode), "gymCode");
+            content.Add(new StringContent(nuevoEjNombre), "nombre");
+
+            // Permitimos subir videos de hasta 100 MB
+            long maxAllowedSize = 500L * 1024 * 1024;
+            using var stream = videoSeleccionado.OpenReadStream(maxAllowedSize);
+            
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(videoSeleccionado.ContentType);
+            
+            content.Add(fileContent, "video", videoSeleccionado.Name);
+
+            // Llamamos a nuestro nuevo endpoint del backend que se conecta con Azure
+            var res = await Http.PostAsync("api/wod/catalogo/subir-video", content);
+            
+            if (res.IsSuccessStatusCode)
+            {
+                nuevoEjNombre = "";
+                videoSeleccionado = null;
+                nombreVideoSeleccionado = "";
+                await CargarCatalogo();
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al subir video: " + ex.Message);
+        }
+        finally
+        {
+            isUploadingVideo = false;
+        }
     }
 
     private async Task EliminarDelCatalogo(int id)
@@ -306,6 +403,7 @@
         else ejerciciosSeleccionados.Add(id);
     }
 
+    // ================== GUARDAR WOD ==================
     private async Task GuardarWod()
     {
         if (string.IsNullOrWhiteSpace(tituloWod) || !secciones.Any(s => !string.IsNullOrWhiteSpace(s.Contenido))) return;
@@ -318,6 +416,7 @@
                 var request = new ActualizarWodRequest
                 {
                     Id = wodEditandoId,
+                    GymCode = gymCode,
                     Titulo = tituloWod,
                     Fecha = fechaWod,
                     CoachId = currentUserId,
@@ -326,12 +425,13 @@
                 };
 
                 var res = await Http.PutAsJsonAsync($"api/wod/{wodEditandoId}", request);
-                if (res.IsSuccessStatusCode) await VerificarWodExistente();
+                if (res.IsSuccessStatusCode) await VerificarWodsExistentes();
             }
             else
             {
                 var request = new CrearWodRequest
                 {
+                    GymCode = gymCode,
                     Titulo = tituloWod,
                     Fecha = fechaWod,
                     CoachId = currentUserId,
@@ -340,7 +440,7 @@
                 };
 
                 var res = await Http.PostAsJsonAsync("api/wod", request);
-                if (res.IsSuccessStatusCode) await VerificarWodExistente();
+                if (res.IsSuccessStatusCode) await VerificarWodsExistentes();
             }
         }
         catch { }

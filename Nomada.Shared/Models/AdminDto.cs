@@ -28,6 +28,7 @@ namespace Nomada.Shared.Models
 
     public class RegistrarCobroRequest
     {
+        public string GymCode { get; set; } = string.Empty;
         public Guid AtletaId { get; set; }
         public Guid CoachId { get; set; } // Para saber quién hizo el cobro en caja
         public string TipoCobro { get; set; } = string.Empty; // "Mensual", "Semanal", "PaqueteClases", "Especial"

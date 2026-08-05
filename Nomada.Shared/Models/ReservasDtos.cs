@@ -30,6 +30,7 @@ namespace Nomada.Shared.Models
 
     public class HacerReservaRequest
     {
+        public string GymCode { get; set; } = string.Empty;
         public Guid UsuarioId { get; set; }
         public int HorarioId { get; set; }
         public DateTime FechaReserva { get; set; }

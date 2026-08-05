@@ -28,9 +28,9 @@
                     bool esSeleccionado = dia.Fecha.Date == fechaSeleccionada.Date;
 
                     <div style="min-width: 60px; height: 75px; border-radius: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s;
-                                        background: @(esSeleccionado ? "linear-gradient(145deg, #33b5e5, #00C851)" : "var(--card-bg)");
-                                        border: 1px solid @(esSeleccionado ? "transparent" : "rgba(128,128,128,0.2)");
-                                        box-shadow: @(esSeleccionado ? "0 4px 15px rgba(51, 181, 229, 0.3)" : "none");"
+                                                background: @(esSeleccionado ? "linear-gradient(145deg, #33b5e5, #00C851)" : "var(--card-bg)");
+                                                border: 1px solid @(esSeleccionado ? "transparent" : "rgba(128,128,128,0.2)");
+                                                box-shadow: @(esSeleccionado ? "0 4px 15px rgba(51, 181, 229, 0.3)" : "none");"
                          @onclick="() => SeleccionarDia(dia.Fecha)">
 
                         <span style="font-size: 0.75rem; font-weight: 800; color: @(esSeleccionado ? "white" : "var(--text-muted)"); margin-bottom: 4px;">@dia.DiaSemana</span>
@@ -68,7 +68,6 @@
                     {
                         bool mostrarAtletas = atletasExpandidos.ContainsKey(horario.HorarioId) && atletasExpandidos[horario.HorarioId];
 
-                        <!-- CONTENEDOR PRINCIPAL: Aquí aplicamos el fondo a toda la tarjeta -->
                         <div class="modern-row" style="flex-direction: column; padding: 0; margin-bottom: 15px; background-color: @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.05)" : "var(--card-bg)"); border: 1px solid @(horario.YoEstoyAgendado ? "#00C851" : "rgba(128,128,128,0.2)"); overflow: hidden; box-shadow: @(horario.YoEstoyAgendado ? "0 4px 15px rgba(0, 200, 81, 0.1)" : "none"); transition: all 0.3s;">
 
                             <!-- Cabecera de la Clase -->
@@ -77,7 +76,6 @@
                                 <div style="flex: 1;">
                                     <h3 style="color: var(--text-main); margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 900;">@horario.HoraTexto</h3>
 
-                                    <!-- Aforo e Indicador -->
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="@(horario.EstaLleno ? "#ff4444" : "var(--text-muted)")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                                         <span style="color: @(horario.EstaLleno ? "#ff4444" : "var(--text-muted)"); font-size: 0.85rem; font-weight: 800;">
@@ -86,7 +84,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Lógica UX: Botones Condicionales -->
                                 <div style="flex-shrink: 0; margin-left: 15px; display: flex; align-items: center; justify-content: flex-end; min-width: 90px;">
                                     @if (horario.YoEstoyAgendado)
                                     {
@@ -113,7 +110,6 @@
                                 </div>
                             </div>
 
-                            <!-- Botón para expandir lista de atletas -->
                             @if (horario.OcupacionActual > 0)
                             {
                                 <div style="border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)"); padding: 10px 20px; background-color: transparent; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px;" @onclick="() => ToggleAtletas(horario.HorarioId)">
@@ -123,7 +119,6 @@
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(@(mostrarAtletas ? "180deg" : "0deg")); transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                 </div>
 
-                                <!-- Lista desplegable de atletas (Alineada a la izquierda) -->
                                 @if (mostrarAtletas)
                                 {
                                     <div style="padding: 15px 20px; background-color: transparent; border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)");">
@@ -150,6 +145,8 @@
 </div>
 
 @code {
+    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+
     private bool isPageLoading = true;
     private bool isHorariosLoading = false;
     private bool isProcessing = false;
@@ -167,6 +164,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS LA SUCURSAL
+
         var userIdStr = Preferences.Get("userId", string.Empty);
         if (Guid.TryParse(userIdStr, out currentUserId))
         {
@@ -206,7 +205,8 @@
         try
         {
             string fechaStr = fechaSeleccionada.ToString("yyyy-MM-dd");
-            horariosDelDia = await Http.GetFromJsonAsync<List<HorarioDisponibleDto>>($"api/reservas/horarios/{fechaStr}/{currentUserId}") ?? new();
+            // INYECTAMOS EL GYM CODE EN LA CONSULTA
+            horariosDelDia = await Http.GetFromJsonAsync<List<HorarioDisponibleDto>>($"api/reservas/{gymCode}/horarios/{fechaStr}/{currentUserId}") ?? new();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
         finally { isHorariosLoading = false; }
@@ -232,6 +232,7 @@
 
         var req = new HacerReservaRequest
         {
+            GymCode = gymCode, // <--- GUARDAMOS LA RESERVA EN ESTE GIMNASIO
             UsuarioId = currentUserId,
             HorarioId = horarioId,
             FechaReserva = fechaSeleccionada
@@ -254,7 +255,7 @@
                 StateHasChanged();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             mensajeError = "No se pudo conectar con el servidor.";
             StateHasChanged();

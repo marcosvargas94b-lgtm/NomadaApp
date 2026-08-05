@@ -2,11 +2,12 @@
 @using Nomada.Shared.Models
 @using System.Net.Http.Json
 @using System.Globalization
+@using Microsoft.Maui.Storage
 @inject HttpClient Http
 
 <div class="app-container">
     <div class="feed-content" style="padding-top: 10px;">
-        
+
         <!-- TOP BAR -->
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
@@ -54,7 +55,7 @@
                             <option value="2026">2026</option>
                             <option value="2027">2027</option>
                         </select>
-                        
+
                         <button class="ink-btn glow-btn" style="margin: 0; padding: 0 15px; width: auto; border-radius: 8px;" @onclick="CargarTickets">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </button>
@@ -81,7 +82,7 @@
                                     <span style="font-weight: 900; color: var(--text-main); font-size: 1rem; flex: 1; word-wrap: break-word; line-height: 1.2;">@ticket.Atleta</span>
                                     <span style="color: #00C851; font-weight: 900; font-size: 1.1rem; flex-shrink: 0;">+$@ticket.Monto.ToString("N2")</span>
                                 </div>
-                                
+
                                 <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
                                     <div style="display: flex; flex-direction: column; gap: 3px; flex: 1; padding-right: 10px;">
                                         <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
@@ -141,21 +142,21 @@
                 <!-- Gráfica 1: Puntos (Comportamiento Anual) -->
                 <div class="modern-row" style="flex-direction: column; padding: 20px 10px; margin-bottom: 20px;">
                     <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 20px; padding-left: 10px; text-transform: uppercase;">REPORTE ANUAL</span>
-                    
+
                     <div style="width: 100%; height: 160px; position: relative;">
                         <svg width="100%" height="100%" viewBox="0 0 120 100" preserveAspectRatio="none">
-                            <polyline points="@ObtenerPuntosSVG()" fill="none" stroke="#33b5e5" stroke-width="1.5" stroke-linejoin="round"/>
+                            <polyline points="@ObtenerPuntosSVG()" fill="none" stroke="#33b5e5" stroke-width="1.5" stroke-linejoin="round" />
                             @for (int i = 0; i < 12; i++)
                             {
-                                int index = i; 
+                                int index = i;
                                 decimal montoMes = resumenAnual.IngresosPorMes[index];
                                 decimal maxMonto = resumenAnual.IngresosPorMes.Max() == 0 ? 1 : resumenAnual.IngresosPorMes.Max();
-                                
+
                                 double cx = 5 + (index * 10);
                                 double cy = 90 - (double)((montoMes / maxMonto) * 80);
 
-                                <circle cx="@cx" cy="@cy" r="3" fill="@(mesSeleccionadoGraph == (index+1) ? "#00C851" : "#111")" stroke="@(mesSeleccionadoGraph == (index+1) ? "#00C851" : "#33b5e5")" stroke-width="1.5" 
-                                        style="cursor: pointer; pointer-events: all;" 
+                                <circle cx="@cx" cy="@cy" r="3" fill="@(mesSeleccionadoGraph == (index + 1) ? "#00C851" : "#111")" stroke="@(mesSeleccionadoGraph == (index + 1) ? "#00C851" : "#33b5e5")" stroke-width="1.5"
+                                        style="cursor: pointer; pointer-events: all;"
                                         @onclick="() => MostrarDetalleMes(index, montoMes)" />
                             }
                         </svg>
@@ -163,7 +164,7 @@
                     <div style="display: flex; justify-content: space-between; width: 100%; padding: 0 5%; color: var(--text-muted); font-size: 0.6rem; font-weight: 700; margin-top: 5px;">
                         <span>E</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
                     </div>
-                    
+
                     <div style="text-align: center; margin-top: 25px; border-top: 1px solid rgba(128,128,128,0.2); padding-top: 15px;">
                         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 800;">INGRESOS TOTALES DEL AÑO</span>
                         <h4 style="color: var(--text-main); margin: 5px 0 0 0; font-size: 1.4rem;">$@resumenAnual.TotalAnio.ToString("N2")</h4>
@@ -174,16 +175,24 @@
                 <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                         <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">INGRESOS SEMANALES  </span>
-                        
+
                         <!-- El selector de mes ahora está más espaciado y limpio -->
                         <select class="search-input" style="padding: 5px 10px; margin-left:5px; border-radius: 6px; width: auto; font-size: 0.8rem; background-color: transparent;" @bind="mesGrafica" @bind:after="CargarGraficaSemanal">
-                            <option value="1">Ene</option><option value="2">Feb</option><option value="3">Mar</option>
-                            <option value="4">Abr</option><option value="5">May</option><option value="6">Jun</option>
-                            <option value="7">Jul</option><option value="8">Ago</option><option value="9">Sep</option>
-                            <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dic</option>
+                            <option value="1">Ene</option>
+                            <option value="2">Feb</option>
+                            <option value="3">Mar</option>
+                            <option value="4">Abr</option>
+                            <option value="5">May</option>
+                            <option value="6">Jun</option>
+                            <option value="7">Jul</option>
+                            <option value="8">Ago</option>
+                            <option value="9">Sep</option>
+                            <option value="10">Oct</option>
+                            <option value="11">Nov</option>
+                            <option value="12">Dic</option>
                         </select>
                     </div>
-                    
+
                     <!-- Contenedor estricto para las barras -->
                     <div style="display: flex; align-items: flex-end; justify-content: space-around; width: 100%; height: 140px; border-bottom: 2px solid rgba(128,128,128,0.2); padding-bottom: 5px;">
                         @{
@@ -197,19 +206,19 @@
                                 int porcentaje = (int)Math.Round((montoSemana / maxSemana) * 100);
 
                                 <!-- Barra individual con ancho fijo para evitar empalmes -->
-                                <div style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; width: 40px; cursor: pointer;" 
+                                <div style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; width: 40px; cursor: pointer;"
                                      @onclick="() => MostrarDetalleSemana(index, montoSemana)">
                                     <div style="width: 25px; height: @(porcentaje)%; min-height: 5px; background: linear-gradient(0deg, #00C851, #007E33); border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); opacity: @(semanaSeleccionadaGraph == index ? "1" : "0.6"); transition: height 0.4s ease-out, opacity 0.2s;"></div>
                                 </div>
                             }
                         }
                     </div>
-                    
+
                     <!-- Etiquetas debajo de las barras -->
                     <div style="display: flex; justify-content: space-around; width: 100%; margin-top: 10px; color: var(--text-muted); font-size: 0.75rem; font-weight: 800;">
                         @for (int i = 0; i < ObtenerIngresosSemanales().Count; i++)
                         {
-                            <span style="width: 40px; text-align: center;">S@(i+1)</span>
+                            <span style="width: 40px; text-align: center;">S@(i + 1)</span>
                         }
                     </div>
                 </div>
@@ -219,9 +228,11 @@
 </div>
 
 @code {
+    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+
     private bool isPageLoading = true;
     private string tabActual = "Tickets";
-    
+
     // Controles Tickets
     private string textoBusqueda = "";
     private int mesTickets = DateTime.Now.Month;
@@ -246,6 +257,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS SUCURSAL
+
         await CargarTickets();
         await CargarGraficasTotales();
     }
@@ -264,7 +277,8 @@
         isPageLoading = true;
         try
         {
-            historialTickets = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/historial?mes={mesTickets}&anio={anioTickets}") ?? new();
+            // INYECTAMOS GYMCODE EN LA RUTA
+            historialTickets = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/{gymCode}/historial?mes={mesTickets}&anio={anioTickets}") ?? new();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
         finally { isPageLoading = false; }
@@ -289,7 +303,8 @@
     {
         try
         {
-            resumenAnual = await Http.GetFromJsonAsync<ResumenFinanzasDto>($"api/finanzas/resumen/{anioGrafica}");
+            // INYECTAMOS GYMCODE EN LA RUTA
+            resumenAnual = await Http.GetFromJsonAsync<ResumenFinanzasDto>($"api/finanzas/{gymCode}/resumen/{anioGrafica}");
             await CargarGraficaSemanal();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
@@ -297,7 +312,11 @@
 
     private async Task CargarGraficaSemanal()
     {
-        try { historialMesGrafica = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/historial?mes={mesGrafica}&anio={anioGrafica}") ?? new(); }
+        try
+        {
+            // INYECTAMOS GYMCODE EN LA RUTA
+            historialMesGrafica = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/{gymCode}/historial?mes={mesGrafica}&anio={anioGrafica}") ?? new();
+        }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
     }
 
@@ -324,7 +343,7 @@
             int dia = ticket.FechaCobro.ToLocalTime().Day;
             int numSemana = (dia - 1) / 7;
             if (numSemana > 4) numSemana = 4;
-            
+
             semanas[numSemana] += ticket.Monto;
         }
         if (semanas[4] == 0) semanas.RemoveAt(4);
@@ -349,7 +368,7 @@
         semanaSeleccionadaGraph = index;
         int diaInicio = (index * 7) + 1;
         int diaFin = index == 4 ? DateTime.DaysInMonth(anioGrafica, mesGrafica) : (index * 7) + 7;
-        
+
         detalleSeleccionado = new DetalleView
         {
             Titulo = $"Semana {index + 1}",

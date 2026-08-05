@@ -2,7 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Nomada.API.Data;
 using Nomada.API.Helpers;
+using Nomada.Shared.Entities; // Asegúrate de tener esta referencia para 'Usuario'
 using Nomada.Shared.Models;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Nomada.API.Controllers
@@ -21,10 +24,10 @@ namespace Nomada.API.Controllers
         [HttpPost("registro")]
         public async Task<IActionResult> Registrar(RegistroRequest request)
         {
-            // 1. Validar si el correo ya existe
-            if (await _context.Usuarios.AnyAsync(u => u.Correo == request.Correo))
+            // 1. Validar si el correo ya existe EN ESE GIMNASIO ESPECÍFICO
+            if (await _context.Usuarios.AnyAsync(u => u.Correo == request.Correo && u.GymCode == request.GymCode))
             {
-                return BadRequest("El correo ya está registrado.");
+                return BadRequest("El correo ya está registrado en esta sucursal.");
             }
 
             // 2. Crear el Hash de la contraseña
@@ -33,6 +36,7 @@ namespace Nomada.API.Controllers
             // 3. Ensamblar el nuevo Usuario
             var nuevoUsuario = new Usuario
             {
+                GymCode = request.GymCode, // <--- ANCLAMOS AL USUARIO A SU GYM
                 Nombre = request.Nombre,
                 ApellidoPaterno = request.ApellidoPaterno,
                 ApellidoMaterno = request.ApellidoMaterno,
@@ -56,8 +60,8 @@ namespace Nomada.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
-            // 1. Buscar al usuario en la base de datos
-            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == request.Correo);
+            // 1. Buscar al usuario en la base de datos (Filtrado por Correo Y GymCode)
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == request.Correo && u.GymCode == request.GymCode);
 
             if (usuario == null)
             {
@@ -92,19 +96,20 @@ namespace Nomada.API.Controllers
             }
 
             // 4. Si pasa todos los filtros, le damos acceso.
-            // Por ahora devolvemos sus datos básicos (Más adelante implementaremos tokens JWT de alta seguridad si lo requieres)
             return Ok(new
             {
                 mensaje = "Bienvenido",
                 id = usuario.Id,
                 nombre = usuario.Nombre,
-                rolId = usuario.RolId
+                rolId = usuario.RolId,
+                gymCode = usuario.GymCode // <--- LA APP NECESITA ESTE DATO
             });
         }
 
         [HttpGet("estatus/{usuarioId}")]
         public async Task<IActionResult> GetEstatus(Guid usuarioId)
         {
+            // El ID es un GUID único global, pero igual es buena práctica mantener la consulta limpia
             var estatus = await _context.Usuarios
                 .Where(u => u.Id == usuarioId)
                 .Select(u => u.EstatusAprobacion)

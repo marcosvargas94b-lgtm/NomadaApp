@@ -1,5 +1,6 @@
 ﻿@page "/comunidad/ranking"
 @using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
 @using System.Net.Http.Json
 @inject HttpClient Http
 
@@ -99,15 +100,20 @@
 </div>
 
 @code {
+    private string gymCode = "NOMADA"; // <--- VARIABLE DE SUCURSAL
+
     private bool isPageLoading = true;
     private int anioActual = DateTime.Now.Year;
     private List<RankingUsuarioDto> ranking = new();
 
     protected override async Task OnInitializedAsync()
     {
+        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- LEEMOS LA SUCURSAL DEL USUARIO
+
         try
         {
-            ranking = await Http.GetFromJsonAsync<List<RankingUsuarioDto>>($"api/comunidad/ranking/{anioActual}") ?? new();
+            // INYECTAMOS EL GYMCODE EN LA URL
+            ranking = await Http.GetFromJsonAsync<List<RankingUsuarioDto>>($"api/comunidad/{gymCode}/ranking/{anioActual}") ?? new();
         }
         catch (Exception ex)
         {

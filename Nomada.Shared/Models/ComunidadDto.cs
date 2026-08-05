@@ -4,6 +4,7 @@ namespace Nomada.Shared.Models
 {
     public class CrearPostRequest
     {
+        public string GymCode { get; set; } = string.Empty;
         public Guid UsuarioId { get; set; }
         public string? Texto { get; set; }
         public string? MediaBase64 { get; set; } // Enviaremos la foto/video en texto base64 temporalmente
