@@ -108,6 +108,8 @@ namespace Nomada.Shared.Entities
         public int HorarioId { get; set; }
         public DateTime FechaReserva { get; set; }
         public DateTime FechaOperacion { get; set; } = DateTime.UtcNow;
+        public string MetodoIngreso { get; set; } = "App"; // App, Codigo, Manual
+        public bool AsistenciaConfirmada { get; set; } = false;
     }
 
     public class ConfiguracionBox
@@ -175,5 +177,24 @@ namespace Nomada.Shared.Entities
 
         public DateTime FechaPublicacion { get; set; } = DateTime.UtcNow;
         public DateTime FechaVencimiento { get; set; } // Cuándo deja de aparecer en el pizarrón
+    }
+
+    public class SesionClase
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        [MaxLength(20)]
+        public string GymCode { get; set; } = string.Empty; // Candado maestro
+
+        public DateTime Fecha { get; set; }
+        public int HorarioId { get; set; }
+
+        [Required]
+        [MaxLength(10)]
+        public string CodigoAcceso { get; set; } = string.Empty;
+
+        public Guid CoachAperturaId { get; set; }
     }
 }

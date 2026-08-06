@@ -26,6 +26,7 @@ namespace Nomada.API.Data
         public DbSet<ConfiguracionBox> ConfiguracionBox { get; set; }
         public DbSet<WodGeneral> WodsGenerales { get; set; }
         public DbSet<WodSeccion> WodsSecciones { get; set; }
+        public DbSet<SesionClase> SesionesClases { get; set; }
         public DbSet<CatalogoEjercicio> CatalogoEjercicios { get; set; }
         public DbSet<WodEjercicio> WodEjercicios { get; set; }
 
@@ -61,7 +62,9 @@ namespace Nomada.API.Data
             modelBuilder.Entity<WodGeneral>().HasIndex(w => w.GymCode);
             modelBuilder.Entity<AvisoBox>().ToTable("AvisosBox");
             modelBuilder.Entity<AvisoBox>().HasIndex(a => a.GymCode);
-
+            modelBuilder.Entity<SesionClase>().ToTable("SesionesClase");
+            modelBuilder.Entity<SesionClase>().HasIndex(s => new { s.GymCode, s.Fecha });
+            modelBuilder.Entity<SesionClase>().HasIndex(s => s.CodigoAcceso);
             // ================= CONFIGURACIONES ESPECÍFICAS =================
             modelBuilder.Entity<ConfiguracionBox>()
                 .Property(c => c.AforoMaximo)

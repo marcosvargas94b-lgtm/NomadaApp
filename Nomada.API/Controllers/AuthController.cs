@@ -65,13 +65,15 @@ namespace Nomada.API.Controllers
 
             if (usuario == null)
             {
-                return BadRequest("Credenciales incorrectas.");
+                // MENSAJE ESPECÍFICO DE CORREO INEXISTENTE
+                return BadRequest("El correo ingresado no está registrado.");
             }
 
             // 2. Verificar la contraseña usando tu Helper
             if (!PasswordHelper.VerificarPasswordHash(request.Password, usuario.PasswordHash, usuario.PasswordSalt))
             {
-                return BadRequest("Credenciales incorrectas.");
+                // MENSAJE ESPECÍFICO DE CONTRASEÑA INCORRECTA
+                return BadRequest("La contraseña es incorrecta.");
             }
 
             // 3. El Candado: Verificar el estatus
@@ -102,7 +104,7 @@ namespace Nomada.API.Controllers
                 id = usuario.Id,
                 nombre = usuario.Nombre,
                 rolId = usuario.RolId,
-                gymCode = usuario.GymCode // <--- LA APP NECESITA ESTE DATO
+                gymCode = usuario.GymCode
             });
         }
 

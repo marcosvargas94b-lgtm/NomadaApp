@@ -1,9 +1,8 @@
 ﻿@page "/perfil"
-@using Nomada.Shared.Entities
+@using Nomada.Shared.Models
 @using Microsoft.Maui.Storage
 @using System.Net.Http.Headers
 @using Microsoft.AspNetCore.Components.Forms
-@using Nomada.Shared.Models
 @inject HttpClient Http
 
 <div class="app-container">
@@ -74,7 +73,7 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                 </div>
                 <span style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 15px; display: block; line-height: 1.4;">
-                    * Datos opcionales, pero sumamente importantes para poder calcular con exactitud tu <b>Mapa de Calor Personal</b> por el impacto de tus entrenamientos.
+                    * Datos opcionales, pero sumamente importantes para calcular con exactitud el <b>Mapa de Calor Personal</b>.
                 </span>
 
                 <div style="display: flex; gap: 10px;">
@@ -98,11 +97,11 @@
                     <input type="text" @bind="usuario.FrasePersonal" class="ink-input" placeholder="Ej: No pain, no gain" />
                 </div>
                 <div class="input-group modern-input" style="margin-bottom: 15px;">
-                    <label>Ejercicio Favorito (Ese que dominas)</label>
+                    <label>Ejercicio Favorito</label>
                     <input type="text" @bind="usuario.EjercicioFavorito" class="ink-input" placeholder="Ej: Snatch" />
                 </div>
                 <div class="input-group modern-input">
-                    <label>Ejercicio Menos Favorito (Tu talón de Aquiles)</label>
+                    <label>Ejercicio Menos Favorito</label>
                     <input type="text" @bind="usuario.EjercicioMenosFavorito" class="ink-input" placeholder="Ej: Burpees" />
                 </div>
             </div>
@@ -110,10 +109,9 @@
             <!-- FOTOS DESTACADAS -->
             <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 20px;">
                 <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin: 0 0 5px 0;">GALERÍA DESTACADA</h3>
-                <span style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 15px; display: block;">Sube tus 3 imagenes favoritas para compartir con los demás.</span>
+                <span style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 15px; display: block;">Sube tus 3 mejores momentos en el Box.</span>
 
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <!-- Foto 1 -->
                     <label style="cursor: pointer;">
                         <InputFile OnChange="@(e => PrevisualizarImagen(e, "d1"))" accept="image/*" style="display: none;" />
                         <div style="aspect-ratio: 4/5; background: var(--card-bg); border: 2px dashed rgba(128,128,128,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
@@ -122,7 +120,6 @@
                         </div>
                     </label>
 
-                    <!-- Foto 2 -->
                     <label style="cursor: pointer;">
                         <InputFile OnChange="@(e => PrevisualizarImagen(e, "d2"))" accept="image/*" style="display: none;" />
                         <div style="aspect-ratio: 4/5; background: var(--card-bg); border: 2px dashed rgba(128,128,128,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
@@ -131,7 +128,6 @@
                         </div>
                     </label>
 
-                    <!-- Foto 3 -->
                     <label style="cursor: pointer;">
                         <InputFile OnChange="@(e => PrevisualizarImagen(e, "d3"))" accept="image/*" style="display: none;" />
                         <div style="aspect-ratio: 4/5; background: var(--card-bg); border: 2px dashed rgba(128,128,128,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
@@ -142,29 +138,79 @@
                 </div>
             </div>
 
-            <!-- SEGURIDAD (CONTRASEÑA) -->
-            <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 30px; border-left: 4px solid #ffbb33;">
-                <h3 style="color: #ffbb33; font-size: 1.1rem; font-weight: 900; margin: 0 0 15px 0;">SEGURIDAD</h3>
-                <div class="input-group modern-input" style="margin-bottom: 15px;">
-                    <label>Contraseña Actual (Si deseas cambiarla)</label>
-                    <input type="password" @bind="passwordActual" class="ink-input" />
+            <!-- ================= SEGURIDAD (CONTRASEÑA COLAPSABLE) ================= -->
+            <div class="modern-row" style="flex-direction: column; padding: 0; margin-bottom: 30px; border-left: 4px solid #ffbb33; overflow: hidden;">
+                
+                <div @onclick="TogglePasswordSection" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: @(mostrarCambiarPassword ? "rgba(255,187,51,0.05)" : "transparent");">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <h3 style="color: #ffbb33; font-size: 1.1rem; font-weight: 900; margin: 0;">CAMBIAR CONTRASEÑA</h3>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(@(mostrarCambiarPassword ? "180deg" : "0deg")); transition: transform 0.3s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
-                <div class="input-group modern-input">
-                    <label>Nueva Contraseña</label>
-                    <input type="password" @bind="nuevaPassword" class="ink-input" />
-                </div>
+
+                @if (mostrarCambiarPassword)
+                {
+                    <div class="fade-in-up" style="padding: 0 20px 20px 20px;">
+                        <div class="input-group modern-input" style="margin-bottom: 15px;">
+                            <label>Contraseña Actual</label>
+                            <input type="password" @bind="passwordActual" class="ink-input" placeholder="Ingresa tu contraseña actual" />
+                        </div>
+                        <div class="input-group modern-input" style="margin-bottom: 15px;">
+                            <label>Nueva Contraseña</label>
+                            <input type="password" @bind="nuevaPassword" @bind:event="oninput" class="ink-input" placeholder="Crea una nueva contraseña segura" />
+                            
+                            <!-- Reglas de validación visuales -->
+                            <ul style="list-style: none; padding: 0; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; line-height: 1.6;">
+                                <li style="color: @(TieneLongitud ? "#00C851" : "var(--text-muted)")">
+                                    @(TieneLongitud ? "✅" : "○") Mínimo 8 caracteres
+                                </li>
+                                <li style="color: @(TieneMayuscula ? "#00C851" : "var(--text-muted)")">
+                                    @(TieneMayuscula ? "✅" : "○") Al menos una letra mayúscula
+                                </li>
+                                <li style="color: @(TieneNumero ? "#00C851" : "var(--text-muted)")">
+                                    @(TieneNumero ? "✅" : "○") Al menos un número
+                                </li>
+                                <li style="color: @(TieneEspecial ? "#00C851" : "var(--text-muted)")">
+                                    @(TieneEspecial ? "✅" : "○") Al menos un carácter especial (ej. !#$%)
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="input-group modern-input">
+                            <label>Confirmar Nueva Contraseña</label>
+                            <input type="password" @bind="confirmarPassword" @bind:event="oninput" class="ink-input" placeholder="Repite la nueva contraseña" />
+                            
+                            @if (!string.IsNullOrEmpty(confirmarPassword))
+                            {
+                                <span style="font-size: 0.75rem; color: @(Coinciden ? "#00C851" : "#ff4444"); margin-top: 5px; display: block; font-weight: 700;">
+                                    @(Coinciden ? "✅ Las contraseñas coinciden" : "❌ Las contraseñas no coinciden")
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
 
-            <!-- BOTÓN GUARDAR -->
+            <!-- ================= ALERTAS DE ERROR O ÉXITO ================= -->
             @if (!string.IsNullOrEmpty(mensajeError))
             {
-                <span style="color: #ff4444; font-size: 0.85rem; font-weight: 800; display: block; text-align: center; margin-bottom: 15px;">@mensajeError</span>
+                <div class="fade-in-up" style="background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.3); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    <span style="color: #ff4444; font-size: 0.85rem; font-weight: 800;">@mensajeError</span>
+                </div>
             }
 
+            @if (!string.IsNullOrEmpty(mensajeExito))
+            {
+                <div class="fade-in-up" style="background: rgba(0,200,81,0.1); border: 1px solid rgba(0,200,81,0.3); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    <span style="color: #00C851; font-size: 0.85rem; font-weight: 800;">@mensajeExito</span>
+                </div>
+            }
+
+            <!-- BOTÓN GUARDAR -->
             <button class="ink-btn glow-btn" style="width: 100%; background: linear-gradient(135deg, #33b5e5, #00C851); font-size: 1.1rem; padding: 15px;" @onclick="GuardarPerfil" disabled="@isProcessing">
                 @if (isProcessing)
                 {
-                    <span class="spinner"></span> <span> ACTUALIZANDO...</span>
+                    <span class="spinner"></span> <span> GUARDANDO...</span>
                 }
                 else
                 {
@@ -174,7 +220,7 @@
         }
     </div>
 
-    <!-- Menú de Navegación Inferior (Con Perfil activo) -->
+    <!-- Menú de Navegación Inferior -->
     <nav class="bottom-nav">
         <a href="/inicio" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span><span class="nav-text">Inicio</span></a>
         <a href="/acciones" class="nav-item"><img src="images/logo-nomada.png" alt="Nómada" class="nav-logo" /><span class="nav-text">Box</span></a>
@@ -190,15 +236,26 @@
     private bool isPageLoading = true;
     private bool isProcessing = false;
     private string mensajeError = "";
+    private string mensajeExito = "";
 
     // Objeto principal
     private Usuario usuario = new();
 
     // Controles de contraseña
+    private bool mostrarCambiarPassword = false;
     private string passwordActual = "";
     private string nuevaPassword = "";
+    private string confirmarPassword = "";
 
-    // Previews y Archivos Físicos
+    // Reglas Dinámicas de Contraseña
+    private bool TieneLongitud => nuevaPassword.Length >= 8;
+    private bool TieneMayuscula => nuevaPassword.Any(char.IsUpper);
+    private bool TieneNumero => nuevaPassword.Any(char.IsDigit);
+    private bool TieneEspecial => nuevaPassword.Any(ch => !char.IsLetterOrDigit(ch));
+    private bool Coinciden => !string.IsNullOrEmpty(nuevaPassword) && nuevaPassword == confirmarPassword;
+    private bool PasswordValida => TieneLongitud && TieneMayuscula && TieneNumero && TieneEspecial && Coinciden;
+
+    // Previews
     private string previewFotoPerfil = "";
     private string previewD1 = "";
     private string previewD2 = "";
@@ -226,7 +283,6 @@
         {
             usuario = await Http.GetFromJsonAsync<Usuario>($"api/perfil/{gymCode}/{currentUserId}") ?? new Usuario();
             
-            // Llenamos los previews iniciales con lo que venga de la BD
             if (!string.IsNullOrEmpty(usuario.FotoPerfil)) previewFotoPerfil = usuario.FotoPerfil;
             if (!string.IsNullOrEmpty(usuario.FotoDestacada1)) previewD1 = usuario.FotoDestacada1;
             if (!string.IsNullOrEmpty(usuario.FotoDestacada2)) previewD2 = usuario.FotoDestacada2;
@@ -236,13 +292,24 @@
         finally { isPageLoading = false; }
     }
 
-    // Genera un preview local rápido para que el usuario vea la foto antes de subirla
+    private void TogglePasswordSection()
+    {
+        mostrarCambiarPassword = !mostrarCambiarPassword;
+        if (!mostrarCambiarPassword)
+        {
+            // Limpiamos los campos si decide colapsarlo
+            passwordActual = "";
+            nuevaPassword = "";
+            confirmarPassword = "";
+            mensajeError = "";
+        }
+    }
+
     private async Task PrevisualizarImagen(InputFileChangeEventArgs e, string tipo)
     {
         var file = e.File;
         if (file == null) return;
 
-        // Redimensionamos localmente para el preview (máximo 800px para no saturar memoria del cel)
         var format = "image/jpeg";
         var resizedImageFile = await file.RequestImageFileAsync(format, 800, 800);
         var buffer = new byte[resizedImageFile.Size];
@@ -257,14 +324,22 @@
 
     private async Task GuardarPerfil()
     {
-        isProcessing = true;
         mensajeError = "";
+        mensajeExito = "";
+
+        // Validamos la contraseña solo si la sección está abierta y se intentó escribir algo
+        if (mostrarCambiarPassword && (!string.IsNullOrEmpty(passwordActual) || !string.IsNullOrEmpty(nuevaPassword)))
+        {
+            if (string.IsNullOrEmpty(passwordActual)) { mensajeError = "Ingresa tu contraseña actual para autorizar el cambio."; return; }
+            if (!PasswordValida) { mensajeError = "La nueva contraseña no cumple con todos los requisitos de seguridad."; return; }
+        }
+
+        isProcessing = true;
 
         try
         {
             using var content = new MultipartFormDataContent();
             
-            // Agregamos todos los textos
             content.Add(new StringContent(currentUserId.ToString()), "Id");
             content.Add(new StringContent(usuario.Nombre ?? ""), "Nombre");
             content.Add(new StringContent(usuario.ApellidoPaterno ?? ""), "ApellidoPaterno");
@@ -279,35 +354,37 @@
             if (usuario.Peso.HasValue) content.Add(new StringContent(usuario.Peso.Value.ToString()), "Peso");
             if (usuario.Estatura.HasValue) content.Add(new StringContent(usuario.Estatura.Value.ToString()), "Estatura");
             
-            content.Add(new StringContent(passwordActual ?? ""), "PasswordActual");
-            content.Add(new StringContent(nuevaPassword ?? ""), "NuevaPassword");
+            // Si todo fue validado, se envían las contraseñas a la API
+            if (mostrarCambiarPassword && PasswordValida)
+            {
+                content.Add(new StringContent(passwordActual), "PasswordActual");
+                content.Add(new StringContent(nuevaPassword), "NuevaPassword");
+            }
 
-            // Agregamos las imágenes físicas solo si el usuario seleccionó una nueva
-            long maxAllowedSize = 20 * 1024 * 1024; // 20 MB por foto
+            long maxAllowedSize = 20 * 1024 * 1024;
 
-            if (fileFotoPerfil != null)
-                content.Add(new StreamContent(fileFotoPerfil.OpenReadStream(maxAllowedSize)), "FotoPerfil", fileFotoPerfil.Name);
-            if (fileD1 != null)
-                content.Add(new StreamContent(fileD1.OpenReadStream(maxAllowedSize)), "FotoDestacada1", fileD1.Name);
-            if (fileD2 != null)
-                content.Add(new StreamContent(fileD2.OpenReadStream(maxAllowedSize)), "FotoDestacada2", fileD2.Name);
-            if (fileD3 != null)
-                content.Add(new StreamContent(fileD3.OpenReadStream(maxAllowedSize)), "FotoDestacada3", fileD3.Name);
+            if (fileFotoPerfil != null) content.Add(new StreamContent(fileFotoPerfil.OpenReadStream(maxAllowedSize)), "FotoPerfil", fileFotoPerfil.Name);
+            if (fileD1 != null) content.Add(new StreamContent(fileD1.OpenReadStream(maxAllowedSize)), "FotoDestacada1", fileD1.Name);
+            if (fileD2 != null) content.Add(new StreamContent(fileD2.OpenReadStream(maxAllowedSize)), "FotoDestacada2", fileD2.Name);
+            if (fileD3 != null) content.Add(new StreamContent(fileD3.OpenReadStream(maxAllowedSize)), "FotoDestacada3", fileD3.Name);
 
-            // Inyectamos GymCode en la ruta (Candado maestro)
             var response = await Http.PutAsync($"api/perfil/{gymCode}/actualizar", content);
 
             if (response.IsSuccessStatusCode)
             {
-                // Limpiamos los campos de password
-                passwordActual = "";
-                nuevaPassword = "";
+                // Mostramos bandera de éxito
+                mensajeExito = "¡Perfil actualizado con éxito! ✅";
+                
+                // Reiniciamos y ocultamos el bloque de contraseña
+                passwordActual = ""; nuevaPassword = ""; confirmarPassword = "";
+                mostrarCambiarPassword = false;
+                
+                // Limpiamos los archivos físicos de la memoria RAM del teléfono
                 fileFotoPerfil = null; fileD1 = null; fileD2 = null; fileD3 = null;
                 
-                // Mensaje visual de éxito temporal (opcional)
-                mensajeError = "¡Perfil actualizado con éxito! ✅";
-                await Task.Delay(3000);
-                mensajeError = "";
+                // Borramos el cartel verde después de 4 segundos
+                await Task.Delay(4000);
+                mensajeExito = "";
             }
             else
             {
