@@ -86,6 +86,55 @@
                 </div>
             </div>
 
+            <!-- ================= BANNER LOBBY (COACHES) ================= -->
+            @if (esSuperAdmin || misPermisos.Contains("Armar WOD"))
+            {
+                <a href="/admin/lobby" class="modern-row fade-in-up" style="display: flex; align-items: center; justify-content: space-between; padding: 20px; text-decoration: none; background: linear-gradient(135deg, #ff4444, #cc0000); border-color: #ff4444; margin-bottom: 25px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); border-radius: 50%; padding: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div>
+                            <h3 style="color: #fff; font-size: 1.1rem; font-weight: 900; margin: 0 0 3px 0;">¡INICIA TU CLASE!</h3>
+                            <span style="color: rgba(255,255,255,0.8); font-size: 0.8rem; font-weight: 700;">Abre el Lobby y pasa lista</span>
+                        </div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            }
+
+            <!-- ================= INGRESAR CÓDIGO (ATLETAS) ================= -->
+            <div class="modern-row fade-in-up" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 15px; border-left: 4px solid #33b5e5;">
+                <input type="text" @bind="codigoIngresado" placeholder="Código de clase (Ej. A2B4C)" class="search-input" style="flex: 1; margin: 0 10px 0 0; padding: 10px 15px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase;" />
+                <button class="ink-btn glow-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 0.85rem; background: #33b5e5;" @onclick="IngresarConCodigo" disabled="@isJoiningCode">
+                    @if (isJoiningCode)
+                    {
+                        <span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span>
+                    }
+                    else
+                    {
+
+                        <span>ENTRAR</span>
+                    }
+                </button>
+            </div>
+
+            <!-- ALERTA DE CÓDIGO (Éxito o Error) -->
+            @if (!string.IsNullOrEmpty(mensajeCodigo))
+            {
+                <div class="fade-in-up" style="background: @(codigoExitoso ? "rgba(0, 200, 81, 0.1)" : "rgba(255, 68, 68, 0.1)"); border: 1px solid @(codigoExitoso ? "rgba(0, 200, 81, 0.3)" : "rgba(255, 68, 68, 0.3)"); padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                    @if (codigoExitoso)
+                    {
+                        <span style="font-size: 1.2rem;">✅</span>
+                    }
+                    else
+                    {
+                        <span style="font-size: 1.2rem;">❌</span>
+                    }
+                    <span style="color: @(codigoExitoso ? "#00C851" : "#ff4444"); font-size: 0.85rem; font-weight: 800; line-height: 1.4;">@mensajeCodigo</span>
+                </div>
+            }
+
             <!-- ================= BANNER: FRASE DEL DÍA ================= -->
             @if (fraseDelDia != null)
             {
@@ -142,20 +191,63 @@
             }
 
             <!-- ================= TARJETAS DEL BOX ================= -->
-            <!-- ... TODO TU BLOQUE DE TARJETAS EXISTENTE SE QUEDA EXACTAMENTE IGUAL ... -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 30px 15px; margin: 0; opacity: 0.5; border: 1px dashed rgba(128,128,128,0.4); box-shadow: none;">
-                    <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; color: var(--text-muted);"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <h3 style="color: var(--text-main); font-size: 0.85rem; font-weight: 800; margin-bottom: 5px;">IMPACTO DEL WOD</h3>
-                    <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Mapa de Calor (Próximamente)</span>
-                </div>
+
+                <!-- TARJETA: MAPA DE CALOR -->
+                <a href="/perfil/recuperacion" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; align-items: center; justify-content: center; padding: 20px 15px; margin: 0; text-decoration: none; border-color: @(dataRecuperacion?.RequiereRPEHoy == true ? "#ffbb33" : "rgba(128,128,128,0.2)"); background: @(dataRecuperacion?.RequiereRPEHoy == true ? "rgba(255,187,51,0.05)" : "var(--card-bg)"); position: relative; overflow: hidden;">
+
+                    @if (isMapaLoading)
+                    {
+                        <span class="spinner" style="width: 30px; height: 30px; border-width: 3px; margin: 30px 0;"></span>
+                    }
+                    else if (dataRecuperacion != null)
+                    {
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; z-index: 10;">
+                            <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin: 0;">ESTADO FISIOLÓGICO</h3>
+                            <span class="font-digital" style="color: @(dataRecuperacion.DisponibilidadGlobal > 80 ? "#00C851" : dataRecuperacion.DisponibilidadGlobal > 50 ? "#ffbb33" : "#ff4444"); font-weight: 900; font-size: 1.2rem;">
+                                @dataRecuperacion.DisponibilidadGlobal%
+                            </span>
+                        </div>
+
+                        <!-- EL COMPONENTE SVG -->
+                        <div style="width: 100%; max-width: 250px; margin: 0 auto; z-index: 10;">
+                            <MapaCalor Sexo="@sexoUsuario" Datos="@dataRecuperacion.Musculos" Parpadear="@dataRecuperacion.RequiereRPEHoy" />
+                        </div>
+
+                        @if (dataRecuperacion.RequiereRPEHoy)
+                        {
+                            <span class="fade-in-up" style="color: #ffbb33; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 15px; letter-spacing: 1px; z-index: 10;">
+                                ⚠️ TOQUE PARA CALIFICAR SU ESFUERZO DE HOY
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-top: 15px; z-index: 10;">
+                                Toca para ver el análisis detallado
+                            </span>
+                        }
+                    }
+                </a>
+
+                <!-- ================= TARJETA: ENTRENAMIENTO PERSONALIZADO ================= -->
+                <a href="/perfil/mis-rutinas" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #9b59b6; background: linear-gradient(145deg, rgba(155, 89, 182, 0.05), transparent); position: relative; overflow: hidden;">
+                    <!-- Etiqueta PRO -->
+                    <div style="position: absolute; top: 10px; right: 10px; background: #9b59b6; color: white; font-size: 0.6rem; font-weight: 900; padding: 3px 8px; border-radius: 4px; letter-spacing: 1px;">PRO</div>
+                    
+                    <div style="background-color: rgba(155, 89, 182, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px; text-transform: uppercase;">Programación Personal</h3>
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">Accede a tu rutina específica</span>
+                </a>
+
 
                 <a href="/agendar" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 30px 15px; margin: 0; text-decoration: none; border-color: #33b5e5; background: linear-gradient(145deg, rgba(51, 181, 229, 0.05), transparent);">
                     <div style="background-color: rgba(51, 181, 229, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
                     </div>
                     <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">AGENDAR CLASE</h3>
-                    <span style="color: var(--text-muted); font-size: 0.8rem;">Reserva tu lugar en el WOD</span>
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">Reserva tu lugar</span>
                 </a>
 
                 <a href="/wod-hoy" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #00C851; background: linear-gradient(145deg, rgba(0, 200, 81, 0.05), transparent);">
@@ -221,6 +313,18 @@
     // AVISOS
     private List<AvisoBoxDto> avisosPizarron = new();
     private int indiceAvisoActual = 0;
+    // Variables Código de Clase
+    private string codigoIngresado = "";
+    private bool isJoiningCode = false;
+    private string mensajeCodigo = "";
+    private bool codigoExitoso = false;
+
+    private class RespuestaCodigo { public string mensaje { get; set; } = ""; }
+
+    // Variables Mapa Calor
+    private bool isMapaLoading = true;
+    private string sexoUsuario = "M";
+    private EstadoRecuperacionDto? dataRecuperacion;
 
     protected override async Task OnInitializedAsync()
     {
@@ -234,9 +338,11 @@
             if (!string.IsNullOrEmpty(userId))
             {
                 misPermisos = await Http.GetFromJsonAsync<List<string>>($"api/admin/mis-permisos/{userId}") ?? new();
+
+                // Disparamos la carga del Mapa de Calor en paralelo
+                _ = CargarMapaCalor(userId);
             }
 
-            // Consultamos la Frase y los Avisos al mismo tiempo
             var taskFrase = Http.GetFromJsonAsync<FraseDto>($"api/box/{gymCode}/frase-aleatoria");
             var taskAvisos = Http.GetFromJsonAsync<List<AvisoBoxDto>>($"api/avisos/{gymCode}/pizarron");
 
@@ -254,6 +360,78 @@
             isPageLoading = false;
         }
     }
+
+   private async Task CargarMapaCalor(string userId)
+    {
+        try
+        {
+            // Una sola llamada rápida y segura
+            dataRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"api/recuperacion/{gymCode}/{userId}");
+            
+            if (dataRecuperacion != null)
+            {
+                sexoUsuario = dataRecuperacion.Sexo;
+            }
+        }
+        catch (Exception ex) 
+        { 
+            Console.WriteLine("Error cargando mapa: " + ex.Message); 
+        }
+        finally
+        {
+            isMapaLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task IngresarConCodigo()
+    {
+        if (string.IsNullOrWhiteSpace(codigoIngresado)) return;
+        isJoiningCode = true;
+        mensajeCodigo = "";
+
+        try
+        {
+            var request = new { usuarioId = Guid.Parse(Preferences.Get("userId", "")), codigo = codigoIngresado.Trim().ToUpper() };
+            var res = await Http.PostAsJsonAsync($"api/lobby/{gymCode}/unirse-codigo", request);
+
+            if (res.IsSuccessStatusCode)
+            {
+                // Extraemos el mensaje personalizado de la API (Ej: "Has sido anotado en la clase de 7:00 AM")
+                var respuesta = await res.Content.ReadFromJsonAsync<RespuestaCodigo>();
+
+                codigoExitoso = true;
+                mensajeCodigo = respuesta?.mensaje ?? "¡Estás dentro de la clase!";
+                codigoIngresado = "";
+
+                StateHasChanged(); // Forzamos que se pinte el recuadro verde
+                await Task.Delay(5000); // Lo dejamos 5 segundos para que lo lea bien
+                mensajeCodigo = "";
+                StateHasChanged();
+            }
+            else
+            {
+                // Si falla, mostramos el error (Ej. "Código inválido")
+                codigoExitoso = false;
+                mensajeCodigo = await res.Content.ReadAsStringAsync();
+
+                StateHasChanged();
+                await Task.Delay(4000);
+                mensajeCodigo = "";
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            codigoExitoso = false;
+            mensajeCodigo = "Error de conexión. Intenta de nuevo.";
+        }
+        finally
+        {
+            isJoiningCode = false;
+        }
+    }
+
 
     private void ToggleMenu()
     {

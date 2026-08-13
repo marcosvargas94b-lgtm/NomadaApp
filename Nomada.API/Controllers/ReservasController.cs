@@ -217,5 +217,16 @@ namespace Nomada.API.Controllers
 
             return Ok();
         }
+
+        [HttpDelete("{gymCode}/admin/reservas/{reservaId}")]
+        public async Task<IActionResult> EliminarReserva(string gymCode, int reservaId)
+        {
+            var reserva = await _context.Reservas.FirstOrDefaultAsync(r => r.Id == reservaId && r.GymCode == gymCode);
+            if (reserva == null) return NotFound();
+
+            _context.Reservas.Remove(reserva);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
     }
 }

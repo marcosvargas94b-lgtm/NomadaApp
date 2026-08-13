@@ -1,0 +1,1336 @@
+﻿@page "/admin/timer/{HorarioId:int}"
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@implements IDisposable
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+@using Microsoft.Maui.Devices
+@using Plugin.Maui.Audio
+@inject IAudioManager AudioManager
+
+<!-- ================= ANIMACIÓN DE ROTACIÓN INTELIGENTE ================= -->
+<div class="orientation-prompt @(requiereVertical ? "need-portrait" : "need-landscape")">
+    <div class="phone-icon-anim">
+        <div class="phone-body"></div>
+    </div>
+    <h2 style="font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">
+        @(requiereVertical ? "Gira a Vertical" : "Gira a Horizontal")
+    </h2>
+    <p style="color: #aaa; text-align: center; max-width: 80%;">
+        @(requiereVertical ? "Para configurar el Timer necesitas estar en modo vertical." : "El Dashboard de la clase está diseñado para verse en horizontal.")
+    </p>
+</div>
+
+<div class="timer-main-wrapper">
+
+    <!-- ========================================== -->
+    <!-- COLUMNA 1: EL TIMER (IZQUIERDA) -->
+    <!-- ========================================== -->
+    <div class="panel-section @(ColapsadoIzquierda ? "collapsed" : "")">
+        <div class="panel-header @(ColapsadoIzquierda ? "header-collapsed" : "")">
+            @if (!ColapsadoIzquierda)
+            {
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffeb3b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <h3 style="margin: 0; color: #ffeb3b; font-weight: 900; letter-spacing: 1px; font-size: 1.2rem;">TIMER</h3>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button class="icon-btn-large" @onclick="AbrirConfiguracionTimer" title="Configurar Timer">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                    <button class="collapse-btn" @onclick="() => TogglePanel(1)">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <button class="collapse-btn collapsed-state-btn" @onclick="() => TogglePanel(1)">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            }
+        </div>
+
+        @if (!ColapsadoIzquierda)
+        {
+            <div class="panel-content timer-content-area">
+                <div class="reloj-container">
+                    <div class="reloj-display font-digital @(AnimarReloj ? "pulse-anim" : "")" style="color: @(ColorTimer);">
+                        @FormatearTiempo(tiempoEnPantalla)
+                    </div>
+
+                    <!-- ESTADO -->
+                    @if (configTimer.Modo != "For Time" && configTimer.Modo != "AMRAP")
+                    {
+                        <div class="timer-estado font-modern">
+                            Ronda @rondaActual / @configTimer.Rondas
+                            @if (configTimer.Modo != "EMOM")
+                            {
+                                <span style="margin: 0 15px; color: #555;">|</span>
+                                @:Bloque @bloqueActual / @configTimer.Bloques
+                            }
+                        </div>
+                    }
+                    <div class="timer-fase font-modern" style="color: @(ColorTimer);">
+                        @FaseActual
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-footer-controls">
+                <button class="btn-block bg-red" @onclick="DetenerYResetear">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect></svg>
+                    RESET
+                </button>
+                @if (isTimerRunning)
+                {
+                    <button class="btn-block bg-yellow" @onclick="PausarTimer">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        PAUSA
+                    </button>
+                }
+                else
+                {
+                    <button class="btn-block bg-green" @onclick="IniciarTimer">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        INICIAR
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- COLUMNA 2: EL WOD (CENTRO) -->
+    <!-- ========================================== -->
+    <div class="panel-section @(ColapsadoCentro ? "collapsed" : "")" style="background-color: #151515;">
+
+        @if (!ColapsadoCentro)
+        {
+            <div class="watermark-bg" style="background-image: url('/images/logo-nomada.png'); opacity: 0.1;"></div>
+        }
+
+        <div class="panel-header @(ColapsadoCentro ? "header-collapsed" : "")" style="z-index: 2; position: relative;">
+            @if (!ColapsadoCentro)
+            {
+                <div style="display: flex; gap: 10px; width: 100%; align-items: center; min-width: 0;">
+                    <select class="wod-select font-modern" @bind="wodSeleccionadoId" @bind:after="CargarWodSeleccionado">
+                        <option value="0">Selecciona el WOD...</option>
+                        @foreach (var wod in wodsDelDia)
+                        {
+                            <option value="@wod.Id">@wod.Titulo - Coach @wod.NombreCoach</option>
+                        }
+                    </select>
+
+                    <button class="icon-btn-large bg-blue-ghost" @onclick="AbrirModalEdicionWod" disabled="@(wodSeleccionadoId == 0)" title="Editar WOD">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+
+                    <button class="collapse-btn ml-auto" @onclick="() => TogglePanel(2)">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <button class="collapse-btn collapsed-state-btn" @onclick="() => TogglePanel(2)">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+            }
+        </div>
+
+        @if (!ColapsadoCentro)
+        {
+            <!-- CONTROLADORES: SELECTOR DE SECCIONES Y ZOOM DE LETRA -->
+            @if (wodActivo != null)
+            {
+                <div style="background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 20px; z-index: 2; position: relative; display: flex; align-items: center; gap: 15px;">
+                    
+                    @if (wodActivo.Secciones.Count > 1)
+                    {
+                        <select class="wod-section-select font-modern" @bind="seccionVisibleIndex" style="flex: 1;">
+                            <option value="-1">▶ WOD COMPLETO</option>
+                            @for (int i = 0; i < wodActivo.Secciones.Count; i++)
+                            {
+                                string nombreSeccion = string.IsNullOrEmpty(wodActivo.Secciones[i].Subtitulo) ? $"SECCIÓN {i + 1}" : wodActivo.Secciones[i].Subtitulo.ToUpper();
+                                <option value="@i">@nombreSeccion</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <div style="flex: 1;"></div> <!-- Espaciador vacío -->
+                    }
+
+                    <!-- SLIDER DE ZOOM -->
+                    <div style="display: flex; align-items: center; gap: 8px; color: #888; font-size: 0.8rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                        <input type="range" min="0.7" max="2.5" step="0.1" @bind="wodFontSize" @bind:event="oninput" style="width: 80px; accent-color: #33b5e5;" />
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                    </div>
+                </div>
+            }
+
+            <div class="panel-content font-modern" style="padding: 25px; overflow-y: auto; z-index: 2; position: relative;">
+                @if (wodActivo != null)
+                {
+                    <div style="font-size: @(wodFontSize)rem;">
+                        @for (int i = 0; i < wodActivo.Secciones.Count; i++)
+                        {
+                            if (seccionVisibleIndex == -1 || seccionVisibleIndex == i)
+                            {
+                                var sec = wodActivo.Secciones[i];
+                                <div class="wod-section-card fade-in" style="margin-bottom: 25px; display: block; width: 100%;">
+                                    
+                                    @if (seccionVisibleIndex == -1 && !string.IsNullOrEmpty(sec.Subtitulo))
+                                    {
+                                        <!-- Muestra el subtítulo solo si estás viendo TODO el WOD -->
+                                        <h4 style="color: #ffbb33; font-size: 1.1em; font-weight: 900; margin: 0 0 15px 0; text-transform: uppercase;">@sec.Subtitulo</h4>
+                                    }
+                                    
+                                    <div style="color: white; font-size: 1em; line-height: 1.6; white-space: pre-wrap; font-weight: 600;">@sec.Contenido</div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 20px auto;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <p style="color: rgba(255,255,255,0.4); font-size: 1.2rem; font-weight: 700;">Selecciona un WOD en el menú superior.</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- COLUMNA 3: LOS ATLETAS (DERECHA) -->
+    <!-- ========================================== -->
+    <div class="panel-section @(ColapsadoDerecha ? "collapsed" : "")">
+
+     <div class="panel-header @(ColapsadoDerecha ? "header-collapsed" : "")" style="@(!ColapsadoDerecha ? "justify-content: flex-end;" : "")">
+            @if (!ColapsadoDerecha)
+            {
+                <h3 class="font-modern" style="margin: 0; color: #00C851; font-weight: 900; letter-spacing: 1px; font-size: 1.2rem; margin-right: auto;">ATLETAS (@usuariosLobby.Count)</h3>
+
+                <div style="display: flex; gap: 10px; margin-left: auto; align-items: center;">
+                    
+                    <!-- SWITCH: MODO JUEZ (Condicionado) -->
+                    @if (configTimer.Modo == "For Time" || configTimer.Modo == "AMRAP")
+                    {
+                        <label class="switch-juez" title="Modo Juez (Capturar Tiempos)">
+                            <input type="checkbox" @bind="modoJuezHabilitado">
+                            <span class="slider-juez round"></span>
+                        </label>
+                    }
+                    else
+                    {
+                        <!-- Si el modo no es For Time ni AMRAP, forzamos el apagado del switch internamente -->
+                        <span style="display: none;">@(modoJuezHabilitado = false)</span> 
+                    }
+
+                    <button class="icon-btn-large" style="color: #00C851; background: rgba(0,200,81,0.1); border: 1px solid rgba(0,200,81,0.3);" @onclick="AbrirModalAddUser" title="Agregar Alumno">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                    </button>
+                    <button class="collapse-btn" @onclick="() => TogglePanel(3)">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <button class="collapse-btn collapsed-state-btn" @onclick="() => TogglePanel(3)">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+            }
+        </div>
+
+        @if (!ColapsadoDerecha)
+        {
+            <div class="panel-content font-modern" style="padding: 20px; overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px;">
+                    @foreach (var user in usuariosLobby)
+                    {
+                        <!-- Comprobamos si ya tiene un tiempo capturado -->
+                        bool tieneTiempo = tiemposCapturados.ContainsKey(user.UsuarioId);
+                        string tiempoMostrado = tieneTiempo ? tiemposCapturados[user.UsuarioId] : "";
+
+                        <div class="atleta-square-card fade-in @(tieneTiempo ? "card-finished" : "") @(modoJuezHabilitado ? "juez-mode-active" : "")" 
+                             style="--method-color: @ObtenerColorMetodo(user.MetodoIngreso);"
+                             @onclick="() => CapturarTiempoAtleta(user.UsuarioId)">
+                            
+                            <!-- BOTÓN ELIMINAR (X) CORREGIDO -->
+                            <button class="delete-badge-btn" @onclick:stopPropagation="true" @onclick="() => SolicitarEliminarAtleta(user)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+
+                            <div class="avatar-center">
+                                @if (!string.IsNullOrEmpty(user.FotoPerfil))
+                                {
+                                    <img src="@user.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <span style="font-size: 1.5rem; color: #888;">👤</span>
+                                }
+                            </div>
+                            <div class="info-center">
+                                <span class="name">@user.Nombre</span>
+                                <span class="surname">@user.ApellidoPaterno</span>
+                            </div>
+
+                            <!-- BADGE DE TIEMPO CAPTURADO -->
+                            @if (tieneTiempo)
+                            {
+                                <div class="badge-time-juez fade-in font-digital">@tiempoMostrado</div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="panel-footer-controls" style="display: flex; gap: 10px; padding: 15px;">
+                <button class="btn-block bg-dark-ghost" style="flex: 0 0 50px; padding: 0; min-width: 50px;" @onclick="RefrescarAtletasMualmente" title="Actualizar Lista">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="@(isRefrescandoAtletas ? "spin-anim" : "")"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                </button>
+                <button class="btn-block bg-dark-ghost" style="flex: 1;" @onclick="VolverAlLobby">LOBBY</button>
+                
+                <!-- BOTÓN TERMINAR MODIFICADO PARA MANDAR AL RESUMEN -->
+                <button class="btn-block bg-blue" style="flex: 1;" @onclick="TerminarClase">TERMINAR</button>
+            </div>
+        }
+    </div>
+
+</div>
+
+
+<!-- ================= MODALES (Pantalla Vertical) ================= -->
+
+<!-- 1. MODAL ELIMINAR ATLETA -->
+@if (mostrarModalEliminar)
+{
+    <div class="modal-overlay">
+        <div class="modal-content font-modern" style="text-align: center; max-width: 350px;">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 15px auto; display: block;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <h3 style="color: white; font-weight: 900; margin: 0 0 10px 0;">¿ELIMINAR ATLETA?</h3>
+            <p style="color: #aaa; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">
+                Se quitará a <strong style="color: white;">@atletaAEliminar?.Nombre</strong> de la clase y se borrará su reserva de hoy.
+            </p>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn-block bg-dark-ghost" @onclick="() => mostrarModalEliminar = false">CANCELAR</button>
+                <button class="btn-block bg-red" @onclick="ConfirmarEliminarAtleta" disabled="@isEliminandoAtleta">
+                    @if (isEliminandoAtleta) { <span class="spinner" style="width: 15px; height: 15px; border-width: 2px;"></span> }
+                    else { <span>ELIMINAR</span> }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 2. MODAL CONFIG TIMER -->
+@if (mostrarModalConfigTimer)
+{
+    <div class="modal-overlay">
+        <div class="modal-content font-modern" style="max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #ffbb33; font-weight: 900; margin: 0; font-size: 1.4rem;">CONFIGURACIÓN TIMER</h3>
+                <button class="icon-btn" style="color: #ff4444;" @onclick="CerrarModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 5px; margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 10px;">
+                <button class="mode-tab @(tempModo == "For Time" ? "active-tab" : "")" @onclick='() => tempModo = "For Time"'>FOR TIME</button>
+                <button class="mode-tab @(tempModo == "AMRAP" ? "active-tab" : "")" @onclick='() => tempModo = "AMRAP"'>AMRAP</button>
+                <button class="mode-tab @(tempModo == "EMOM" ? "active-tab" : "")" @onclick='() => tempModo = "EMOM"'>EMOM</button>
+                <button class="mode-tab @(tempModo == "Intervalos" ? "active-tab" : "")" @onclick='() => tempModo = "Intervalos"'>TABATA</button>
+            </div>
+
+            <div class="config-row" style="border-left: 3px solid #33b5e5;">
+                <label>Cuenta Regresiva (Segs):</label>
+                <input type="number" @bind="tempCuentaRegresiva" class="ink-input-small" min="3" max="15" />
+            </div>
+
+            @if (tempModo == "For Time" || tempModo == "AMRAP")
+            {
+                <div class="config-row" style="border-left: 3px solid #ff4444; margin-top: 15px;">
+                    <label>@(tempModo == "For Time" ? "Time Cap (Opcional):" : "Tiempo Total:")</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="number" @bind="tempTimeCapMin" class="ink-input-small" placeholder="Min" min="0" /> <span style="color:#aaa;">m</span>
+                        <input type="number" @bind="tempTimeCapSeg" class="ink-input-small" placeholder="Seg" min="0" max="59" /> <span style="color:#aaa;">s</span>
+                    </div>
+                </div>
+                @if (tempModo == "For Time")
+                {
+                    <span style="font-size: 0.75rem; color: #888; display: block; margin-top: 5px;">*Déjalo en 0 si no hay límite.</span>
+                }
+            }
+            else if (tempModo == "EMOM")
+            {
+                <div class="config-row" style="border-left: 3px solid #00C851; margin-top: 15px;">
+                    <label>Rondas:</label>
+                    <input type="number" @bind="tempRondas" class="ink-input-small" min="1" />
+                </div>
+                <div class="config-row" style="border-left: 3px solid #ffbb33; margin-top: 15px;">
+                    <label>Ventana de Trabajo:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="number" @bind="tempMinTrabajo" class="ink-input-small" placeholder="Min" min="0" /> <span style="color:#aaa;">m</span>
+                        <input type="number" @bind="tempSegTrabajo" class="ink-input-small" placeholder="Seg" min="0" max="59" /> <span style="color:#aaa;">s</span>
+                    </div>
+                </div>
+            }
+            else if (tempModo == "Intervalos")
+            {
+                <div class="config-row" style="border-left: 3px solid #00C851; margin-top: 15px;">
+                    <label>Tiempo de TRABAJO:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="number" @bind="tempMinTrabajo" class="ink-input-small" placeholder="Min" min="0" /> <span style="color:#aaa;">m</span>
+                        <input type="number" @bind="tempSegTrabajo" class="ink-input-small" placeholder="Seg" min="0" max="59" /> <span style="color:#aaa;">s</span>
+                    </div>
+                </div>
+                <div class="config-row" style="border-left: 3px solid #ff4444; margin-top: 15px;">
+                    <label>Tiempo de DESCANSO:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="number" @bind="tempMinDescanso" class="ink-input-small" placeholder="Min" min="0" /> <span style="color:#aaa;">m</span>
+                        <input type="number" @bind="tempSegDescanso" class="ink-input-small" placeholder="Seg" min="0" max="59" /> <span style="color:#aaa;">s</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <div class="config-row" style="flex: 1; border-left: 3px solid #ffbb33;">
+                        <label>Rondas:</label>
+                        <input type="number" @bind="tempRondas" class="ink-input-small" min="1" />
+                    </div>
+                    <div class="config-row" style="flex: 1; border-left: 3px solid #33b5e5;">
+                        <label>Bloques:</label>
+                        <input type="number" @bind="tempBloques" class="ink-input-small" min="1" />
+                    </div>
+                </div>
+                @if (tempBloques > 1)
+                {
+                    <div class="config-row" style="border-left: 3px solid #aaa; margin-top: 15px;">
+                        <label>Descanso entre Bloques:</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" @bind="tempMinDescansoBloque" class="ink-input-small" placeholder="Min" min="0" /> <span style="color:#aaa;">m</span>
+                            <input type="number" @bind="tempSegDescansoBloque" class="ink-input-small" placeholder="Seg" min="0" max="59" /> <span style="color:#aaa;">s</span>
+                        </div>
+                    </div>
+                }
+            }
+
+            <button class="ink-btn bg-green" style="width: 100%; padding: 15px; margin-top: 25px; font-weight: 900; font-size: 1.1rem; letter-spacing: 1px;" @onclick="GuardarConfiguracionTimer">
+                GUARDAR Y APLICAR
+            </button>
+        </div>
+    </div>
+}
+
+<!-- 3. MODAL EDITAR WOD EN VIVO -->
+@if (mostrarModalEdicionWod)
+{
+    <div class="modal-overlay">
+        <div class="modal-content font-modern" style="max-height: 90vh; overflow-y: auto; width: 95%; max-width: 600px; display: flex; flex-direction: column;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                <div>
+                    <h3 style="color: #33b5e5; font-weight: 900; margin: 0; font-size: 1.4rem;">EDITAR WOD ACTUAL</h3>
+                    <span style="font-size: 0.8rem; color: #888;">Modifica la estructura de la clase</span>
+                </div>
+                <button class="icon-btn" style="color: #ff4444;" @onclick="CerrarModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-right: 5px;">
+                @if (cargandoOperacionWod)
+                {
+                    <div style="text-align: center; padding: 40px;">
+                        <span class="spinner" style="width: 30px; height: 30px; border-width: 3px;"></span>
+                        <p style="color: #aaa; margin-top: 15px;">Guardando en la nube...</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Título Principal del WOD -->
+                    <div style="margin-bottom: 25px;">
+                        <label style="color: #33b5e5; font-weight: 900; font-size: 0.9rem; text-transform: uppercase;">TÍTULO DEL WOD</label>
+                        <input type="text" @bind="tituloEdicion" class="ink-input-small" style="width: 100%; text-align: left; font-size: 1.2rem; margin-top: 5px;" placeholder="Ej: Clase Especial..." />
+                    </div>
+
+                    @foreach (var sec in listaSeccionesEdicion)
+                    {
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <span style="color: #ffbb33; font-weight: 900; font-family: 'Orbitron', monospace; letter-spacing: 1px;">SECCIÓN</span>
+                                <button style="background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.3); color: #ff4444; border-radius: 6px; padding: 5px 10px; cursor: pointer;" @onclick="() => EliminarSeccionEdicion(sec)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
+
+                            <input type="text" @bind="sec.Subtitulo" class="ink-input-small" style="width: 100%; text-align: left; margin-bottom: 15px; color: #ffbb33;" placeholder="Subtítulo (Ej: Calentamiento)" />
+                            
+                            <textarea @bind="sec.Contenido" class="ink-input-small" style="width: 100%; height: 150px; text-align: left; resize: vertical; padding: 15px;" placeholder="Escribe aquí los ejercicios o la rutina..."></textarea>
+                        </div>
+                    }
+
+                    <button style="width: 100%; background: transparent; border: 2px dashed #33b5e5; color: #33b5e5; font-weight: 900; padding: 15px; border-radius: 12px; cursor: pointer; margin-bottom: 20px;" @onclick="AgregarSeccionEdicion">
+                        + NUEVA SECCIÓN
+                    </button>
+                }
+            </div>
+
+            @if (!cargandoOperacionWod)
+            {
+                <button class="ink-btn bg-blue" style="width: 100%; padding: 15px; margin-top: 15px; font-weight: 900; font-size: 1.1rem; letter-spacing: 1px; flex-shrink: 0;" @onclick="GuardarWodEditado">
+                    ACTUALIZAR EN PANTALLA
+                </button>
+            }
+        </div>
+    </div>
+}
+
+<!-- 4. MODAL AGREGAR ALUMNO -->
+@if (mostrarModalAddUser)
+{
+    <div class="modal-overlay">
+        <div class="modal-content font-modern" style="max-height: 90vh; overflow-y: auto; width: 95%; max-width: 600px; display: flex; flex-direction: column;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                <div>
+                    <h3 style="color: #00C851; font-weight: 900; margin: 0; font-size: 1.4rem;">AGREGAR ALUMNO</h3>
+                    <span style="font-size: 0.8rem; color: #888;">Ingresa manualmente a la clase</span>
+                </div>
+                <button class="icon-btn" style="color: #ff4444;" @onclick="CerrarModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto;">
+                
+                <!-- Buscador en tiempo real -->
+                <div style="margin-bottom: 15px; position: relative;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 15px; top: 12px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" @bind="textoBusquedaAtleta" @bind:event="oninput" placeholder="Buscar por nombre..." class="ink-input-small" style="width: 100%; text-align: left; padding-left: 45px; font-size: 1rem;" />
+                </div>
+
+                <!-- Lista de Resultados (Filtrada) -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    @if (!AtletasBusquedaFiltrados.Any())
+                    {
+                        <span style="color: #888; font-size: 0.9rem; text-align: center; display: block; margin-top: 20px;">No hay resultados o el atleta ya está en la clase.</span>
+                    }
+
+                    @foreach (var atleta in AtletasBusquedaFiltrados)
+                    {
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #222; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);">
+                                    @if (!string.IsNullOrEmpty(atleta.FotoPerfil)) { <img src="@atleta.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" /> }
+                                    else { <span style="color: #888; font-size: 1rem; font-weight: bold;">@atleta.Iniciales</span> }
+                                </div>
+                                <span style="color: white; font-size: 0.95rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@atleta.NombreCompleto</span>
+                            </div>
+                            
+                            <button style="background: @(atleta.Agregado ? "#00C851" : "rgba(51,181,229,0.1)"); color: @(atleta.Agregado ? "white" : "#33b5e5"); border: 1px solid @(atleta.Agregado ? "transparent" : "rgba(51,181,229,0.3)"); border-radius: 8px; padding: 8px 15px; font-weight: 900; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" 
+                                    @onclick="() => AgregarAtletaManual(atleta)" disabled="@(atleta.Procesando || atleta.Agregado)">
+                                
+                                @if (atleta.Procesando) { <span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span> }
+                                else if (atleta.Agregado) { <span>✅ LISTO</span> }
+                                else { <span>AGREGAR</span> }
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* ==============================================
+           ANIMACIÓN DE ROTACIÓN Y DISEÑO
+           ============================================== */
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap');
+
+    .font-modern { font-family: 'Montserrat', sans-serif; }
+    .font-digital { font-family: 'Orbitron', monospace; }
+
+    .orientation-prompt { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; color: white; }
+    @@media screen and (orientation: landscape) { .orientation-prompt.need-portrait { display: flex; } }
+    @@media screen and (orientation: portrait) { .orientation-prompt.need-landscape { display: flex; } }
+
+    .phone-icon-anim { width: 60px; height: 100px; border: 4px solid white; border-radius: 10px; margin-bottom: 20px; position: relative; }
+    .need-portrait .phone-icon-anim { animation: rotarAVertical 2s infinite ease-in-out; }
+    .need-landscape .phone-icon-anim { animation: rotarAHorizontal 2s infinite ease-in-out; }
+    @@keyframes rotarAVertical { 0% { transform: rotate(90deg); } 50% { transform: rotate(0deg); } 100% { transform: rotate(0deg); } }
+    @@keyframes rotarAHorizontal { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(-90deg); } }
+
+    .timer-main-wrapper { display: flex; gap: 15px; padding: 15px; background-color: #050505; height: 100vh; width: 100vw; overflow: hidden; color: white; box-sizing: border-box; }
+    
+    .panel-section { background-color: #111; border-radius: 18px; display: flex; flex-direction: column; flex: 1; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); min-width: 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.6); position: relative; }
+    .panel-section.collapsed { flex: 0 0 70px; min-width: 70px; background-color: #0a0a0a; }
+
+    .panel-header { height: 65px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .header-collapsed { justify-content: center !important; padding: 0 !important; }
+    
+    .panel-content { flex: 1; overflow: hidden; }
+    .panel-footer-controls { display: flex; gap: 15px; padding: 20px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05); }
+
+    .watermark-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; background-size: contain; background-repeat: no-repeat; background-position: center; pointer-events: none; z-index: 1; }
+
+    /* BOTONES */
+    .collapse-btn { background: rgba(255,255,255,0.05); border: none; color: #bbb; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s, color 0.2s; }
+    .collapse-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+    .collapsed-state-btn { width: 100%; height: 100%; border-radius: 0; background: transparent; }
+
+    .icon-btn-large { background: transparent; border: none; color: #aaa; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; transition: color 0.2s; border-radius: 10px; }
+    .icon-btn-large:hover { color: white; background: rgba(255,255,255,0.1); }
+
+    .bg-blue-ghost { background: rgba(51,181,229,0.1); color: #33b5e5 !important; border: 1px solid rgba(51,181,229,0.3); }
+    .bg-blue-ghost:hover { background: #33b5e5; color: white !important; }
+
+    /* SELECT TRUNCADO (Para no empujar íconos) */
+    .wod-select { background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px 15px; font-weight: 800; font-size: 1.05rem; flex: 1; cursor: pointer; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; min-width: 0; }
+    
+    .wod-section-select { background: transparent; color: #33b5e5; border: none; font-weight: 800; font-size: 0.95rem; cursor: pointer; width: 100%; outline: none; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+    .wod-section-select option { background: #111; color: white; }
+
+    .wod-section-card { background: rgba(0,0,0,0.4); padding: 25px; border-radius: 15px; border-left: 5px solid #ffbb33; backdrop-filter: blur(8px); border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); }
+
+    /* TARJETAS CUADRADAS ATLETAS */
+    .atleta-square-card {
+        background: rgba(255,255,255,0.03); border-radius: 14px; padding: 15px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); transition: transform 0.2s; text-align: center;
+    }
+    .atleta-square-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: var(--method-color);
+    }
+    .avatar-center {
+        width: 55px; height: 55px; border-radius: 50%; background: #222; border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto;
+    }
+    .info-center {
+        width: 100%; overflow: hidden;
+    }
+    .info-center .name {
+        color: white; font-weight: 800; font-size: 0.95rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .info-center .surname {
+        color: #888; font-weight: 700; font-size: 0.75rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+    }
+
+    /* TIMER */
+    .timer-content-area { display: flex; align-items: center; justify-content: center; flex-direction: column; container-type: inline-size; }
+    .reloj-container { text-align: center; width: 100%; }
+    .reloj-display { font-size: clamp(4rem, 15cqi, 18rem); line-height: 1; text-shadow: 0 0 30px currentColor; margin-bottom: 10px; }
+    .timer-estado { font-size: clamp(1rem, 3cqi, 2rem); font-weight: 800; color: #888; letter-spacing: 2px; margin-bottom: 10px; }
+    .timer-fase { font-size: clamp(1.5rem, 5cqi, 4rem); font-weight: 900; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.1); letter-spacing: 3px; }
+
+    .pulse-anim { animation: pulse 0.5s infinite alternate; }
+    @@keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @@keyframes fadeIn { 0% { opacity: 0; transform: translateY(5px); } 100% { opacity: 1; transform: translateY(0); } }
+
+    .btn-block { flex: 1; border: none; border-radius: 12px; padding: 18px 10px; font-size: 1.1rem; font-weight: 900; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s, filter 0.2s; letter-spacing: 1px; font-family: 'Montserrat', sans-serif; }
+    .btn-block:active { transform: scale(0.96); }
+    .bg-green { background: linear-gradient(135deg, #00C851, #007E33); box-shadow: 0 5px 15px rgba(0,200,81,0.3); }
+    .bg-yellow { background: linear-gradient(135deg, #ffbb33, #ff8800); color: #111; box-shadow: 0 5px 15px rgba(255,187,51,0.3); }
+    .bg-red { background: linear-gradient(135deg, #ff4444, #cc0000); box-shadow: 0 5px 15px rgba(255,68,68,0.3); }
+    .bg-blue { background: linear-gradient(135deg, #33b5e5, #0099CC); box-shadow: 0 5px 15px rgba(51,181,229,0.3); }
+    .bg-dark-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+
+    /* MODALES */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: #111; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); }
+    .mode-tab { flex: 1; padding: 10px 5px; background: transparent; border: none; color: #888; font-weight: 800; font-size: 0.75rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .mode-tab.active-tab { background: #333; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .config-row { background: rgba(0,0,0,0.3); padding: 12px 15px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .config-row label { color: #ddd; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
+    .ink-input-small { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 12px; border-radius: 8px; font-weight: 700; width: 60px; text-align: center; }
+    .ink-input-small:focus { outline: none; border-color: #33b5e5; }
+    .spin-anim { animation: spin 1s linear infinite; }
+    @@keyframes spin { 100% { transform: rotate(360deg); } }
+    /* SWITCH MODO JUEZ */
+    .switch-juez { position: relative; display: inline-block; width: 42px; height: 22px; } 
+    .switch-juez input { opacity: 0; width: 0; height: 0; }
+    .slider-juez { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border: 1px solid rgba(255,255,255,0.2); } 
+    .slider-juez:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: #888; transition: .4s; }
+    input:checked + .slider-juez { background-color: rgba(0, 200, 81, 0.2); border-color: #00C851; } 
+    input:checked + .slider-juez:before { transform: translateX(20px); background-color: #00C851; }
+    .slider-juez.round { border-radius: 34px; } 
+    .slider-juez.round:before { border-radius: 50%; }
+
+    /* ESTILOS DE TARJETA MODO JUEZ */
+    .juez-mode-active { cursor: crosshair !important; border: 1px dashed rgba(51, 181, 229, 0.4) !important; }
+    .juez-mode-active:hover { transform: scale(1.05); border-color: #33b5e5 !important; background: rgba(51, 181, 229, 0.05); }
+    
+    .card-finished { background: rgba(0, 200, 81, 0.1) !important; border-color: #00C851 !important; opacity: 0.8; }
+    .badge-time-juez { margin-top: 8px; background: #00C851; color: #000; font-size: 1.1rem; padding: 2px 10px; border-radius: 6px; font-weight: bold; width: 100%; box-shadow: 0 0 10px rgba(0,200,81,0.5); }
+
+    /* BOTON ELIMINAR X */
+    .delete-badge-btn { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: 0.2s; padding: 0; }
+    .delete-badge-btn:hover { background: #ff4444; color: white; transform: scale(1.1); }
+</style>
+
+@code {
+    private IAudioPlayer playerBeep;
+    private IAudioPlayer playerGo;
+    private IAudioPlayer playerMedio;
+
+    [Parameter] public int HorarioId { get; set; }
+    private string gymCode = "NOMADA";
+
+    private bool ColapsadoIzquierda = false;
+    private bool ColapsadoCentro = false;
+    private bool ColapsadoDerecha = false;
+
+    private bool mostrarModalConfigTimer = false;
+    private bool mostrarModalEdicionWod = false;
+    private bool mostrarModalAddUser = false;
+    private bool requiereVertical = false;
+
+    private List<WodGeneralDto> wodsDelDia = new();
+    private int wodSeleccionadoId = 0;
+    private WodGeneralDto? wodActivo;
+    
+    private int seccionVisibleIndex = -1; 
+    private double wodFontSize = 1.0;
+    
+    private List<UsuarioLobbyDto> usuariosLobby = new();
+    private bool isRefrescandoAtletas = false;
+
+    private async Task RefrescarAtletasMualmente()
+    {
+        if (isRefrescandoAtletas) return;
+
+        isRefrescandoAtletas = true;
+        StateHasChanged(); 
+
+        await CargarUsuariosLobby();
+        await Task.Delay(500); 
+
+        isRefrescandoAtletas = false;
+        StateHasChanged(); 
+    }
+
+    // ================= TIMER ENGINE (MATH & LOGIC) =================
+    public class TimerConfiguracion
+    {
+        public string Modo { get; set; } = "Intervalos";
+        public int TiempoTrabajoSegundos { get; set; } = 30;
+        public int TiempoDescansoSegundos { get; set; } = 20;
+        public int Rondas { get; set; } = 5;
+        public int Bloques { get; set; } = 3;
+        public int DescansoEntreBloquesSegundos { get; set; } = 180;
+        public int CuentaRegresivaInicial { get; set; } = 7;
+    }
+
+    private TimerConfiguracion configTimer = new();
+    private System.Timers.Timer engineReloj;
+
+    private bool isTimerRunning = false;
+    private int tiempoEnPantalla = 0;
+    private int rondaActual = 1;
+    private int bloqueActual = 1;
+
+    private string FaseActual = "READY";
+    private string ColorTimer = "#ffffff";
+    private bool AnimarReloj = false;
+
+    private DateTime horaObjetivoFase;
+    private DateTime horaInicioPausa;
+    private int segundosRestantesAntesDePausa;
+    private DateTime horaInicioForTime;
+
+    private string tempModo = "Intervalos";
+    private int tempMinTrabajo = 0, tempSegTrabajo = 30;
+    private int tempMinDescanso = 0, tempSegDescanso = 20;
+    private int tempRondas = 5;
+    private int tempBloques = 1;
+    private int tempMinDescansoBloque = 1, tempSegDescansoBloque = 0;
+    private int tempTimeCapMin = 0, tempTimeCapSeg = 0;
+    private int tempCuentaRegresiva = 7;
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        DeviceDisplay.Current.KeepScreenOn = true;
+
+        try
+        {
+            playerBeep = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("wwwroot/sonidos/beep.mp3"));
+            playerGo = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("wwwroot/sonidos/go.mp3"));
+            playerMedio = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("wwwroot/sonidos/medio.mp3"));
+
+#if IOS
+            var session = AVFoundation.AVAudioSession.SharedInstance();
+            session.SetCategory(AVFoundation.AVAudioSessionCategory.Playback, AVFoundation.AVAudioSessionCategoryOptions.MixWithOthers);
+            session.SetActive(true);
+#endif
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error Audio: " + ex.Message);
+        }
+
+        tiempoEnPantalla = configTimer.CuentaRegresivaInicial;
+        ColorTimer = "#ffffff";
+
+        engineReloj = new System.Timers.Timer(100);
+        engineReloj.Elapsed += TicTacReloj;
+
+        await CargarWodsDelDia();
+        await CargarUsuariosLobby();
+    }
+
+    private void Sonar(string tipo)
+    {
+        try
+        {
+            if (tipo == "beep" && playerBeep != null) { playerBeep.Stop(); playerBeep.Play(); }
+            else if (tipo == "go" && playerGo != null) { playerGo.Stop(); playerGo.Play(); }
+            else if (tipo == "medio" && playerMedio != null) { playerMedio.Stop(); playerMedio.Play(); }
+        }
+        catch { }
+    }
+
+    private void TogglePanel(int panel)
+    {
+        if (panel == 1) ColapsadoIzquierda = !ColapsadoIzquierda;
+        if (panel == 2) ColapsadoCentro = !ColapsadoCentro;
+        if (panel == 3) ColapsadoDerecha = !ColapsadoDerecha;
+    }
+
+    public class SeccionEdicionViewModel
+    {
+        public string Subtitulo { get; set; } = string.Empty;
+        public string Contenido { get; set; } = string.Empty;
+    }
+
+    private bool cargandoOperacionWod = false;
+    private string tituloEdicion = string.Empty;
+    private List<SeccionEdicionViewModel> listaSeccionesEdicion = new();
+
+    private async Task AbrirModalEdicionWod()
+    {
+        if (wodActivo == null) return;
+
+        requiereVertical = true;
+        mostrarModalEdicionWod = true;
+        try { await JSRuntime.InvokeVoidAsync("setOrientation", "portrait"); } catch { }
+
+        tituloEdicion = wodActivo.Titulo;
+        listaSeccionesEdicion.Clear();
+
+        foreach (var seccionDb in wodActivo.Secciones)
+        {
+            listaSeccionesEdicion.Add(new SeccionEdicionViewModel
+            {
+                Subtitulo = seccionDb.Subtitulo,
+                Contenido = seccionDb.Contenido 
+            });
+        }
+
+        if (!listaSeccionesEdicion.Any()) AgregarSeccionEdicion();
+    }
+
+    private void AgregarSeccionEdicion() => listaSeccionesEdicion.Add(new SeccionEdicionViewModel());
+    private void EliminarSeccionEdicion(SeccionEdicionViewModel s) => listaSeccionesEdicion.Remove(s);
+
+    private async Task GuardarWodEditado()
+    {
+        if (string.IsNullOrWhiteSpace(tituloEdicion))
+        {
+            Console.WriteLine("El WOD debe tener un título.");
+            return;
+        }
+
+        cargandoOperacionWod = true;
+        StateHasChanged();
+
+        try
+        {
+            var updateRequest = new ActualizarWodRequest
+            {
+                Titulo = tituloEdicion,
+                Fecha = wodActivo.Fecha, 
+                Secciones = new List<WodSeccionDto>(),
+                EjerciciosIds = wodActivo.Ejercicios?.Select(e => e.Id).ToList() ?? new List<int>()
+            };
+
+            int orden = 1;
+            foreach (var secEdit in listaSeccionesEdicion)
+            {
+                if (string.IsNullOrWhiteSpace(secEdit.Contenido)) continue; 
+
+                updateRequest.Secciones.Add(new WodSeccionDto
+                {
+                    Subtitulo = secEdit.Subtitulo ?? "",
+                    Contenido = secEdit.Contenido.Trim(),
+                    Orden = orden++
+                });
+            }
+
+            var response = await Http.PutAsJsonAsync($"api/wod/{wodActivo.Id}", updateRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await CargarWodsDelDia(); 
+                wodSeleccionadoId = wodActivo.Id; 
+                CargarWodSeleccionado(); 
+
+                await CerrarModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al guardar: " + ex.Message);
+        }
+        finally
+        {
+            cargandoOperacionWod = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AbrirConfiguracionTimer()
+    {
+        requiereVertical = true;
+        mostrarModalConfigTimer = true;
+        try { await JSRuntime.InvokeVoidAsync("setOrientation", "portrait"); } catch { }
+    }
+
+    private async Task GuardarConfiguracionTimer()
+    {
+        configTimer.Modo = tempModo;
+        configTimer.CuentaRegresivaInicial = tempCuentaRegresiva;
+        configTimer.Rondas = tempRondas;
+        configTimer.Bloques = tempBloques;
+
+        if (tempModo == "For Time" || tempModo == "AMRAP")
+        {
+            configTimer.TiempoTrabajoSegundos = (tempTimeCapMin * 60) + tempTimeCapSeg;
+            configTimer.Rondas = 1; configTimer.Bloques = 1;
+        }
+        else if (tempModo == "EMOM")
+        {
+            configTimer.TiempoTrabajoSegundos = (tempMinTrabajo * 60) + tempSegTrabajo;
+            configTimer.Bloques = 1; 
+        }
+        else if (tempModo == "Intervalos")
+        {
+            configTimer.TiempoTrabajoSegundos = (tempMinTrabajo * 60) + tempSegTrabajo;
+            configTimer.TiempoDescansoSegundos = (tempMinDescanso * 60) + tempSegDescanso;
+            configTimer.DescansoEntreBloquesSegundos = (tempMinDescansoBloque * 60) + tempSegDescansoBloque;
+        }
+
+        DetenerYResetear();
+        await CerrarModal();
+    }
+
+    private async Task AbrirModalAddUser()
+    {
+        requiereVertical = true;
+        mostrarModalAddUser = true;
+        textoBusquedaAtleta = ""; 
+        
+        try { await JSRuntime.InvokeVoidAsync("setOrientation", "portrait"); } catch { }
+
+        if (!todosLosAtletas.Any())
+        {
+            try
+            {
+                var listaUsuariosAdmin = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/admin/{gymCode}/usuarios/Aprobado");
+                
+                if(listaUsuariosAdmin != null)
+                {
+                    todosLosAtletas = listaUsuariosAdmin.Select(u => new AtletaBusquedaDto
+                    {
+                        Id = u.Id,
+                        NombreCompleto = $"{u.Nombre} {u.ApellidoPaterno}",
+                        Iniciales = (u.Nombre?.FirstOrDefault().ToString() + u.ApellidoPaterno?.FirstOrDefault().ToString()).ToUpper(),
+                        FotoPerfil = null 
+                    }).ToList();
+                }
+            }
+            catch { }
+        }
+    }
+
+    private async Task AgregarAtletaManual(AtletaBusquedaDto atleta)
+    {
+        atleta.Procesando = true;
+        StateHasChanged();
+
+        try
+        {
+            var req = new { usuarioId = atleta.Id, horarioId = HorarioId }; 
+            var res = await Http.PostAsJsonAsync($"api/lobby/{gymCode}/agregar-manual", req);
+            
+            if (res.IsSuccessStatusCode)
+            {
+                atleta.Agregado = true;
+                await CargarUsuariosLobby(); 
+            }
+        }
+        catch { }
+        finally 
+        { 
+            atleta.Procesando = false; 
+            StateHasChanged();
+        }
+    }
+
+    private async Task CerrarModal()
+    {
+        mostrarModalConfigTimer = false;
+        mostrarModalEdicionWod = false;
+        mostrarModalAddUser = false;
+        requiereVertical = false; 
+        try { await JSRuntime.InvokeVoidAsync("setOrientation", "landscape"); } catch { }
+    }
+
+    // =========================================================================
+    // ================= MÓDULO JUEZ Y ELIMINACIÓN DE ATLETAS ==================
+    // =========================================================================
+
+    private bool modoJuezHabilitado = false;
+    
+    private Dictionary<Guid, string> tiemposCapturados = new();
+
+    private void CapturarTiempoAtleta(Guid usuarioId)
+    {
+        if (!modoJuezHabilitado) return;
+        if (tiemposCapturados.ContainsKey(usuarioId)) return;
+
+        int segundosTranscurridos = 0;
+
+        if (FaseActual == "READY")
+        {
+            segundosTranscurridos = 0; 
+        }
+        else if (configTimer.Modo == "For Time")
+        {
+            segundosTranscurridos = tiempoEnPantalla;
+        }
+        else
+        {
+            segundosTranscurridos = configTimer.TiempoTrabajoSegundos - tiempoEnPantalla;
+            if (segundosTranscurridos < 0) segundosTranscurridos = 0; 
+        }
+
+        tiemposCapturados.Add(usuarioId, FormatearTiempo(segundosTranscurridos));
+    }
+
+    private bool mostrarModalEliminar = false;
+    private bool isEliminandoAtleta = false;
+    private UsuarioLobbyDto? atletaAEliminar = null;
+
+    private void SolicitarEliminarAtleta(UsuarioLobbyDto atleta)
+    {
+        atletaAEliminar = atleta;
+        mostrarModalEliminar = true;
+    }
+
+    private async Task ConfirmarEliminarAtleta()
+    {
+        if (atletaAEliminar == null) return;
+
+        isEliminandoAtleta = true;
+        StateHasChanged();
+
+        try
+        {
+            string urlDelete = $"api/reservas/{gymCode}/admin/reservas/{atletaAEliminar.ReservaId}";
+            Console.WriteLine($"Intentando eliminar reserva con URL: {urlDelete}"); 
+
+            var response = await Http.DeleteAsync(urlDelete);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                usuariosLobby.RemoveAll(u => u.UsuarioId == atletaAEliminar.UsuarioId);
+                tiemposCapturados.Remove(atletaAEliminar.UsuarioId); 
+                
+                Console.WriteLine("Atleta eliminado correctamente de la BD.");
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                usuariosLobby.RemoveAll(u => u.UsuarioId == atletaAEliminar.UsuarioId);
+                tiemposCapturados.Remove(atletaAEliminar.UsuarioId);
+                
+                Console.WriteLine("La reserva ya no existía en la BD, se limpió de la UI.");
+            }
+            else
+            {
+                string error = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {error}", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error de Red", ex.Message, "OK");
+        }
+        finally
+        {
+            isEliminandoAtleta = false;
+            mostrarModalEliminar = false;
+            atletaAEliminar = null;
+            StateHasChanged();
+        }
+    }
+
+    private void IniciarTimer()
+    {
+        try { JSRuntime.InvokeVoidAsync("unlockAudio"); } catch { }
+
+        isTimerRunning = true;
+
+        if (FaseActual == "PAUSA")
+        {
+            FaseActual = ObtenerFaseAnteriorColorYNombre(ColorTimer);
+            
+            if (configTimer.Modo == "For Time" && FaseActual == "WORK")
+            {
+                 horaInicioForTime = DateTime.UtcNow.AddSeconds(-tiempoEnPantalla);
+            }
+            else
+            {
+                 horaObjetivoFase = DateTime.UtcNow.AddSeconds(segundosRestantesAntesDePausa);
+            }
+        }
+        else
+        {
+            if (FaseActual == "READY")
+            {
+                horaObjetivoFase = DateTime.UtcNow.AddSeconds(configTimer.CuentaRegresivaInicial);
+            }
+        }
+
+        engineReloj.Start();
+    }
+
+    private void PausarTimer()
+    {
+        isTimerRunning = false;
+        engineReloj.Stop();
+
+        horaInicioPausa = DateTime.UtcNow;
+        segundosRestantesAntesDePausa = FaseActual == "READY" || configTimer.Modo != "For Time" 
+                                        ? (int)(horaObjetivoFase - DateTime.UtcNow).TotalSeconds 
+                                        : tiempoEnPantalla;
+
+        FaseActual = "PAUSA";
+        ColorTimer = "#ffbb33";
+    }
+
+    private void DetenerYResetear()
+    {
+        isTimerRunning = false;
+        engineReloj.Stop();
+        tiempoEnPantalla = configTimer.CuentaRegresivaInicial;
+        rondaActual = 1;
+        bloqueActual = 1;
+        ColorTimer = "#ffffff";
+        FaseActual = "READY";
+        AnimarReloj = false;
+        horaObjetivoFase = DateTime.UtcNow.AddSeconds(configTimer.CuentaRegresivaInicial);
+    }
+
+    private void FinalizarTimer()
+    {
+        isTimerRunning = false;
+        engineReloj.Stop();
+        ColorTimer = "#ffffff";
+        tiempoEnPantalla = 0;
+        AnimarReloj = false;
+    }
+
+    private void TicTacReloj(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        if (!isTimerRunning) return;
+
+        int segundosCalculados;
+
+        if (configTimer.Modo == "For Time" && FaseActual == "WORK")
+        {
+            segundosCalculados = (int)(DateTime.UtcNow - horaInicioForTime).TotalSeconds;
+        }
+        else
+        {
+            segundosCalculados = (int)(horaObjetivoFase - DateTime.UtcNow).TotalSeconds;
+            if (segundosCalculados < 0) segundosCalculados = 0;
+        }
+
+        if (tiempoEnPantalla != segundosCalculados)
+        {
+            tiempoEnPantalla = segundosCalculados;
+
+            if (FaseActual == "READY" || configTimer.Modo != "For Time")
+            {
+                if (tiempoEnPantalla == 3 || tiempoEnPantalla == 2 || tiempoEnPantalla == 1)
+                {
+                    Sonar("beep"); AnimarReloj = true;
+                }
+                else { AnimarReloj = false; }
+            }
+
+            if (FaseActual == "WORK" && configTimer.TiempoTrabajoSegundos >= 10 && tiempoEnPantalla == (configTimer.TiempoTrabajoSegundos / 2))
+            {
+                Sonar("medio");
+            }
+
+            if (configTimer.Modo == "For Time" && FaseActual == "WORK" && configTimer.TiempoTrabajoSegundos > 0)
+            {
+                if (tiempoEnPantalla >= configTimer.TiempoTrabajoSegundos)
+                {
+                    Sonar("go"); FaseActual = "DONE"; FinalizarTimer();
+                    InvokeAsync(StateHasChanged);
+                    return;
+                }
+            }
+
+            if (tiempoEnPantalla <= 0 && FaseActual != "DONE" && (FaseActual == "READY" || configTimer.Modo != "For Time"))
+            {
+                Sonar("go"); AvanzarFase();
+            }
+
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void AvanzarFase()
+    {
+        if (FaseActual == "READY")
+        {
+            FaseActual = "WORK"; ColorTimer = "#00C851";
+
+            if (configTimer.Modo == "For Time")
+            {
+                tiempoEnPantalla = 0;
+                horaInicioForTime = DateTime.UtcNow;
+            }
+            else
+            {
+                horaObjetivoFase = DateTime.UtcNow.AddSeconds(configTimer.TiempoTrabajoSegundos);
+            }
+        }
+        else if (FaseActual == "WORK")
+        {
+            if (configTimer.Modo == "AMRAP") { FaseActual = "DONE"; FinalizarTimer(); return; }
+
+            if (rondaActual < configTimer.Rondas)
+            {
+                if (configTimer.Modo == "EMOM")
+                {
+                    rondaActual++;
+                    horaObjetivoFase = horaObjetivoFase.AddSeconds(configTimer.TiempoTrabajoSegundos);
+                }
+                else
+                {
+                    FaseActual = "REST"; ColorTimer = "#ff4444";
+                    horaObjetivoFase = DateTime.UtcNow.AddSeconds(configTimer.TiempoDescansoSegundos);
+                }
+            }
+            else if (bloqueActual < configTimer.Bloques)
+            {
+                FaseActual = "REST BLOCK"; ColorTimer = "#ffbb33";
+                horaObjetivoFase = DateTime.UtcNow.AddSeconds(configTimer.DescansoEntreBloquesSegundos);
+            }
+            else { FaseActual = "DONE"; FinalizarTimer(); }
+        }
+        else if (FaseActual == "REST" || FaseActual == "REST BLOCK")
+        {
+            if (FaseActual == "REST BLOCK") { bloqueActual++; rondaActual = 1; }
+            else { rondaActual++; }
+
+            FaseActual = "WORK"; ColorTimer = "#00C851";
+            horaObjetivoFase = DateTime.UtcNow.AddSeconds(configTimer.TiempoTrabajoSegundos);
+        }
+    }
+
+    private string ObtenerFaseAnteriorColorYNombre(string color)
+    {
+        if (color == "#ffbb33" && configTimer.Bloques > 1 && bloqueActual < configTimer.Bloques) return "REST BLOCK";
+        if (color == "#ff4444") return "REST";
+        if (tiempoEnPantalla <= configTimer.CuentaRegresivaInicial && rondaActual == 1 && bloqueActual == 1) return "READY";
+        return "WORK";
+    }
+
+    private string FormatearTiempo(int totalSegundos) { int min = totalSegundos / 60; int sec = totalSegundos % 60; return $"{min:D2}:{sec:D2}"; }
+    private void VolverAlLobby() { NavManager.NavigateTo("/admin/lobby"); }
+    
+    private async Task TerminarClase() 
+    { 
+        var payload = new 
+        {
+            HorarioId = this.HorarioId,
+            WodId = this.wodSeleccionadoId,
+            ModoJuez = this.modoJuezHabilitado,
+            TiemposCapturados = this.tiemposCapturados,
+            Atletas = this.usuariosLobby
+        };
+        try 
+        {
+            string json = System.Text.Json.JsonSerializer.Serialize(payload);
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "ResumenClaseData", json);
+        }
+        catch { }
+        
+        NavManager.NavigateTo("/resumen-clase"); 
+    }
+
+    public class AtletaBusquedaDto
+    {
+        public Guid Id { get; set; }
+        public string NombreCompleto { get; set; } = string.Empty;
+        public string Iniciales { get; set; } = string.Empty;
+        public string? FotoPerfil { get; set; }
+        public bool Procesando { get; set; } = false;
+        public bool Agregado { get; set; } = false;
+    }
+
+    private string textoBusquedaAtleta = "";
+    private List<AtletaBusquedaDto> todosLosAtletas = new();
+
+    private IEnumerable<AtletaBusquedaDto> AtletasBusquedaFiltrados => todosLosAtletas
+        .Where(a => 
+            (string.IsNullOrWhiteSpace(textoBusquedaAtleta) || a.NombreCompleto.Contains(textoBusquedaAtleta, StringComparison.OrdinalIgnoreCase))
+            && !usuariosLobby.Any(lobbyUser => lobbyUser.UsuarioId == a.Id)
+        );
+
+    private async Task CargarWodsDelDia() 
+    { 
+        try 
+        { 
+            wodsDelDia = await Http.GetFromJsonAsync<List<WodGeneralDto>>($"api/wod/{gymCode}/dia/{DateTime.UtcNow:yyyy-MM-dd}") ?? new(); 
+            if (wodsDelDia.Any()) 
+            { 
+                wodSeleccionadoId = wodsDelDia.First().Id; 
+                CargarWodSeleccionado(); 
+            } 
+        } catch { } 
+    }
+
+    private void CargarWodSeleccionado() 
+    { 
+        wodActivo = wodsDelDia.FirstOrDefault(w => w.Id == wodSeleccionadoId); 
+        seccionVisibleIndex = -1; 
+    }
+
+    private async Task CargarUsuariosLobby() { try { usuariosLobby = await Http.GetFromJsonAsync<List<UsuarioLobbyDto>>($"api/lobby/{gymCode}/sesion/{HorarioId}/usuarios") ?? new(); } catch { } }
+    private string ObtenerColorMetodo(string metodo) => metodo switch { "App" => "#33b5e5", "Codigo" => "#00C851", "Manual" => "#ffbb33", _ => "#aaa" };
+    
+    public void Dispose()
+    {
+        DeviceDisplay.Current.KeepScreenOn = false;
+        engineReloj?.Dispose();
+        playerBeep?.Dispose();
+        playerGo?.Dispose();
+        playerMedio?.Dispose();
+    }
+}

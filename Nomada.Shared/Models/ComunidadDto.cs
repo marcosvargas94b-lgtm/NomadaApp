@@ -42,7 +42,19 @@ namespace Nomada.Shared.Models
         public string Nombre { get; set; } = string.Empty;
         public string ApellidoPaterno { get; set; } = string.Empty;
         public string Iniciales { get; set; } = string.Empty;
+        public string? FotoPerfil { get; set; } // <--- ¡ESTE FALTABA!
         public int TotalLikes { get; set; }
         public int Posicion { get; set; } // 1 (Oro), 2 (Plata), 3 (Bronce)...
+    }
+
+    public class RankingAsistenciaDto
+    {
+        public Guid Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string ApellidoPaterno { get; set; } = string.Empty;
+        public string Iniciales { get; set; } = string.Empty;
+        public string? FotoPerfil { get; set; }
+        public int TotalAsistencias { get; set; }
+        public int Posicion { get; set; }
     }
 }

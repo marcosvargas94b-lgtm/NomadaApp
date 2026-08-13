@@ -1,0 +1,326 @@
+﻿@page "/perfil/recuperacion"
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="app-container font-modern">
+    <!-- ================= HEADER ================= -->
+    <div class="resumen-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="background: none; border: none; color: white; cursor: pointer; padding: 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h2 class="greeting-title" style="margin: 0; font-size: 1.3rem; letter-spacing: 1px; text-transform: uppercase;">LAB. RECUPERACIÓN</h2>
+        <div style="width: 24px;"></div>
+    </div>
+
+    <div class="feed-content" style="padding-top: 20px; padding-bottom: 80px;">
+        @if (isLoading)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: #00C851;"></span>
+                <p style="margin-top: 20px; color: #888; font-weight: 800; letter-spacing: 1px;">SINTETIZANDO DATOS...</p>
+            </div>
+        }
+        else if (dataRecuperacion != null)
+        {
+            <!-- ================= HERO CARD (ESTADO GLOBAL) ================= -->
+            <div class="modern-row fade-in-up" style="flex-direction: column; text-align: center; padding: 30px 20px; margin: 0 15px 15px 15px; border-color: @ColorGlobal; background: linear-gradient(145deg, @(ColorGlobalTransparente), transparent); box-shadow: 0 10px 30px @(ColorGlobalTransparente);">
+                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Disponibilidad Física</span>
+
+                <h1 class="font-digital" style="font-size: 5.5rem; font-weight: 900; color: white; margin: 0; line-height: 1; text-shadow: 0 0 20px @ColorGlobalTransparente;">
+                    @Math.Round(dataRecuperacion.DisponibilidadGlobal)<span style="font-size: 2.5rem; color: @ColorGlobal;">%</span>
+                </h1>
+
+                <div style="background: rgba(0,0,0,0.4); padding: 10px 15px; border-radius: 8px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                    <p style="color: @ColorGlobal; font-weight: 900; font-size: 0.95rem; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
+                        @dataRecuperacion.Mensaje
+                    </p>
+                </div>
+            </div>
+
+            <!-- ================= MÉTRICAS TÁCTICAS RÁPIDAS ================= -->
+            <div class="fade-in-up" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 15px; margin-bottom: 25px; animation-delay: 0.1s;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(51, 181, 229, 0.1); padding: 10px; border-radius: 8px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Tiempo al 100%</span>
+                        <h4 style="color: white; font-size: 1.1rem; font-weight: 900; margin: 0;">@TiempoEstimadoRecuperacion</h4>
+                    </div>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: @ColorGlobalTransparente; padding: 10px; border-radius: 8px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="@ColorGlobal" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                    </div>
+                    <div>
+                        <span style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Foco de Hoy</span>
+                        <h4 style="color: white; font-size: 0.95rem; font-weight: 900; margin: 0;">@FocoEntrenamiento</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MODAL DE ESFUERZO (RPE PENDIENTE) ================= -->
+            @if (dataRecuperacion.RequiereRPEHoy)
+            {
+                <div class="fade-in-up" style="background: rgba(255, 187, 51, 0.05); border: 1px solid #ffbb33; border-radius: 16px; padding: 20px; margin: 0 15px 25px 15px; text-align: center;">
+                    <h3 style="color: #ffbb33; font-weight: 900; margin: 0 0 10px 0; font-size: 1.1rem;">NIVEL DE ESFUERZO</h3>
+                    <p style="color: var(--text-main); font-size: 0.85rem; margin-bottom: 15px;">Para ser precisos, califica qué tan pesado sentiste el entrenamiento de hoy: <br /><b style="color: #fff;">@dataRecuperacion.TituloWodPendiente</b></p>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="font-size: 0.7rem; color: #00C851; font-weight: 800; text-transform: uppercase;">1 (Suave)</span>
+                        <input type="range" min="1" max="10" @bind="rpeSeleccionado" @bind:event="oninput" style="width: 60%; accent-color: #ffbb33;" />
+                        <span style="font-size: 0.7rem; color: #ff4444; font-weight: 800; text-transform: uppercase;">10 (Fallo)</span>
+                    </div>
+
+                    <h1 class="font-digital" style="color: #ffbb33; font-weight: 900; font-size: 3rem; margin: 0 0 20px 0;">@rpeSeleccionado</h1>
+
+                    <button class="ink-btn" style="width: 100%; background: #ffbb33; border: none; color: black; border-radius: 12px; padding: 15px; font-weight: 900; cursor: pointer;" @onclick="GuardarRPE" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner" style="width: 15px; height: 15px; border-width: 2px; border-top-color: black;"></span>
+                        }
+                        else
+                        {
+
+                            <span>GUARDAR Y ACTUALIZAR</span>
+                        }
+                    </button>
+                </div>
+            }
+
+            <!-- ================= RECOMENDACIONES IA ================= -->
+            <div style="padding: 0 15px; margin-bottom: 25px;">
+                <h4 style="color: white; font-weight: 900; font-size: 1rem; margin-bottom: 15px; text-transform: uppercase; border-left: 4px solid @ColorGlobal; padding-left: 10px;">
+                    PROTOCOLOS SUGERIDOS
+                </h4>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px 10px; text-align: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>
+                        <h5 style="color: white; font-size: 0.75rem; font-weight: 900; margin: 0 0 5px 0;">NUTRICIÓN</h5>
+                        <p style="color: var(--text-muted); font-size: 0.65rem; line-height: 1.3; margin: 0;">@RecomendacionNutricion</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px 10px; text-align: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;"><path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M4 20h4l1.5 -3"></path><path d="M15 20h4l-1.5 -3"></path><path d="M12 15v-5l-2.5 -2.5"></path><path d="M12 10l2.5 -2.5"></path></svg>
+                        <h5 style="color: white; font-size: 0.75rem; font-weight: 900; margin: 0 0 5px 0;">MOVILIDAD</h5>
+                        <p style="color: var(--text-muted); font-size: 0.65rem; line-height: 1.3; margin: 0;">@RecomendacionMovilidad</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 15px 10px; text-align: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <h5 style="color: white; font-size: 0.75rem; font-weight: 900; margin: 0 0 5px 0;">DESCANSO</h5>
+                        <p style="color: var(--text-muted); font-size: 0.65rem; line-height: 1.3; margin: 0;">@RecomendacionDescanso</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= IMPACTO SEMANAL (MINI GRÁFICO CORREGIDO) ================= -->
+            <div class="modern-row" style="margin: 0 15px 25px 15px; padding: 20px; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h4 style="color: white; font-weight: 900; font-size: 0.9rem; margin: 0;">CARGA DE LOS ÚLTIMOS 5 DÍAS</h4>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                </div>
+
+                <!-- CORRECCIÓN DE CSS: width 100%, flex 1 en los hijos, space-between -->
+                <div style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%; height: 110px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    @{
+                        int[] alturasMock = new int[] { 30, 80, 45, 60, (int)Math.Max(10, 100 - dataRecuperacion.DisponibilidadGlobal) };
+                    }
+
+                    @for (int i = 4; i >= 0; i--)
+                    {
+                        int alturaActual = i == 0 ? alturasMock[4] : alturasMock[4 - i];
+
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; height: 100%; gap: 10px;">
+                            <div style="width: 24px; background: @(i == 0 ? ColorGlobal : "rgba(255,255,255,0.15)"); height: @(alturaActual)%; border-radius: 4px 4px 0 0; box-shadow: @(i == 0 ? $"0 -5px 15px {ColorGlobalTransparente}" : "none");"></div>
+
+                            <!-- CORRECCIÓN DE ETIQUETA: Solo 1 letra (L, M, X, J, V, S, D) -->
+                            <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900;">@GetLetraDia(DateTime.Now.AddDays(-i))</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ================= DESGLOSE POR MÚSCULO ================= -->
+            <div style="padding: 0 15px;">
+                <h4 style="color: white; font-weight: 900; font-size: 1rem; margin-bottom: 15px; text-transform: uppercase; border-left: 4px solid @ColorGlobal; padding-left: 10px;">
+                    ESTADO POR GRUPO MUSCULAR
+                </h4>
+
+                @if (dataRecuperacion.Musculos.All(m => m.Porcentaje == 100))
+                {
+                    <div style="text-align: center; padding: 30px 10px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <p style="color: white; font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">Recuperación Completa</p>
+                        <p style="color: var(--text-muted); font-size: 0.8rem;">No se detecta fatiga reciente. Estás listo para un WOD pesado.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var musculo in dataRecuperacion.Musculos.OrderBy(m => m.Porcentaje))
+                    {
+                        if (musculo.Porcentaje < 100)
+                        {
+                            string colorBarra = musculo.Porcentaje > 80 ? "#00C3A5" : musculo.Porcentaje > 40 ? "#FFCC00" : "#FF3B30";
+                            string glowBarra = $"drop-shadow(0 0 5px {colorBarra}80)";
+
+                            <div style="display: flex; flex-direction: column; padding: 12px 15px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="color: white; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.5px;">@musculo.Nombre</span>
+                                    <span class="font-digital" style="color: @colorBarra; font-weight: 900; font-size: 1rem;">
+                                        @(musculo.Porcentaje)%
+                                    </span>
+                                </div>
+                                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                                    <div style="height: 100%; width: @(musculo.Porcentaje)%; background: @colorBarra; border-radius: 3px; filter: @glowBarra; transition: width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1);"></div>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            </div>
+
+            <!-- AVISO DE PRECISIÓN -->
+            @if (!perfilCompleto)
+            {
+                <div style="margin: 30px 15px 0 15px; padding: 15px; background: rgba(51, 181, 229, 0.05); border: 1px dashed rgba(51, 181, 229, 0.3); border-radius: 12px; text-align: center;">
+                    <span style="font-size: 1.5rem; display: block; margin-bottom: 5px;">⚙️</span>
+                    <h5 style="color: #33b5e5; font-weight: 900; margin: 0 0 5px 0;">MEJORA LA PRECISIÓN</h5>
+                    <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0;">Ve a tu Perfil y registra tu Peso y Estatura para que el algoritmo biométrico sea exacto a tu tipo de cuerpo.</p>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .font-digital {
+        font-family: 'Orbitron', monospace;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+@code {
+    private string gymCode = "NOMADA";
+    private Guid currentUserId;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool perfilCompleto = true;
+    private int rpeSeleccionado = 7;
+
+    private EstadoRecuperacionDto? dataRecuperacion;
+
+    private string ColorGlobal => dataRecuperacion?.DisponibilidadGlobal > 80 ? "#00C851" : dataRecuperacion?.DisponibilidadGlobal > 50 ? "#ffbb33" : "#ff4444";
+    private string ColorGlobalTransparente => dataRecuperacion?.DisponibilidadGlobal > 80 ? "rgba(0, 200, 81, 0.15)" : dataRecuperacion?.DisponibilidadGlobal > 50 ? "rgba(255, 187, 51, 0.15)" : "rgba(255, 68, 68, 0.15)";
+
+    private string RecomendacionNutricion => dataRecuperacion?.DisponibilidadGlobal < 60 ? "Aumenta ingesta de carbohidratos complejos para reponer glucógeno." : "Mantén ingesta de proteína regular (1.8g - 2.2g por kg).";
+    private string RecomendacionMovilidad => dataRecuperacion?.DisponibilidadGlobal < 60 ? "Día de recuperación. Estiramientos suaves y controlados." : "Movilidad dinámica enfocada en articulaciones antes del WOD.";
+    private string RecomendacionDescanso => dataRecuperacion?.DisponibilidadGlobal < 60 ? "Obligatorio: 8+ horas de sueño. Considera un Rest Day." : "Descanso estándar. Estás en zona óptima de compensación.";
+
+    // Lógicas de las nuevas tarjetas
+    private string TiempoEstimadoRecuperacion
+    {
+        get
+        {
+            if (dataRecuperacion == null || dataRecuperacion.DisponibilidadGlobal >= 100) return "Óptimo";
+            // Si el cuerpo recupera en promedio 2% por hora, calculamos el faltante:
+            int horasFaltantes = (int)Math.Ceiling((100 - dataRecuperacion.DisponibilidadGlobal) / 2.0);
+            return $"~{horasFaltantes} hrs";
+        }
+    }
+
+    private string FocoEntrenamiento
+    {
+        get
+        {
+            if (dataRecuperacion == null) return "Desconocido";
+            if (dataRecuperacion.DisponibilidadGlobal < 60) return "RECUPERACIÓN ACTIVA";
+            if (dataRecuperacion.DisponibilidadGlobal <= 80) return "AERÓBICO / TÉCNICA";
+            return "FUERZA";
+        }
+    }
+
+    // Helper para las letras de la gráfica (para que Miércoles sea 'X' o 'M' limpio)
+    private string GetLetraDia(DateTime fecha)
+    {
+        return fecha.DayOfWeek switch
+        {
+            DayOfWeek.Monday => "L",
+            DayOfWeek.Tuesday => "M",
+            DayOfWeek.Wednesday => "X", // Usamos X para no confundir con Martes
+            DayOfWeek.Thursday => "J",
+            DayOfWeek.Friday => "V",
+            DayOfWeek.Saturday => "S",
+            DayOfWeek.Sunday => "D",
+            _ => ""
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        var userIdStr = Preferences.Get("userId", string.Empty);
+        if (Guid.TryParse(userIdStr, out currentUserId))
+        {
+            await CargarDatosRecuperacion();
+        }
+    }
+
+    private async Task CargarDatosRecuperacion()
+    {
+        isLoading = true;
+        try
+        {
+            dataRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"api/recuperacion/{gymCode}/{currentUserId}");
+            if (dataRecuperacion != null)
+            {
+                perfilCompleto = dataRecuperacion.PerfilCompleto;
+            }
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isLoading = false; }
+    }
+
+    private async Task GuardarRPE()
+    {
+        if (dataRecuperacion == null || dataRecuperacion.AsistenciaPendienteId == null) return;
+        isSubmitting = true;
+
+        try
+        {
+            var req = new GuardarRPERequest { RPE = rpeSeleccionado };
+            var res = await Http.PutAsJsonAsync($"api/recuperacion/capturar-rpe/{dataRecuperacion.AsistenciaPendienteId}", req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                await CargarDatosRecuperacion();
+            }
+        }
+        catch { }
+        finally { isSubmitting = false; }
+    }
+}

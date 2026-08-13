@@ -10,18 +10,26 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
 
+            <!-- TARJETA RANKING LIKES (Amarillo) -->
             <a href="/comunidad/ranking" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; cursor: pointer; text-decoration: none;">
-                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M8 21h8m-4-4v4m-5-4h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2V4a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v1H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4z"></path><path d="M4 11h3m10 0h3"></path></svg>
+                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">RANKING LIKES</h3>
                 <span style="color: #ffbb33; font-weight: 900; font-size: 1.1rem;">@DateTime.Now.Year</span>
             </a>
 
-            <!-- Tarjeta Placeholder -->
-            <div class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; opacity: 0.5;">
-                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; color: var(--text-muted);"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">ESTADÍSTICAS</h3>
-                <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">Próximamente</span>
-            </div>
+            <!-- TARJETA LEADERBOARD WOD (Azul) -->
+            <a href="/comunidad/rankingwod" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; cursor: pointer; text-decoration: none;">
+                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10"></path><path d="M5 4h14v7a7 7 0 0 1-14 0V4z"></path></svg>
+                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">LEADERBOARD</h3>
+                <span style="color: #33b5e5; font-weight: 900; font-size: 0.8rem; text-transform: uppercase;">Resultados de Hoy</span>
+            </a>
+
+            <!-- TARJETA ASISTENCIAS (Verde) - OCUPA LAS DOS COLUMNAS -->
+            <a href="/comunidad/ranking-asistencias" class="modern-row" style="grid-column: span 2; flex-direction: column; justify-content: center; text-align: center; padding: 20px 15px; margin: 0; cursor: pointer; text-decoration: none;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 12"></polyline></svg>
+                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">TOP ASISTENCIAS</h3>
+                <span style="color: #00C851; font-weight: 900; font-size: 0.8rem; text-transform: uppercase;">Los más disciplinados</span>
+            </a>
 
         </div>
     </div>

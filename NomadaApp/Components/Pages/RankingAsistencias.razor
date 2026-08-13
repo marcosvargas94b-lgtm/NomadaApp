@@ -1,4 +1,4 @@
-﻿@page "/comunidad/ranking"
+﻿@page "/comunidad/ranking-asistencias"
 @using Nomada.Shared.Models
 @using Microsoft.Maui.Storage
 @using System.Net.Http.Json
@@ -8,11 +8,22 @@
 <div class="app-container font-modern">
     <div class="feed-content">
 
-        <div style="display: flex; align-items: center; margin-bottom: 25px;">
-            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/comunidad")' style="background: none; border: none; color: var(--text-main); margin-right: 15px; cursor: pointer; padding: 0;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">Ranking @anioActual</h2>
+        <!-- HEADER CON SELECTOR DE AÑO -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px;">
+            <div style="display: flex; align-items: center;">
+                <button class="back-btn" @onclick='() => NavManager.NavigateTo("/comunidad")' style="background: none; border: none; color: var(--text-main); margin-right: 15px; cursor: pointer; padding: 0;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                </button>
+                <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">Constancia</h2>
+            </div>
+
+            <!-- EL SELECT DE HISTORIAL -->
+            <select class="search-input" style="font-weight: 900; color: #00C851; border-color: #00C851; font-size: 0.95rem; width: auto; padding: 5px 10px;" @bind="anioSeleccionado" @bind:after="CargarRanking">
+                @for (int year = DateTime.Now.Year; year >= DateTime.Now.Year - 4; year--)
+                {
+                    <option value="@year">@year</option>
+                }
+            </select>
         </div>
 
         @if (isPageLoading)
@@ -22,9 +33,8 @@
         else if (!ranking.Any())
         {
             <div style="text-align: center; padding: 50px 20px;">
-                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <p style="color: var(--text-muted); font-weight: bold;">Aún no hay likes registrados este año.</p>
-                <p style="color: var(--text-main); font-size: 0.85rem; margin-top: 10px;">¡Sube una foto y sé el primero!</p>
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 12"></polyline></svg>
+                <p style="color: var(--text-muted); font-weight: bold;">No hay asistencias registradas para el año @anioSeleccionado.</p>
             </div>
         }
         else
@@ -49,8 +59,8 @@
                         </div>
                         <span style="color: var(--text-main); font-size: 0.75rem; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@ranking[1].Nombre</span>
                         <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
-                            <span style="color: #ff4444; font-size: 0.8rem; font-weight: 900;">@ranking[1].TotalLikes</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#ff4444" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            <span style="color: #00C851; font-size: 0.8rem; font-weight: 900;">@ranking[1].TotalAsistencias</span>
+                            <span style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800;">Clases</span>
                         </div>
                         <div style="background: linear-gradient(180deg, #e0e0e0, #a0a0a0); width: 100%; height: 60px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px;">
                             <span style="color: black; font-weight: 900; font-size: 1.2rem;">2</span>
@@ -77,8 +87,8 @@
                         </div>
                         <span style="color: var(--text-main); font-size: 0.85rem; font-weight: 900; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@ranking[0].Nombre</span>
                         <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
-                            <span style="color: #ff4444; font-size: 0.9rem; font-weight: 900;">@ranking[0].TotalLikes</span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff4444" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            <span style="color: #00C851; font-size: 0.9rem; font-weight: 900;">@ranking[0].TotalAsistencias</span>
+                            <span style="color: var(--text-muted); font-size: 0.7rem; font-weight: 800;">Clases</span>
                         </div>
                         <div style="background: linear-gradient(180deg, #ffe066, #ffb300); width: 100%; height: 90px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px; box-shadow: 0 -5px 15px rgba(255, 215, 0, 0.3);">
                             <span style="color: black; font-weight: 900; font-size: 1.5rem;">1</span>
@@ -103,8 +113,8 @@
                         </div>
                         <span style="color: var(--text-main); font-size: 0.75rem; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@ranking[2].Nombre</span>
                         <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px;">
-                            <span style="color: #ff4444; font-size: 0.8rem; font-weight: 900;">@ranking[2].TotalLikes</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#ff4444" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            <span style="color: #00C851; font-size: 0.8rem; font-weight: 900;">@ranking[2].TotalAsistencias</span>
+                            <span style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800;">Clases</span>
                         </div>
                         <div style="background: linear-gradient(180deg, #e6a87c, #b36b39); width: 100%; height: 45px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px;">
                             <span style="color: black; font-weight: 900; font-size: 1rem;">3</span>
@@ -138,8 +148,8 @@
                             <span class="user-name" style="flex: 1; font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@user.Nombre @user.ApellidoPaterno</span>
 
                             <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0; margin-left: 10px;">
-                                <span style="font-weight: 900; color: #ff4444; font-size: 0.95rem;">@user.TotalLikes</span>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                <span style="font-weight: 900; color: #00C851; font-size: 1rem;">@user.TotalAsistencias</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </div>
                         </div>
                     }
@@ -148,9 +158,9 @@
 
             <!-- Frase Motivacional -->
             <div style="text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid rgba(128,128,128,0.2);">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <p style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; margin-bottom: 5px;">¿Quieres subir de posición?</p>
-                <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">Sube más contenido en el Inicio de la aplicación para que la tribu interactúe contigo.</p>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 12"></polyline></svg>
+                <p style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; margin-bottom: 5px;">La constancia es la clave</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">El resultado se construye día con día. ¡Sigue viniendo a entrenar y asegura tu lugar en el top!</p>
             </div>
         }
     </div>
@@ -168,16 +178,21 @@
     private string gymCode = "NOMADA";
 
     private bool isPageLoading = true;
-    private int anioActual = DateTime.Now.Year;
-    private List<RankingUsuarioDto> ranking = new();
+    private int anioSeleccionado = DateTime.Now.Year;
+    private List<RankingAsistenciaDto> ranking = new();
 
     protected override async Task OnInitializedAsync()
     {
         gymCode = Preferences.Get("gymCode", "NOMADA");
+        await CargarRanking();
+    }
 
+    private async Task CargarRanking()
+    {
+        isPageLoading = true;
         try
         {
-            ranking = await Http.GetFromJsonAsync<List<RankingUsuarioDto>>($"api/comunidad/{gymCode}/ranking/{anioActual}") ?? new();
+            ranking = await Http.GetFromJsonAsync<List<RankingAsistenciaDto>>($"api/comunidad/{gymCode}/ranking-asistencias/{anioSeleccionado}") ?? new();
         }
         catch (Exception ex)
         {

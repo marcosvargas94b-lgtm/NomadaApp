@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-
+using Plugin.Maui.Audio;
 namespace NomadaApp
 {
     public static class MauiProgram
@@ -23,7 +23,7 @@ namespace NomadaApp
        
             builder.Logging.AddDebug();
 #endif
-
+            builder.Services.AddSingleton(AudioManager.Current);
             return builder.Build();
         }
     }

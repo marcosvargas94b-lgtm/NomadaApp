@@ -34,8 +34,45 @@ namespace Nomada.Shared.Entities
         public Guid UsuarioId { get; set; }
         public DateTime FechaHora { get; set; }
         public string MetodoRegistro { get; set; } = string.Empty;
+        public int HorarioId { get; set; }
+        public int WodGeneralId { get; set; }
+        public int? RPE { get; set; } // El nivel de esfuerzo de esa clase
     }
 
+    public class WodScore
+    {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
+
+        [Required]
+        [MaxLength(50)]
+        public string GymCode { get; set; } = string.Empty;
+
+        [Required]
+        public int WodGeneralId { get; set; }
+
+        [Required]
+        public Guid UsuarioId { get; set; }
+
+        public DateTime Fecha { get; set; }
+
+        [Required]
+        [MaxLength(20)]
+        public string TipoScore { get; set; } = string.Empty; // 'Tiempo', 'Rondas', 'Reps', 'Asistencia'
+
+        // Métricas
+        [MaxLength(10)]
+        public string? TiempoFormato { get; set; }
+        public int? TiempoSegundos { get; set; }
+        public int? Rondas { get; set; }
+        public int? Repeticiones { get; set; }
+        public int HorarioId { get; set; }
+        [Required]
+        [MaxLength(20)]
+        public string Categoria { get; set; } = "General";
+        public bool EsCapturaManual { get; set; } = false;
+        public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+    }
     public class Permiso
     {
         public int Id { get; set; }
@@ -130,6 +167,8 @@ namespace Nomada.Shared.Entities
         public Guid CoachId { get; set; }
         public string NombreCoach { get; set; } = string.Empty;
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public string? JsonFatigaMuscular { get; set; } // Análisis de la IA
+        public bool TienePesos { get; set; }
     }
 
     public class WodSeccion
@@ -186,7 +225,7 @@ namespace Nomada.Shared.Entities
 
         [Required]
         [MaxLength(20)]
-        public string GymCode { get; set; } = string.Empty; // Candado maestro
+        public string GymCode { get; set; } = string.Empty;
 
         public DateTime Fecha { get; set; }
         public int HorarioId { get; set; }
@@ -197,4 +236,46 @@ namespace Nomada.Shared.Entities
 
         public Guid CoachAperturaId { get; set; }
     }
+
+    // ================= MÓDULO DE ENTRENAMIENTO PERSONALIZADO =================
+
+    public class WodPersonalizado
+    {
+        public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
+        public Guid CoachId { get; set; }
+        public Guid AtletaId { get; set; } // El dueño de la rutina
+        public string Titulo { get; set; } = string.Empty;
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public string? JsonFatigaMuscular { get; set; } // Fatiga Base
+        public bool TienePesos { get; set; }
+    }
+
+    public class WodPersonalizadoSeccion
+    {
+        public int Id { get; set; }
+        public int WodPersonalizadoId { get; set; }
+        public string Subtitulo { get; set; } = string.Empty;
+        public string Contenido { get; set; } = string.Empty;
+        public int Orden { get; set; }
+    }
+
+    public class WodPersonalizadoEjercicio
+    {
+        public int Id { get; set; }
+        public int WodPersonalizadoId { get; set; }
+        public int EjercicioId { get; set; }
+    }
+
+    public class EntrenoPersonalizadoRealizado
+    {
+        public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
+        public Guid AtletaId { get; set; }
+        public int WodPersonalizadoId { get; set; }
+        public DateTime FechaRealizacion { get; set; }
+        public string? NotasAtleta { get; set; }
+        public string? JsonFatigaAjustada { get; set; } // Modificado por IA tras leer las notas
+    }
+
 }

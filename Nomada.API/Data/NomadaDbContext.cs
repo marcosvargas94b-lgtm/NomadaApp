@@ -29,7 +29,11 @@ namespace Nomada.API.Data
         public DbSet<SesionClase> SesionesClases { get; set; }
         public DbSet<CatalogoEjercicio> CatalogoEjercicios { get; set; }
         public DbSet<WodEjercicio> WodEjercicios { get; set; }
-
+        public DbSet<WodScore> WodScores { get; set; }
+        public DbSet<WodPersonalizado> WodsPersonalizados { get; set; }
+        public DbSet<WodPersonalizadoSeccion> WodsPersonalizadosSecciones { get; set; }
+        public DbSet<WodPersonalizadoEjercicio> WodsPersonalizadosEjercicios { get; set; }
+        public DbSet<EntrenoPersonalizadoRealizado> EntrenosPersonalizadosRealizados { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Siempre es buena práctica llamar al método base
@@ -65,6 +69,21 @@ namespace Nomada.API.Data
             modelBuilder.Entity<SesionClase>().ToTable("SesionesClase");
             modelBuilder.Entity<SesionClase>().HasIndex(s => new { s.GymCode, s.Fecha });
             modelBuilder.Entity<SesionClase>().HasIndex(s => s.CodigoAcceso);
+
+            // ================= MAPEO DE TABLAS PERSONALIZADAS =================
+            modelBuilder.Entity<WodPersonalizado>().ToTable("WodsPersonalizados");
+            modelBuilder.Entity<WodPersonalizadoSeccion>().ToTable("WodsPersonalizadosSecciones");
+            modelBuilder.Entity<WodPersonalizadoEjercicio>().ToTable("WodsPersonalizadosEjercicios");
+            modelBuilder.Entity<EntrenoPersonalizadoRealizado>().ToTable("EntrenosPersonalizadosRealizados");
+
+            // Índices de rendimiento
+            modelBuilder.Entity<WodPersonalizado>()
+                .HasIndex(w => new { w.GymCode, w.AtletaId });
+
+            modelBuilder.Entity<EntrenoPersonalizadoRealizado>()
+                .HasIndex(e => new { e.AtletaId, e.FechaRealizacion });
+
+
             // ================= CONFIGURACIONES ESPECÍFICAS =================
             modelBuilder.Entity<ConfiguracionBox>()
                 .Property(c => c.AforoMaximo)
@@ -110,6 +129,16 @@ namespace Nomada.API.Data
                       .HasForeignKey(d => d.RolId)
                       .OnDelete(DeleteBehavior.Restrict); // Evita que si borras un rol, se borren los usuarios
             });
+
+            modelBuilder.Entity<WodScore>(entity =>
+            {
+                entity.ToTable("WodScores");
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.WodGeneralId);
+                entity.Property(e => e.TipoScore).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Categoria).IsRequired().HasMaxLength(20).HasDefaultValue("General");
+            });
+
         }
     }
 }

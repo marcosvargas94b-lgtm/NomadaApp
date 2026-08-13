@@ -4,6 +4,7 @@ using Nomada.API.Data;
 using Nomada.Shared.Entities;
 using Nomada.Shared.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -180,6 +181,7 @@ namespace Nomada.API.Controllers
                     Nombre = u.Nombre,
                     ApellidoPaterno = u.ApellidoPaterno,
                     Iniciales = (u.Nombre.Substring(0, 1) + u.ApellidoPaterno.Substring(0, 1)).ToUpper(),
+                    FotoPerfil = u.FotoPerfil, // <--- SE AGREGA ESTA LÍNEA PARA QUE SQL SAQUE LA FOTO
                     // Cuenta los likes SOLO de los posts de esta sucursal
                     TotalLikes = _context.Likes.Count(l => l.GymCode == gymCode &&
                         _context.Posts.Any(p => p.Id == l.PostId && p.UsuarioId == u.Id)
@@ -187,6 +189,38 @@ namespace Nomada.API.Controllers
                 })
                 .Where(r => r.TotalLikes > 0)
                 .OrderByDescending(r => r.TotalLikes)
+                .ToListAsync();
+
+            int pos = 1;
+            foreach (var user in ranking)
+            {
+                user.Posicion = pos++;
+            }
+
+            return Ok(ranking);
+        }
+
+        // 8. Obtener Ranking de ASISTENCIAS por Año (Separado por Sucursal)
+        [HttpGet("{gymCode}/ranking-asistencias/{anio}")]
+        public async Task<IActionResult> GetRankingAsistencias(string gymCode, int anio)
+        {
+            var ranking = await _context.Asistencias
+                .Where(a => a.GymCode == gymCode && a.FechaHora.Year == anio)
+                .GroupBy(a => a.UsuarioId)
+                .Select(g => new { UsuarioId = g.Key, Total = g.Count() })
+                .Join(_context.Usuarios.Where(u => u.EstatusAprobacion == "Aprobado" || u.RolId == 1 || u.RolId == 2),
+                      a => a.UsuarioId,
+                      u => u.Id,
+                      (a, u) => new RankingAsistenciaDto
+                      {
+                          Id = u.Id,
+                          Nombre = u.Nombre,
+                          ApellidoPaterno = u.ApellidoPaterno,
+                          Iniciales = (u.Nombre.Substring(0, 1) + u.ApellidoPaterno.Substring(0, 1)).ToUpper(),
+                          FotoPerfil = u.FotoPerfil,
+                          TotalAsistencias = a.Total
+                      })
+                .OrderByDescending(r => r.TotalAsistencias)
                 .ToListAsync();
 
             int pos = 1;

@@ -1,0 +1,231 @@
+﻿@page "/admin/personalizado/{AtletaId:guid}"
+@using Nomada.Shared.Entities
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="app-container">
+    <div class="feed-content" style="padding-top: 10px;">
+
+        <!-- ENCABEZADO -->
+        <div style="display: flex; align-items: center; margin-bottom: 25px;">
+            <a href="/admin/tribu" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </a>
+            <div>
+                <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">PROGRAMACIÓN PRO</h2>
+                <span style="color: #33b5e5; font-size: 0.85rem; font-weight: 800; text-transform: uppercase;">ATLETA: @nombreAtleta</span>
+            </div>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: #33b5e5; margin: 0 0 20px 0;"></span>
+                <p style="color: var(--text-muted); font-weight: 800;">CARGANDO BÓVEDA...</p>
+            </div>
+        }
+        else
+        {
+            <div class="admin-section">
+
+                <!-- ================= FORMULARIO CREADOR ================= -->
+                <div class="login-card fade-in-up" style="padding: 20px; margin-bottom: 30px; border-top: 4px solid #33b5e5;">
+                    <h3 style="color: white; font-weight: 900; margin-bottom: 20px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        NUEVA RUTINA
+                    </h3>
+
+                    <div class="input-group modern-input">
+                        <label>Título del Entrenamiento</label>
+                        <input type="text" @bind="request.Titulo" class="ink-input" placeholder="Ej: Fuerza de Pierna + Cardio Ligero" />
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; display: block; text-transform: uppercase;">Bloques de Trabajo</label>
+
+                        @foreach (var seccion in request.Secciones)
+                        {
+                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; position: relative;">
+                                <button type="button" @onclick="() => RemoverSeccion(seccion)" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #ff4444; cursor: pointer;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+
+                                <input type="text" @bind="seccion.Subtitulo" class="ink-input" placeholder="Subtítulo (Ej: WARMUP)" style="margin-bottom: 10px; font-weight: 800; font-size: 0.9rem;" />
+                                <textarea @bind="seccion.Contenido" class="ink-input" rows="3" placeholder="Detalle (Ej: 3 Rondas de 10 Squats...)"></textarea>
+                            </div>
+                        }
+
+                        <button type="button" class="ink-btn-outline" @onclick="AgregarSeccion" style="width: 100%; border-style: dashed; padding: 10px; color: #33b5e5;">
+                            + AGREGAR BLOQUE
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; display: block; text-transform: uppercase;">Guía de Movimientos (Catálogo)</label>
+                        <div style="max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                            @foreach (var ej in catalogo)
+                            {
+                                <div style="display: flex; align-items: center; padding: 5px 0;">
+                                    <input type="checkbox" id="ej_@ej.Id" checked="@request.EjerciciosIds.Contains(ej.Id)" @onchange="@(e => ToggleEjercicio(ej.Id, e.Value))" style="accent-color: #33b5e5; margin-right: 10px; width: 18px; height: 18px;" />
+                                    <label for="ej_@ej.Id" style="color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer;">@ej.Nombre</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <button class="ink-btn glow-btn" @onclick="GuardarRutina" disabled="@isSaving" style="width: 100%; margin-top: 25px; background: #33b5e5;">
+                        @if (isSaving)
+                        {
+                            <span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span>
+                        }
+                        else
+                        {
+                            <span>ASIGNAR ENTRENAMIENTO</span>
+                        }
+                    </button>
+                </div>
+
+                <!-- ================= HISTORIAL DEL ATLETA ================= -->
+                <div style="margin-top: 40px;">
+                    <h4 style="color: white; font-weight: 900; font-size: 1rem; margin-bottom: 15px; text-transform: uppercase; border-left: 4px solid #00C851; padding-left: 10px;">
+                        HISTORIAL ASIGNADO
+                    </h4>
+
+                    @if (!historial.Any())
+                    {
+                        <div style="text-align: center; padding: 30px; opacity: 0.5;">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <p>No hay rutinas previas para este atleta.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var rutina in historial)
+                        {
+                            <div class="modern-row" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 10px;">
+                                <div>
+                                    <h4 style="color: white; font-weight: 800; font-size: 0.95rem; margin: 0 0 5px 0;">@rutina.Titulo</h4>
+                                    <span style="color: var(--text-muted); font-size: 0.75rem;">Creado: @rutina.FechaCreacion.ToString("dd MMM yyyy")</span>
+                                </div>
+                                @if (rutina.RealizadoHoy)
+                                {
+                                    <span style="background: rgba(0, 200, 81, 0.1); color: #00C851; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; border: 1px solid rgba(0,200,81,0.3);">COMPLETADO</span>
+                                }
+                                else
+                                {
+                                    <span style="background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800;">PENDIENTE</span>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid AtletaId { get; set; }
+
+    private string gymCode = "NOMADA";
+    private Guid coachId;
+    private string nombreAtleta = "Cargando...";
+    private bool isPageLoading = true;
+    private bool isSaving = false;
+
+    // Modelos limpios
+    private CrearWodPersonalizadoRequest request = new();
+    private List<CatalogoEjercicio> catalogo = new();
+    private List<RutinaAtletaResumenDto> historial = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        var userIdStr = Preferences.Get("userId", string.Empty);
+        Guid.TryParse(userIdStr, out coachId);
+
+        // Preparamos el Request
+        request.GymCode = gymCode;
+        request.CoachId = coachId;
+        request.AtletaId = AtletaId;
+
+        // Agregamos una sección por defecto
+        AgregarSeccion();
+
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            // 1. Obtener nombre del atleta
+            var perfil = await Http.GetFromJsonAsync<Usuario>($"api/usuarios/{AtletaId}");
+            if (perfil != null) nombreAtleta = $"{perfil.Nombre} {perfil.ApellidoPaterno}";
+
+            // 2. Obtener el catálogo de videos
+            catalogo = await Http.GetFromJsonAsync<List<CatalogoEjercicio>>($"api/wod/{gymCode}/catalogo") ?? new();
+
+            // 3. Obtener el historial
+            historial = await Http.GetFromJsonAsync<List<RutinaAtletaResumenDto>>($"api/personalizados/{gymCode}/atleta/{AtletaId}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isPageLoading = false;
+        }
+    }
+
+    private void AgregarSeccion()
+    {
+        request.Secciones.Add(new WodSeccionDto { Orden = request.Secciones.Count + 1 });
+    }
+
+    private void RemoverSeccion(WodSeccionDto s)
+    {
+        request.Secciones.Remove(s);
+        // Reordenar
+        for (int i = 0; i < request.Secciones.Count; i++)
+        {
+            request.Secciones[i].Orden = i + 1;
+        }
+    }
+
+    private void ToggleEjercicio(int id, object checkedValue)
+    {
+        bool isChecked = (bool)checkedValue;
+        if (isChecked && !request.EjerciciosIds.Contains(id)) request.EjerciciosIds.Add(id);
+        else if (!isChecked) request.EjerciciosIds.Remove(id);
+    }
+
+    private async Task GuardarRutina()
+    {
+        if (string.IsNullOrWhiteSpace(request.Titulo)) return;
+        isSaving = true;
+
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/personalizados", request);
+            if (res.IsSuccessStatusCode)
+            {
+                // Limpiamos el form y recargamos el historial
+                request.Titulo = "";
+                request.Secciones.Clear();
+                request.EjerciciosIds.Clear();
+                AgregarSeccion();
+
+                await CargarDatos(); // Refresca la lista
+            }
+        }
+        catch { }
+        finally { isSaving = false; }
+    }
+}

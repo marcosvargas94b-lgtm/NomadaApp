@@ -1,0 +1,1177 @@
+﻿@page "/resumen-clase"
+@using Nomada.Shared.Models
+@using Nomada.Shared.Entities
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@using System.Text.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+
+@if (!mostrarPodium)
+{
+    <div class="resumen-container font-modern">
+        <!-- HEADER -->
+        <div class="resumen-header">
+            <button class="back-btn" @onclick="VolverAlTimer">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 style="margin: 0; font-weight: 900; color: white; font-size: 1.2rem; letter-spacing: 1px;">RESUMEN DE CLASE</h2>
+            <div style="width: 24px;"></div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh;">
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px;"></span>
+                <p style="margin-top: 20px; color: #888; font-weight: 800;">PROCESANDO DATOS...</p>
+            </div>
+        }
+        else
+        {
+            <!-- TABS DE MODOS (Sin emojis) -->
+            <div class="tabs-container">
+                <button class="tab-btn @(tabActiva == "Asistencia" ? "active" : "")" @onclick='() => tabActiva = "Asistencia"'>ASIST</button>
+                <button class="tab-btn @(tabActiva == "Tiempo" ? "active" : "")" @onclick='() => tabActiva = "Tiempo"'>TIEMPO</button>
+                <button class="tab-btn @(tabActiva == "Rondas" ? "active" : "")" @onclick='() => tabActiva = "Rondas"'>RONDAS</button>
+                <button class="tab-btn @(tabActiva == "Reps" ? "active" : "")" @onclick='() => tabActiva = "Reps"'>REPS</button>
+            </div>
+
+            @if (tabActiva != "Asistencia")
+            {
+                <!-- SWITCH CATEGORÍAS -->
+                <div class="config-row-switch">
+                    <div>
+                        <span style="display: block; font-weight: 800; color: white; font-size: 0.9rem;">ESPECIFICAR CATEGORÍAS</span>
+                        <span style="display: block; color: #888; font-size: 0.75rem;">Permitir asignar Rx, Avanzado, etc.</span>
+                    </div>
+                    <label class="switch-juez">
+                        <input type="checkbox" @bind="habilitarCategorias">
+                        <span class="slider-juez round"></span>
+                    </label>
+                </div>
+
+                <!-- SWITCH CAPTURA MANUAL -->
+                <div class="config-row-switch" style="border-top: 1px solid rgba(255,255,255,0.02);">
+                    <div>
+                        <span style="display: block; font-weight: 800; color: #00C851; font-size: 0.9rem;">CAPTURA MANUAL</span>
+                        <span style="display: block; color: #888; font-size: 0.75rem;">Los atletas subirán su score en la app</span>
+                    </div>
+                    <label class="switch-juez">
+                        <input type="checkbox" @bind="capturaManualGlobal">
+                        <span class="slider-juez round" style="background-color: @(capturaManualGlobal ? "#00C851" : "rgba(255,255,255,0.1)");"></span>
+                    </label>
+                </div>
+            }
+
+            <!-- LISTA DE ATLETAS -->
+            <div class="atletas-list scroll-custom">
+                @if (atletas.Any())
+                {
+                    @foreach (var atleta in atletas)
+                    {
+                        <div class="atleta-score-card">
+                            <div class="atleta-info-area">
+                                <div class="avatar-sm">
+                                    @if (!string.IsNullOrEmpty(atleta.FotoPerfil))
+                                    {
+                                        <img src="@atleta.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+
+                                        <span style="font-size: 1.2rem; color: #888;">👤</span>
+                                    }
+                                </div>
+                                <div class="name-area">
+                                    <span class="name">@atleta.Nombre</span>
+                                    <span class="surname">@atleta.ApellidoPaterno</span>
+
+                                    @if (tabActiva != "Asistencia" && habilitarCategorias)
+                                    {
+                                        <div style="margin-top: 5px;">
+                                            <select class="cat-select" @bind="atleta.CategoriaSeleccionada">
+                                                <option value="General">+ Categoría</option>
+                                                <option value="Rx" style="color: #ffbb33; font-weight: bold;">🔥 Rx</option>
+                                                <option value="Avanzado">Avanzado</option>
+                                                <option value="Intermedio">Intermedio</option>
+                                                <option value="Principiante">Principiante</option>
+                                            </select>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="score-input-area">
+                                @if (tabActiva == "Asistencia")
+                                {
+                                    <span style="color: #00C851; font-weight: 900; font-size: 0.9rem;">PRESENTE</span>
+                                }
+                                else if (capturaManualGlobal)
+                                {
+                                    <span style="color: #33b5e5; font-weight: 800; font-size: 0.75rem; text-align: right;">Pendiente<br />de captura</span>
+                                }
+                                else if (tabActiva == "Tiempo")
+                                {
+                                    <input type="text" @bind="atleta.TiempoFinal" class="ink-input-score font-digital" placeholder="00:00" />
+                                }
+                                else if (tabActiva == "Rondas")
+                                {
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <input type="number" @bind="atleta.Rondas" class="ink-input-score" placeholder="Rnds" style="width: 55px;" min="0" />
+                                        <span style="color: #888; font-weight: bold;">+</span>
+                                        <input type="number" @bind="atleta.Reps" class="ink-input-score" placeholder="Reps" style="width: 55px;" min="0" />
+                                    </div>
+                                }
+                                else if (tabActiva == "Reps")
+                                {
+                                    <input type="number" @bind="atleta.RepsTotales" class="ink-input-score" placeholder="Total Reps" style="width: 80px;" min="0" />
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="text-align: center; padding: 40px; color: #888;">No hay atletas en esta clase.</div>
+                }
+            </div>
+
+            <!-- BOTÓN INFERIOR (Simple o Hold-to-process) -->
+            <div class="bottom-action-area">
+                @if (tabActiva == "Asistencia" || capturaManualGlobal)
+                {
+                    <!-- Botón normal de guardado rápido -->
+                    <button class="ink-btn bg-blue" style="width: 100%; padding: 18px; font-weight: 900; font-size: 1.1rem; letter-spacing: 1px;" @onclick="ProcesarClaseSimple" disabled="@isProcesando">
+                        @if (isProcesando)
+                        {
+                            <span class="spinner" style="width: 20px; height: 20px; border-width: 3px;"></span>
+                        }
+                        else
+                        {
+
+                            <span>FINALIZAR CLASE</span>
+                        }
+                    </button>
+                }
+                else
+                {
+                    <!-- Botón de Mantener Presionado -->
+                    <button class="hold-to-process-btn @(isHolding ? "holding" : "")"
+                            oncontextmenu="return false;"
+                            @onmousedown="StartHold" @onmouseup="EndHold" @onmouseleave="EndHold"
+                            @ontouchstart="StartHold" @ontouchend="EndHold"
+                            disabled="@isProcesando">
+                        @if (isProcesando)
+                        {
+                            <span class="spinner" style="width: 20px; height: 20px; border-width: 3px; position: relative; z-index: 2;"></span>
+                        }
+                        else
+                        {
+                            <span style="position: relative; z-index: 2;">MANTÉN PRESIONADO PARA CLASIFICAR</span>
+                        }
+                        <div class="hold-progress"></div>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <!-- ================= PANTALLA DE PODIUM (MODO HORIZONTAL) ================= -->
+    <div class="orientation-prompt need-portrait">
+        <div class="phone-icon-anim-landscape">
+            <div class="phone-body"></div>
+        </div>
+        <h2 style="font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">GIRA EL TELÉFONO</h2>
+        <p style="color: #aaa; text-align: center; max-width: 80%;">Los resultados se revelarán en modo horizontal.</p>
+    </div>
+
+    <div class="podium-master-container font-modern">
+        @if (enCountdown)
+        {
+            <div class="countdown-overlay font-digital">
+                <span class="count-number">@countdownNumber</span>
+            </div>
+        }
+        else
+        {
+            <!-- RESULTADOS Y PODIUM -->
+            <div style="display: flex; flex-direction: column; height: 100%; width: 100%;">
+
+                <!-- HEADER DEL PODIUM -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <h2 style="margin: 0; color: #ffeb3b; font-weight: 900; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">
+                        LEADERBOARD
+                    </h2>
+
+                    <!-- PESTAÑAS DE CATEGORÍA -->
+                    @if (categoriasDisponibles.Count > 1)
+                    {
+                        <div style="display: flex; gap: 10px;">
+                            @foreach (var cat in categoriasDisponibles)
+                            {
+                                <button class="cat-tab-btn @(categoriaActivaPodium == cat ? "active" : "")" @onclick="() => categoriaActivaPodium = cat">
+                                    @(cat == "Rx" ? "🔥 Rx" : cat)
+                                </button>
+                            }
+                        </div>
+                    }
+
+                    <button class="btn-exit-podium" @onclick='() => NavManager.NavigateTo("/acciones")'>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        SALIR AL LOBBY
+                    </button>
+                </div>
+
+                <!-- ESCENARIO DEL PODIUM -->
+                <div class="podium-stage">
+                    @{
+                        var topAtletas = GetAtletasOrdenados(categoriaActivaPodium);
+                    }
+
+                    @if (topAtletas.Count > 1)
+                    {
+                        <!-- PLATA (2do) -->
+                        <div class="podium-spot silver-spot fade-in-up" style="animation-delay: 0.4s;">
+                            <div class="podium-avatar">
+                                @if (!string.IsNullOrEmpty(topAtletas[1].FotoPerfil))
+                                {
+                                    <img src="@topAtletas[1].FotoPerfil" />
+                                }
+                                else
+                                {
+
+                                    <span>👤</span>
+                                }
+                            </div>
+                            <span class="podium-name">@topAtletas[1].Nombre</span>
+                            <span class="podium-score">@GenerarTextoScore(topAtletas[1])</span>
+                            <div class="podium-block silver-block">2</div>
+                        </div>
+                    }
+
+                    @if (topAtletas.Count > 0)
+                    {
+                        <!-- ORO (1ero) -->
+                        <div class="podium-spot gold-spot fade-in-up" style="animation-delay: 0.8s;">
+                            <div class="podium-avatar gold-avatar">
+                                @if (!string.IsNullOrEmpty(topAtletas[0].FotoPerfil))
+                                {
+                                    <img src="@topAtletas[0].FotoPerfil" />
+                                }
+                                else
+                                {
+
+                                    <span>👤</span>
+                                }
+                            </div>
+                            <span class="podium-name" style="color: #FFD700; font-size: 1.2rem;">@topAtletas[0].Nombre</span>
+                            <span class="podium-score" style="color: #FFD700;">@GenerarTextoScore(topAtletas[0])</span>
+                            <div class="podium-block gold-block">1</div>
+                        </div>
+                    }
+
+                    @if (topAtletas.Count > 2)
+                    {
+                        <!-- BRONCE (3ero) -->
+                        <div class="podium-spot bronze-spot fade-in-up" style="animation-delay: 0.2s;">
+                            <div class="podium-avatar">
+                                @if (!string.IsNullOrEmpty(topAtletas[2].FotoPerfil))
+                                {
+                                    <img src="@topAtletas[2].FotoPerfil" />
+                                }
+                                else
+                                {
+
+                                    <span>👤</span>
+                                }
+                            </div>
+                            <span class="podium-name">@topAtletas[2].Nombre</span>
+                            <span class="podium-score">@GenerarTextoScore(topAtletas[2])</span>
+                            <div class="podium-block bronze-block">3</div>
+                        </div>
+                    }
+                </div>
+
+                <!-- RESTO DE LOS ATLETAS (4to en adelante) -->
+                @if (topAtletas.Count > 3)
+                {
+                    <div class="rest-athletes-scroller fade-in-up" style="animation-delay: 1s;">
+                        @for (int i = 3; i < topAtletas.Count; i++)
+                        {
+                            <div class="rest-card">
+                                <span style="font-weight: 900; color: #888; font-size: 1.1rem; width: 25px;">@(i + 1)</span>
+                                <div class="avatar-sm" style="width: 35px; height: 35px; margin: 0 10px;">
+                                    @if (!string.IsNullOrEmpty(topAtletas[i].FotoPerfil))
+                                    {
+                                        <img src="@topAtletas[i].FotoPerfil" />
+                                    }
+                                    else
+                                    {
+                                        <span>👤</span>
+                                    }
+                                </div>
+                                <span style="color: white; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@topAtletas[i].Nombre</span>
+
+                                <!-- AQUI AGREGAMOS EL MARGIN-LEFT -->
+                                <span style="color: #33b5e5; font-weight: 900; font-family: 'Orbitron', monospace; margin-left: 15px;">@GenerarTextoScore(topAtletas[i])</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .font-digital {
+        font-family: 'Orbitron', monospace;
+    }
+
+    /* CONTENEDOR PRINCIPAL */
+    .resumen-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background-color: #050505;
+    }
+
+    .resumen-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .back-btn {
+        background: transparent;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+
+        .back-btn:hover {
+            color: white;
+        }
+
+    /* TABS */
+    .tabs-container {
+        display: flex;
+        gap: 5px;
+        padding: 15px 15px;
+        background: #0a0a0a;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 10px 2px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #888;
+        font-weight: 800;
+        font-size: 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+        .tab-btn.active {
+            background: #33b5e5;
+            color: #000;
+            border-color: #33b5e5;
+            box-shadow: 0 4px 15px rgba(51,181,229,0.3);
+        }
+
+    .config-row-switch {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: #111;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* LISTA VERTICAL */
+    .atletas-list {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    .atleta-score-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 14px;
+        padding: 15px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .atleta-info-area {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .avatar-sm {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #222;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+        .avatar-sm img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .name-area {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+        .name-area .name {
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .name-area .surname {
+            color: #888;
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    .cat-select {
+        background: transparent;
+        color: #33b5e5;
+        border: 1px dashed rgba(51,181,229,0.5);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        padding: 4px 6px;
+        outline: none;
+        cursor: pointer;
+    }
+
+        .cat-select option {
+            background: #111;
+            color: white;
+        }
+
+    .score-input-area {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .ink-input-score {
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        text-align: center;
+        width: 85px;
+        outline: none;
+        transition: 0.2s;
+    }
+
+        .ink-input-score:focus {
+            border-color: #33b5e5;
+            background: rgba(51,181,229,0.1);
+        }
+
+    .bottom-action-area {
+        padding: 20px;
+        background: #0a0a0a;
+        border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* BOTÓN HOLD-TO-PROCESS */
+    .hold-to-process-btn {
+        position: relative;
+        width: 100%;
+        padding: 18px;
+        background: #222;
+        border: 1px solid #444;
+        color: #aaa;
+        border-radius: 12px;
+        font-weight: 900;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+        cursor: pointer;
+        overflow: hidden;
+        outline: none;
+        transition: 0.2s;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+        .hold-to-process-btn.holding {
+            color: white;
+            border-color: #33b5e5;
+            transform: scale(0.98);
+        }
+
+    .hold-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #0099CC, #33b5e5);
+        z-index: 1;
+        transition: width 0.1s linear;
+    }
+
+    .holding .hold-progress {
+        width: 100%;
+        transition: width 1.5s linear;
+    }
+
+    .bg-blue {
+        background: linear-gradient(135deg, #33b5e5, #0099CC);
+        border: none;
+        color: white;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(51,181,229,0.3);
+        transition: transform 0.1s;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .bg-blue:active {
+            transform: scale(0.98);
+        }
+
+    /* BOTON ELEGANTE SALIR LOBBY (PODIUM) */
+    .btn-exit-podium {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        width: auto;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+        .btn-exit-podium:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+    /* SWITCH ESTILOS */
+    .switch-juez {
+        position: relative;
+        display: inline-block;
+        width: 42px;
+        height: 22px;
+    }
+
+        .switch-juez input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider-juez {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255,255,255,0.1);
+        transition: .4s;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .slider-juez:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #888;
+            transition: .4s;
+        }
+
+    input:checked + .slider-juez {
+        background-color: rgba(51, 181, 229, 0.2);
+        border-color: #33b5e5;
+    }
+
+        input:checked + .slider-juez:before {
+            transform: translateX(20px);
+            background-color: #33b5e5;
+        }
+
+    .slider-juez.round {
+        border-radius: 34px;
+    }
+
+        .slider-juez.round:before {
+            border-radius: 50%;
+        }
+
+    /* ============================== PODIUM CSS ============================== */
+    .podium-master-container {
+        background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .countdown-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.9);
+        z-index: 5000;
+    }
+
+    .count-number {
+        font-size: 15rem;
+        color: #ffeb3b;
+        text-shadow: 0 0 50px rgba(255,235,59,0.5);
+        animation: popIn 1s infinite;
+    }
+
+    @@keyframes popIn {
+        0% {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+
+        50% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 0;
+        }
+    }
+
+    .podium-stage {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 20px;
+        padding-bottom: 20px;
+    }
+
+    .podium-spot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 120px;
+    }
+
+    .podium-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: #222;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        overflow: hidden;
+        border: 3px solid white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+
+        .podium-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .gold-avatar {
+        width: 90px;
+        height: 90px;
+        border-color: #FFD700;
+        box-shadow: 0 0 30px rgba(255,215,0,0.5);
+    }
+
+    .podium-name {
+        color: white;
+        font-weight: 900;
+        font-size: 1rem;
+        margin-bottom: 2px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    .podium-score {
+        color: #33b5e5;
+        font-weight: 900;
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+
+    .podium-block {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 15px;
+        font-weight: 900;
+        font-size: 2rem;
+        color: rgba(0,0,0,0.5);
+        border-radius: 10px 10px 0 0;
+        box-shadow: inset 0 5px 15px rgba(255,255,255,0.3);
+    }
+
+    .gold-block {
+        height: 160px;
+        background: linear-gradient(180deg, #FFD700, #B8860B);
+    }
+
+    .silver-block {
+        height: 120px;
+        background: linear-gradient(180deg, #E0E0E0, #808080);
+    }
+
+    .bronze-block {
+        height: 90px;
+        background: linear-gradient(180deg, #CD7F32, #8B4513);
+    }
+
+    .cat-tab-btn {
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: #aaa;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .cat-tab-btn.active {
+            background: #33b5e5;
+            color: #000;
+            box-shadow: 0 0 10px rgba(51,181,229,0.5);
+        }
+
+    .rest-athletes-scroller {
+        display: flex;
+        gap: 15px;
+        padding: 15px 20px;
+        background: rgba(0,0,0,0.6);
+        overflow-x: auto;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .rest-card {
+        display: flex;
+        align-items: center;
+        background: rgba(255,255,255,0.05);
+        padding: 10px 20px;
+        border-radius: 12px;
+        min-width: 250px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ROTACIÓN LANDSCAPE */
+    .orientation-prompt {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        z-index: 9999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    @@media screen and (orientation: portrait) {
+        .orientation-prompt.need-portrait {
+            display: flex;
+        }
+
+        .podium-master-container {
+            display: none !important;
+        }
+    }
+
+    .phone-icon-anim-landscape {
+        width: 60px;
+        height: 100px;
+        border: 4px solid white;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        animation: rotarALandscape 2s infinite ease-in-out;
+    }
+
+    @@keyframes rotarALandscape {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        50% {
+            transform: rotate(-90deg);
+        }
+
+        100% {
+            transform: rotate(-90deg);
+        }
+    }
+</style>
+
+@code {
+    private string gymCode = "NOMADA";
+    private bool isLoading = true;
+    private bool isProcesando = false;
+
+    private string tabActiva = "Asistencia";
+    private bool habilitarCategorias = false;
+    private bool capturaManualGlobal = false;
+
+    private int horarioIdOriginal = 0;
+    private int wodIdOriginal = 0; // Guardamos el WodId que viene del Timer
+
+    // --- VARIABLES PODIUM ---
+    private bool mostrarPodium = false;
+    private bool requiereVertical = false;
+    private bool enCountdown = false;
+    private int countdownNumber = 3;
+    private string categoriaActivaPodium = "General";
+    private List<string> categoriasDisponibles = new();
+
+    // --- LOGICA HOLD BUTTON ---
+    private bool isHolding = false;
+    private CancellationTokenSource? holdCts;
+
+    public class AtletaScoreDto
+    {
+        public Guid UsuarioId { get; set; }
+        public string Nombre { get; set; } = "";
+        public string ApellidoPaterno { get; set; } = "";
+        public string? FotoPerfil { get; set; }
+        public string MetodoIngreso { get; set; } = "App";
+
+        public string TiempoFinal { get; set; } = "";
+        public int? Rondas { get; set; }
+        public int? Reps { get; set; }
+        public int? RepsTotales { get; set; }
+
+        public string CategoriaSeleccionada { get; set; } = "General";
+    }
+
+    private List<AtletaScoreDto> atletas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        try { await JSRuntime.InvokeVoidAsync("setOrientation", "portrait"); } catch { }
+        await CargarDatosMemoria();
+    }
+
+    private async Task CargarDatosMemoria()
+    {
+        try
+        {
+            string json = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "ResumenClaseData");
+            if (!string.IsNullOrEmpty(json))
+            {
+                using JsonDocument doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                horarioIdOriginal = root.GetProperty("HorarioId").GetInt32();
+                wodIdOriginal = root.GetProperty("WodId").GetInt32(); // <--- LEEMOS EL ID EXACTO
+
+                bool modoJuez = root.GetProperty("ModoJuez").GetBoolean();
+
+                var dictTiempos = new Dictionary<Guid, string>();
+                if (root.TryGetProperty("TiemposCapturados", out JsonElement tiemposElement))
+                {
+                    foreach (JsonProperty prop in tiemposElement.EnumerateObject())
+                    {
+                        if (Guid.TryParse(prop.Name, out Guid id))
+                        {
+                            dictTiempos[id] = prop.Value.GetString() ?? "";
+                        }
+                    }
+                }
+
+                if (root.TryGetProperty("Atletas", out JsonElement atletasElement))
+                {
+                    foreach (JsonElement a in atletasElement.EnumerateArray())
+                    {
+                        var uId = a.GetProperty("UsuarioId").GetGuid();
+                        string tiempo = dictTiempos.ContainsKey(uId) ? dictTiempos[uId] : "";
+
+                        atletas.Add(new AtletaScoreDto
+                        {
+                            UsuarioId = uId,
+                            Nombre = a.GetProperty("Nombre").GetString() ?? "",
+                            ApellidoPaterno = a.GetProperty("ApellidoPaterno").GetString() ?? "",
+                            FotoPerfil = a.GetProperty("FotoPerfil").GetString(),
+                            MetodoIngreso = a.GetProperty("MetodoIngreso").GetString() ?? "App",
+                            TiempoFinal = tiempo
+                        });
+                    }
+                }
+
+                if (modoJuez && atletas.Any(a => !string.IsNullOrEmpty(a.TiempoFinal)))
+                {
+                    tabActiva = "Tiempo";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error leyendo SessionStorage: " + ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void VolverAlTimer()
+    {
+        NavManager.NavigateTo($"/admin/timer/{horarioIdOriginal}");
+    }
+
+    // --- HOLD TO PROCESS LOGIC ---
+    private async Task StartHold()
+    {
+        if (isProcesando) return;
+        isHolding = true;
+        holdCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(1500, holdCts.Token);
+            await ProcesarClaseYMostrarPodium();
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    private void EndHold()
+    {
+        if (isHolding)
+        {
+            isHolding = false;
+            holdCts?.Cancel();
+        }
+    }
+
+    private async Task ProcesarClaseSimple()
+    {
+        await ProcesarDatosBackend();
+        NavManager.NavigateTo("/acciones");
+    }
+
+    private async Task ProcesarClaseYMostrarPodium()
+    {
+        isHolding = false;
+        bool exito = await ProcesarDatosBackend();
+
+        if (exito)
+        {
+            mostrarPodium = true;
+            try { await JSRuntime.InvokeVoidAsync("setOrientation", "landscape"); } catch { }
+
+            if (habilitarCategorias)
+            {
+                categoriasDisponibles = atletas.Select(a => a.CategoriaSeleccionada).Distinct().ToList();
+                if (categoriasDisponibles.Contains("Rx")) categoriaActivaPodium = "Rx";
+                else categoriaActivaPodium = categoriasDisponibles.FirstOrDefault() ?? "General";
+            }
+            else
+            {
+                categoriasDisponibles = new List<string> { "General" };
+                categoriaActivaPodium = "General";
+            }
+
+            enCountdown = true;
+            for (int i = 3; i > 0; i--)
+            {
+                countdownNumber = i;
+                StateHasChanged();
+                await Task.Delay(1000);
+            }
+            enCountdown = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<bool> ProcesarDatosBackend()
+    {
+        isProcesando = true;
+        StateHasChanged();
+
+        try
+        {
+            var payload = new
+            {
+                GymCode = gymCode,
+                HorarioId = horarioIdOriginal,
+                WodGeneralId = wodIdOriginal, // <--- ENVIAMOS EL ID EXACTO Y SEGURO AL BACKEND
+                TipoScoreGlobal = tabActiva,
+                CapturaManualGlobal = capturaManualGlobal,
+                Scores = atletas.Select(a => new
+                {
+                    UsuarioId = a.UsuarioId,
+                    MetodoIngreso = a.MetodoIngreso,
+                    Categoria = habilitarCategorias ? a.CategoriaSeleccionada : "General",
+                    TiempoFormato = a.TiempoFinal,
+                    Rondas = a.Rondas,
+                    Repeticiones = (tabActiva == "Rondas") ? a.Reps : a.RepsTotales
+                }).ToList()
+            };
+
+            var response = await Http.PostAsJsonAsync($"api/lobby/{gymCode}/procesar-clase", payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "ResumenClaseData");
+                return true;
+            }
+            else
+            {
+                string error = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", $"Hubo un problema: {error}", "OK");
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error de Red", ex.Message, "OK");
+            return false;
+        }
+        finally
+        {
+            isProcesando = false;
+            StateHasChanged();
+        }
+    }
+
+    // --- LOGICA DE ORDENAMIENTO DE PODIUM ---
+    private List<AtletaScoreDto> GetAtletasOrdenados(string categoria)
+    {
+        var filtrados = atletas.Where(a => a.CategoriaSeleccionada == categoria).ToList();
+
+        if (tabActiva == "Tiempo")
+        {
+            // Ordenar de menor a mayor (El más rápido gana)
+            return filtrados.OrderBy(a => ConvertirASegundos(a.TiempoFinal)).ToList();
+        }
+        else if (tabActiva == "Rondas")
+        {
+            // Mayor rondas, luego mayor reps
+            return filtrados.OrderByDescending(a => a.Rondas ?? 0).ThenByDescending(a => a.Reps ?? 0).ToList();
+        }
+        else if (tabActiva == "Reps")
+        {
+            // Mayor reps totales
+            return filtrados.OrderByDescending(a => a.RepsTotales ?? 0).ToList();
+        }
+
+        return filtrados;
+    }
+
+    private string GenerarTextoScore(AtletaScoreDto a)
+    {
+        if (tabActiva == "Tiempo") return string.IsNullOrEmpty(a.TiempoFinal) ? "--" : a.TiempoFinal;
+        if (tabActiva == "Rondas") return $"{a.Rondas ?? 0}R + {a.Reps ?? 0}";
+        if (tabActiva == "Reps") return $"{a.RepsTotales ?? 0} Reps";
+        return "";
+    }
+
+    private int ConvertirASegundos(string? formato)
+    {
+        if (string.IsNullOrWhiteSpace(formato)) return 999999; // Si no tiene tiempo, se va al fondo
+        var parts = formato.Split(':');
+        if (parts.Length == 2 && int.TryParse(parts[0], out int m) && int.TryParse(parts[1], out int s))
+            return (m * 60) + s;
+        return 999999;
+    }
+}

@@ -1,0 +1,371 @@
+﻿@page "/admin/lobby"
+@using Nomada.Shared.Models
+@using Nomada.Shared.Entities
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@implements IDisposable
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="app-container">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
+
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+            </a>
+            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">LOBBY DE CLASE</h2>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+        }
+        else
+        {
+            <!-- SELECTOR DE HORARIO -->
+            <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px;">
+                <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: block;">Selecciona el Horario a Iniciar</label>
+                <div style="display: flex; gap: 10px;">
+                    <!-- Cargamos los horarios REALES de la base de datos para esta sucursal -->
+                    <select class="search-input" style="flex: 1; margin: 0; font-weight: 800; font-size: 0.95rem; border-color: #33b5e5;" @bind="horarioSeleccionadoId">
+                        <option value="0">Elige un horario...</option>
+                        @foreach (var horario in horariosDisponibles)
+                        {
+                            <option value="@horario.Id">@horario.HoraTexto</option>
+                        }
+                    </select>
+
+                    <button class="ink-btn glow-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 0.85rem;" @onclick="AbrirSesion" disabled="@(horarioSeleccionadoId == 0 || isProcessing)">
+                        @if (isProcessing)
+                        {
+                            <span class="spinner" style="width: 14px; height: 14px;"></span>
+                        }
+                        else
+                        {
+
+                            <span>ABRIR CLASE</span>
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <!-- TABLERO PRINCIPAL (Se muestra cuando se abre la sesión) -->
+            @if (sesionActiva != null)
+            {
+                <div class="fade-in-up">
+                    <div style="background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 25px;">
+                        <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 5px;">Código de Clase (Solo hoy)</span>
+                        <h1 style="color: #00C851; font-size: 2.8rem; font-weight: 900; letter-spacing: 5px; margin: 0; text-shadow: 0 0 15px rgba(0,200,81,0.3);">@sesionActiva.CodigoAcceso</h1>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; text-transform: uppercase;">Atletas en Lobby (@usuariosLobby.Count)</span>
+                        <button style="background: rgba(51,181,229,0.1); color: #33b5e5; border: 1px solid rgba(51,181,229,0.3); border-radius: 20px; padding: 5px 15px; font-size: 0.75rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px;" @onclick="AbrirModalAgregar">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> AGREGAR
+                        </button>
+                    </div>
+
+                    <!-- CSS GRID PARA RESPONSIVE (Vertical y Horizontal) -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                        @foreach (var user in usuariosLobby)
+                        {
+                            <div class="modern-row" style="padding: 12px 15px; margin: 0; display: flex; align-items: center; gap: 15px;">
+                                <!-- Foto Circular -->
+                                <div style="width: 45px; height: 45px; border-radius: 50%; background: rgba(128,128,128,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid @(ObtenerColorMetodo(user.MetodoIngreso));">
+                                    @if (!string.IsNullOrEmpty(user.FotoPerfil))
+                                    {
+                                        <img src="@user.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+
+                                        <span style="color: var(--text-muted); font-size: 1.2rem;">👤</span>
+                                    }
+                                </div>
+
+                                <div style="flex: 1; overflow: hidden;">
+                                    <h4 style="color: var(--text-main); margin: 0 0 3px 0; font-size: 0.95rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@user.Nombre @user.ApellidoPaterno</h4>
+                                    <!-- Insignia del Método de Ingreso -->
+                                    <span style="background: @(ObtenerFondoMetodo(user.MetodoIngreso)); color: @(ObtenerColorMetodo(user.MetodoIngreso)); padding: 2px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">
+                                        @user.MetodoIngreso
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <button class="ink-btn glow-btn" style="width: 100%; font-size: 1.1rem; padding: 18px; background: linear-gradient(135deg, #ff4444, #cc0000); box-shadow: 0 5px 20px rgba(255,68,68,0.4);" @onclick="IrAlCronometro">
+                        ▶ IR AL TIMER
+                    </button>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- MODAL BUSCADOR MANUAL -->
+    @if (mostrarModal)
+    {
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; justify-content: center; align-items: flex-end; padding: 0;">
+            <div class="fade-in-up" style="background: #111; width: 100%; height: 80vh; border-top-left-radius: 25px; border-top-right-radius: 25px; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <h3 style="color: white; margin: 0; font-weight: 900; font-size: 1.1rem;">AGREGAR ATLETA</h3>
+                    <button style="background: none; border: none; color: #ff4444; cursor: pointer; padding: 5px; font-weight: 800;" @onclick="CerrarModal">CERRAR</button>
+                </div>
+
+                <div style="padding: 15px; flex: 1; overflow-y: auto;">
+                    <!-- Buscador en tiempo real -->
+                    <div class="search-wrapper" style="margin-bottom: 15px;">
+                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" @bind="textoBusquedaAtleta" @bind:event="oninput" placeholder="Buscar por nombre..." class="search-input" />
+                    </div>
+
+                    <!-- Lista de Resultados (Filtrada) -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        @if (!AtletasBusquedaFiltrados.Any())
+                        {
+                            <span style="color: var(--text-muted); font-size: 0.8rem; text-align: center; display: block; margin-top: 10px;">No hay resultados o el atleta ya está en el lobby.</span>
+                        }
+
+                        @foreach (var atleta in AtletasBusquedaFiltrados)
+                        {
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 12px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden;">
+                                    <div style="width: 35px; height: 35px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                                        @if (!string.IsNullOrEmpty(atleta.FotoPerfil))
+                                        {
+                                            <img src="@atleta.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+
+                                            <span style="color: white; font-size: 0.8rem; font-weight: bold;">@atleta.Iniciales</span>
+                                        }
+                                    </div>
+                                    <span style="color: white; font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@atleta.NombreCompleto</span>
+                                </div>
+
+                                <!-- BOTÓN INTERACTIVO -->
+                                <button class="ink-btn glow-btn" style="margin: 0; padding: 6px 12px; font-size: 0.7rem; width: auto; background: @(atleta.Agregado ? "#00C851" : "#33b5e5"); border-color: transparent;"
+                                        @onclick="() => AgregarAtletaManual(atleta)" disabled="@(atleta.Procesando || atleta.Agregado)">
+                                    @if (atleta.Procesando)
+                                    {
+                                        <span class="spinner" style="width: 12px; height: 12px; border-width: 2px;"></span>
+                                    }
+                                    else if (atleta.Agregado)
+                                    {
+
+                                        <span>✅ LISTO</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span>AGREGAR</span>
+                                    }
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string gymCode = "NOMADA";
+    private Guid coachId;
+
+    private bool isPageLoading = true;
+    private bool isProcessing = false;
+    private bool isAddingManual = false;
+
+    // Lista de Horarios Reales
+    private List<HorarioClase> horariosDisponibles = new();
+
+    // Sesión Actual
+    private int horarioSeleccionadoId = 0;
+    private SesionLobbyDto? sesionActiva;
+    private List<UsuarioLobbyDto> usuariosLobby = new();
+
+    // Modal de Búsqueda Manual
+    private bool mostrarModal = false;
+    private string textoBusquedaAtleta = "";
+    private List<AtletaBusquedaDto> todosLosAtletas = new();   
+
+    // Control de Polling (Tiempo Real)
+    private bool isPolling = false;
+
+    // Clase DTO Ampliada con variables para la UI (Loader y Check verde)
+    public class AtletaBusquedaDto
+    {
+        public Guid Id { get; set; }
+        public string NombreCompleto { get; set; } = string.Empty;
+        public string Iniciales { get; set; } = string.Empty;
+        public string? FotoPerfil { get; set; }
+        public bool Procesando { get; set; } = false;
+        public bool Agregado { get; set; } = false;
+    }
+
+    // EL FILTRO MÁGICO: Excluye a los que ya están en el Lobby
+    private IEnumerable<AtletaBusquedaDto> AtletasBusquedaFiltrados => todosLosAtletas
+        .Where(a =>
+            // Que coincida con el texto de búsqueda
+            (string.IsNullOrWhiteSpace(textoBusquedaAtleta) || a.NombreCompleto.Contains(textoBusquedaAtleta, StringComparison.OrdinalIgnoreCase))
+            // Y que NO ESTÉ ya en el Lobby
+            && !usuariosLobby.Any(lobbyUser => lobbyUser.UsuarioId == a.Id)
+        );
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        var userIdStr = Preferences.Get("userId", string.Empty);
+        if (Guid.TryParse(userIdStr, out Guid parsedId))
+        {
+            coachId = parsedId;
+        }
+
+        await CargarHorariosDelGym();
+    }
+
+    private async Task CargarHorariosDelGym()
+    {
+        try
+        {
+            // Usamos el endpoint que ya tienes en ReservasController para traer los horarios de este Gym
+            horariosDisponibles = await Http.GetFromJsonAsync<List<HorarioClase>>($"api/reservas/{gymCode}/admin/horarios") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isPageLoading = false;
+        }
+    }
+
+    private async Task AbrirSesion()
+    {
+        isProcessing = true;
+        try
+        {
+            var req = new { horarioId = horarioSeleccionadoId, coachId = coachId };
+            sesionActiva = await Http.PostAsJsonAsync($"api/lobby/{gymCode}/iniciar-sesion", req)
+                                     .Result.Content.ReadFromJsonAsync<SesionLobbyDto>();
+
+            // Iniciamos el ciclo infinito de actualización
+            isPolling = true;
+            _ = IniciarPollingLobby();
+        }
+        catch { }
+        finally { isProcessing = false; }
+    }
+
+    private async Task IniciarPollingLobby()
+    {
+        while (isPolling)
+        {
+            try
+            {
+                var usuariosRefresh = await Http.GetFromJsonAsync<List<UsuarioLobbyDto>>($"api/lobby/{gymCode}/sesion/{horarioSeleccionadoId}/usuarios");
+                if (usuariosRefresh != null)
+                {
+                    usuariosLobby = usuariosRefresh;
+                    StateHasChanged(); // Forzamos actualización visual de la pantalla
+                }
+            }
+            catch { }
+
+            // Espera 3 segundos antes de volver a preguntar
+            await Task.Delay(3000);
+        }
+    }
+
+    // =================== LÓGICA DEL BUSCADOR MANUAL ===================
+    private async Task AbrirModalAgregar()
+    {
+        mostrarModal = true;
+        textoBusquedaAtleta = "";
+
+        // Cargamos a TODOS los usuarios Aprobados de este Gimnasio para el buscador
+        // Nota: Reutilizamos un endpoint de administración si ya lo tienes, o lo podemos crear.
+        // Suponiendo que tienes un endpoint que devuelve la lista de usuarios:
+        try
+        {
+            var listaUsuariosAdmin = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/admin/{gymCode}/usuarios/Aprobado");
+
+            if (listaUsuariosAdmin != null)
+            {
+                todosLosAtletas = listaUsuariosAdmin.Select(u => new AtletaBusquedaDto
+                {
+                    Id = u.Id,
+                    NombreCompleto = $"{u.Nombre} {u.ApellidoPaterno}",
+                    Iniciales = (u.Nombre?.FirstOrDefault().ToString() + u.ApellidoPaterno?.FirstOrDefault().ToString()).ToUpper(),
+                    FotoPerfil = null // O aquí asignarías la foto si la tuvieras en el DTO
+                }).ToList();
+            }
+        }
+        catch { }
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+    }
+
+    private async Task AgregarAtletaManual(AtletaBusquedaDto atleta)
+    {
+        atleta.Procesando = true;
+        StateHasChanged();
+
+        try
+        {
+            var req = new { usuarioId = atleta.Id, horarioId = horarioSeleccionadoId };
+            var res = await Http.PostAsJsonAsync($"api/lobby/{gymCode}/agregar-manual", req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                atleta.Agregado = true; // El botón se pone verde
+            }
+        }
+        catch { }
+        finally
+        {
+            atleta.Procesando = false;
+            StateHasChanged();
+        }
+    }
+
+    // ==================================================================
+
+    private void IrAlCronometro()
+    {
+        if (sesionActiva != null)
+        {
+            NavManager.NavigateTo($"/admin/timer/{sesionActiva.HorarioId}");
+        }
+    }
+
+    // Funciones de Diseño UI
+    private string ObtenerColorMetodo(string metodo) => metodo switch
+    {
+        "App" => "#33b5e5",
+        "Codigo" => "#00C851",
+        "Manual" => "#ffbb33",
+        _ => "#aaa"
+    };
+
+    private string ObtenerFondoMetodo(string metodo) => metodo switch
+    {
+        "App" => "rgba(51,181,229,0.15)",
+        "Codigo" => "rgba(0,200,81,0.15)",
+        "Manual" => "rgba(255,187,51,0.15)",
+        _ => "transparent"
+    };
+
+    // Al salir de la pantalla, apagamos el ciclo infinito para no gastar batería/internet
+    public void Dispose()
+    {
+        isPolling = false;
+    }
+}

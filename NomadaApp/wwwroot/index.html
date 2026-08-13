@@ -24,7 +24,23 @@
     </div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script>
+        window.playAudio = function (id) {
+            var audio = document.getElementById(id);
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(function (e) { console.log("Bloqueado: ", e); });
+            }
+        };
 
+        window.unlockAudio = function () {
+            // Truco para engañar al celular y que nos dé permiso de hacer ruido
+            ['audio-beep', 'audio-go', 'audio-medio'].forEach(id => {
+                let a = document.getElementById(id);
+                if (a) { a.play().then(() => a.pause()).catch(() => { }); }
+            });
+        };
+    </script>
 </body>
 
 </html>

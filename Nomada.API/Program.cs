@@ -22,6 +22,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<Nomada.API.Data.NomadaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHostedService<MotorNotificacionesService>();
+builder.Services.AddScoped<GeminiAIService>();
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 // Ensamblamos la aplicación
 var app = builder.Build();

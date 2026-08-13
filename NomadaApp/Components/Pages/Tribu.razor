@@ -3,6 +3,7 @@
 @using Microsoft.Maui.Storage
 @using System.Net.Http.Json
 @inject HttpClient Http
+@inject NavigationManager NavManager
 
 <div class="app-container">
     <div class="feed-content" style="padding-top: 10px;">
@@ -113,10 +114,9 @@
                                             </button>
                                         }
 
-                                        <!-- Nuevo botón protegido con candado -->
                                         @if (esSuperAdmin || misPermisos.Contains("Agregar Personalizados"))
                                         {
-                                            <button type="button" class="dropdown-item" @onclick:stopPropagation="true">
+                                            <button type="button" class="dropdown-item" @onclick='() => NavManager.NavigateTo($"/admin/personalizado/{atleta.Id}")' @onclick:stopPropagation="true">
                                                 <span class="dd-icon">📝</span> Rutina Personalizada
                                             </button>
                                         }
