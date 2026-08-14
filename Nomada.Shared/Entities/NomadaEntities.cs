@@ -278,4 +278,30 @@ namespace Nomada.Shared.Entities
         public string? JsonFatigaAjustada { get; set; } // Modificado por IA tras leer las notas
     }
 
+    public class RutinaProvisionalIA
+    {
+        public int Id { get; set; }
+        public string GymCode { get; set; } = string.Empty;
+        public Guid UsuarioId { get; set; }
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+        public DateTime FechaExpiracion { get; set; }
+        public int DiasTotales { get; set; }
+        public string Entorno { get; set; } = string.Empty;
+        public string Dificultad { get; set; } = string.Empty;
+        public string? NotasSolicitud { get; set; }
+    }
+
+    public class RutinaProvisionalDia
+    {
+        public int Id { get; set; }
+        public int RutinaProvisionalId { get; set; }
+        public int DiaNumero { get; set; }
+        public string TituloDia { get; set; } = string.Empty;
+        public string ContenidoJson { get; set; } = string.Empty;
+        public bool Completado { get; set; }
+        public DateTime? FechaRealizacion { get; set; }
+        public string? NotasAtleta { get; set; }
+        public string? JsonFatigaAjustada { get; set; }
+    }
+
 }

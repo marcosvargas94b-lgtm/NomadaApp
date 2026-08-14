@@ -187,7 +187,54 @@ namespace Nomada.API.Controllers
                     }
                 }
                 // =========================================================
+                // =========================================================
+                // 3.6 OBTENER DÍAS PROVISIONALES IA REALIZADOS
+                // =========================================================
+                var provisionalesRealizados = await _context.RutinasProvisionalesDias
+                    .Join(_context.RutinasProvisionalesIA,
+                          dia => dia.RutinaProvisionalId,
+                          plan => plan.Id,
+                          (dia, plan) => new { dia, plan })
+                    .Where(x => x.plan.GymCode == gymCode &&
+                                x.plan.UsuarioId == usuarioId &&
+                                x.dia.Completado &&
+                                x.dia.FechaRealizacion >= fechaBusqueda)
+                    .Select(x => x.dia)
+                    .ToListAsync();
 
+                foreach (var dia in provisionalesRealizados)
+                {
+                    if (!string.IsNullOrEmpty(dia.JsonFatigaAjustada) && dia.FechaRealizacion.HasValue)
+                    {
+                        double horasTranscurridas = Math.Max((hoyMexico - dia.FechaRealizacion.Value).TotalHours, 0);
+
+                        try
+                        {
+                            var fatigaDict = JsonSerializer.Deserialize<Dictionary<string, int>>(dia.JsonFatigaAjustada);
+                            if (fatigaDict != null)
+                            {
+                                foreach (var kvp in fatigaDict)
+                                {
+                                    if (kvp.Value > 0)
+                                    {
+                                        bool esGrande = musculosGrandes.Contains(kvp.Key);
+                                        bool esMediano = musculosMedianos.Contains(kvp.Key);
+                                        double recupPorHoraBase = esGrande ? 1.5 : esMediano ? 2.0 : 3.0;
+
+                                        double fatigaGenerada = (kvp.Value * 0.5) * 1.0;
+                                        double fatigaRestante = fatigaGenerada - (horasTranscurridas * (recupPorHoraBase * factorFisiologico));
+
+                                        if (fatigaRestante > 0 && fatigaDic.ContainsKey(kvp.Key))
+                                        {
+                                            fatigaDic[kvp.Key] += fatigaRestante;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
                 // 4. CONSOLIDAR DATOS PARA EL MAPA DE CALOR
                 var listaMusculos = fatigaDic.Select(kvp =>
                 {

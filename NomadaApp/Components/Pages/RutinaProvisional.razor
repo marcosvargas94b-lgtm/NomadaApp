@@ -1,0 +1,294 @@
+﻿@page "/perfil/rutina-provisional"
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="app-container font-modern">
+    <!-- HEADER -->
+    <div class="resumen-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="background: none; border: none; color: white; cursor: pointer; padding: 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h2 class="greeting-title" style="margin: 0; font-size: 1.3rem; letter-spacing: 1px; text-transform: uppercase; color: #00bcd4;">COACH IA PROVISIONAL</h2>
+        <div style="width: 24px;"></div>
+    </div>
+
+    <div class="feed-content" style="padding-top: 15px; padding-bottom: 80px;">
+
+        <!-- BANNER DE ADVERTENCIA PROVISIONAL -->
+        <div style="background: rgba(0, 188, 212, 0.08); border-left: 4px solid #00bcd4; padding: 12px 15px; margin: 0 15px 20px 15px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span style="color: #00bcd4; font-weight: 900; font-size: 0.8rem; text-transform: uppercase;">Entrenamiento Provisional</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0; line-height: 1.4;">
+                Este plan es temporal para viajes o días sin asistencia al box. No lleva historial acumulativo y caducará 48 hrs después de finalizar el plan.
+            </p>
+        </div>
+
+        @if (isLoading)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 45vh;">
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: #00bcd4;"></span>
+                <p style="margin-top: 20px; color: #888; font-weight: 800; letter-spacing: 1px;">@(isGenerating ? "COACH IA PROGRAMANDO..." : "CARGANDO...")</p>
+            </div>
+        }
+        else if (planActivo == null)
+        {
+            <!-- ================= CUESTIONARIO GENERADOR ================= -->
+            <div class="fade-in-up" style="padding: 0 15px;">
+                <div class="login-card" style="padding: 20px; border: 1px solid rgba(0, 188, 212, 0.3);">
+                    <h3 style="color: white; font-weight: 900; font-size: 1.1rem; margin-bottom: 20px; text-transform: uppercase;">
+                        CONFIGURA TU PLAN
+                    </h3>
+
+                    <!-- DÍAS (1 A 5) -->
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 8px;">¿Cuántos días entrenarás? (1 a 5)</label>
+                        <div style="display: flex; gap: 8px;">
+                            @for (int d = 1; d <= 5; d++)
+                            {
+                                int num = d;
+                                <button type="button" class="@(request.Dias == num ? "ink-btn" : "ink-btn-outline")" style="flex: 1; padding: 10px 0; margin: 0; font-weight: 900; @(request.Dias == num ? "background: #00bcd4; color: black;" : "")" @onclick="() => request.Dias = num">
+                                    @num D
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- ENTORNO / EQUIPO -->
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 8px;">Equipamiento disponible</label>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div class="modern-row" style="padding: 12px 15px; margin: 0; cursor: pointer; border-color: @(request.Entorno == "CasaAutocargas" ? "#00bcd4" : "rgba(255,255,255,0.1)"); background: @(request.Entorno == "CasaAutocargas" ? "rgba(0, 188, 212, 0.1)" : "transparent");" @onclick='() => request.Entorno = "CasaAutocargas"'>
+                                <span style="color: white; font-weight: 800; font-size: 0.85rem;">🏠 Casa (Peso Corporal Puro)</span>
+                            </div>
+                            <div class="modern-row" style="padding: 12px 15px; margin: 0; cursor: pointer; border-color: @(request.Entorno == "CasaMancuernas" ? "#00bcd4" : "rgba(255,255,255,0.1)"); background: @(request.Entorno == "CasaMancuernas" ? "rgba(0, 188, 212, 0.1)" : "transparent");" @onclick='() => request.Entorno = "CasaMancuernas"'>
+                                <span style="color: white; font-weight: 800; font-size: 0.85rem;">🏋️ Casa con Mancuernas</span>
+                            </div>
+                            <div class="modern-row" style="padding: 12px 15px; margin: 0; cursor: pointer; border-color: @(request.Entorno == "Gimnasio" ? "#00bcd4" : "rgba(255,255,255,0.1)"); background: @(request.Entorno == "Gimnasio" ? "rgba(0, 188, 212, 0.1)" : "transparent");" @onclick='() => request.Entorno = "Gimnasio"'>
+                                <span style="color: white; font-weight: 800; font-size: 0.85rem;">🏢 Gimnasio Tradicional / Hotel</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DIFICULTAD -->
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 8px;">Nivel de Exigencia</label>
+                        <div class="segmented-control" style="margin: 0;">
+                            <div class="segment @(request.Dificultad == "Principiante" ? "active" : "")" @onclick='() => request.Dificultad = "Principiante"'>SUAVE</div>
+                            <div class="segment @(request.Dificultad == "Intermedio" ? "active" : "")" @onclick='() => request.Dificultad = "Intermedio"'>MEDIO</div>
+                            <div class="segment @(request.Dificultad == "Avanzado" ? "active" : "")" @onclick='() => request.Dificultad = "Avanzado"'>INTENSO</div>
+                        </div>
+                    </div>
+
+                    <!-- NOTAS EXTRAS -->
+                    <div style="margin-bottom: 25px;">
+                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 8px;">¿Alguna molestia o preferencia?</label>
+                        <input type="text" @bind="request.Notas" placeholder="Ej. Dolor lumbar, enfocar en hombros..." class="search-input" style="font-size: 0.9rem;" />
+                    </div>
+
+                    <button class="ink-btn glow-btn" @onclick="GenerarPlanIA" disabled="@isGenerating" style="width: 100%; background: #00bcd4; color: black; font-weight: 900;">
+                        GENERAR ENTRENAMIENTO IA
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- ================= VISTA DEL PLAN ACTIVO ================= -->
+            <div style="padding: 0 15px;">
+                <!-- SELECTOR DE DÍAS -->
+                <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto;">
+                    @foreach (var dia in planActivo.Dias)
+                    {
+                        int dNum = dia.DiaNumero;
+                        <button class="ink-btn-outline" style="flex: 1; min-width: 60px; padding: 10px 0; margin: 0; font-weight: 900; font-size: 0.85rem; border-color: @(diaSeleccionadoNumero == dNum ? "#00bcd4" : (dia.Completado ? "#00C851" : "rgba(255,255,255,0.1)")); background: @(diaSeleccionadoNumero == dNum ? "rgba(0, 188, 212, 0.2)" : (dia.Completado ? "rgba(0, 200, 81, 0.1)" : "transparent")); color: @(diaSeleccionadoNumero == dNum ? "#00bcd4" : (dia.Completado ? "#00C851" : "white"));" @onclick="() => diaSeleccionadoNumero = dNum">
+                            DÍA @dNum @(dia.Completado ? "✓" : "")
+                        </button>
+                    }
+                </div>
+
+                @if (DiaActual != null)
+                {
+                    <div class="modern-row fade-in-up" style="flex-direction: column; padding: 20px; margin-bottom: 20px; border-color: @(DiaActual.Completado ? "#00C851" : "#00bcd4");">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="color: white; font-weight: 900; font-size: 1.15rem; margin: 0;">@DiaActual.TituloDia</h3>
+                            @if (DiaActual.Completado)
+                            {
+                                <span style="background: rgba(0,200,81,0.15); color: #00C851; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 900;">REALIZADO</span>
+                            }
+                        </div>
+
+                        <!-- BLOQUES DE TRABAJO -->
+                        @foreach (var sec in DiaActual.Secciones)
+                        {
+                            <div style="margin-bottom: 15px;">
+                                <h5 style="color: #00bcd4; font-size: 0.85rem; font-weight: 900; margin: 0 0 5px 0; text-transform: uppercase;">@sec.Subtitulo</h5>
+                                <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <pre style="color: white; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; line-height: 1.5; margin: 0; font-weight: 600; white-space: pre-wrap;">@sec.Contenido</pre>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- NOTAS Y TERMINAR ENTRENAMIENTO -->
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                            @if (DiaActual.Completado)
+                            {
+                                <p style="color: #00C851; font-size: 0.8rem; font-weight: 800; margin: 0; text-align: center;">
+                                    ✓ Impacto registrado en tu mapa de calor.
+                                </p>
+                            }
+                            else
+                            {
+                                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; display: block; margin-bottom: 6px;">
+                                    NOTAS (Exclusivo para ajustar el impacto del entrenamiento):
+                                </label>
+                                <textarea @bind="notasDia" placeholder="Ej. Hice 2 rondas extra, se me complicaron las flexiones..." class="search-input" rows="2" style="background: #111; font-size: 0.85rem; margin-bottom: 12px; resize: none;"></textarea>
+
+                                <button class="ink-btn glow-btn" @onclick="FinalizarDia" disabled="@isSubmitting" style="width: 100%; background: #00bcd4; color: black; font-weight: 900; margin: 0;">
+                                    @if (isSubmitting)
+                                    {
+                                        <span class="spinner" style="border-top-color: black;"></span>
+                                    }
+                                    else
+                                    {
+                                        <span>ENTRENAMIENTO REALIZADO</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    @@import url('[https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap](https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap)');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+@code {
+    private string gymCode = "NOMADA";
+    private Guid currentUserId;
+    private bool isLoading = true;
+    private bool isGenerating = false;
+    private bool isSubmitting = false;
+
+    private GenerarRutinaProvisionalRequest request = new();
+    private RutinaProvisionalCompletaDto? planActivo;
+    private int diaSeleccionadoNumero = 1;
+    private string notasDia = "";
+
+    private RutinaProvisionalDiaDto? DiaActual => planActivo?.Dias.FirstOrDefault(d => d.DiaNumero == diaSeleccionadoNumero);
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        var userIdStr = Preferences.Get("userId", string.Empty);
+
+        if (Guid.TryParse(userIdStr, out currentUserId))
+        {
+            request.GymCode = gymCode;
+            request.UsuarioId = currentUserId;
+            await CargarPlanActivo();
+        }
+    }
+
+    private async Task CargarPlanActivo()
+    {
+        isLoading = true;
+        try
+        {
+            planActivo = await Http.GetFromJsonAsync<RutinaProvisionalCompletaDto>($"api/provisionales/{gymCode}/{currentUserId}");
+            if (planActivo != null && planActivo.Dias.Any())
+            {
+                // Selecciona por defecto el primer día pendiente
+                var primerPendiente = planActivo.Dias.FirstOrDefault(d => !d.Completado);
+                diaSeleccionadoNumero = primerPendiente?.DiaNumero ?? 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando plan: " + ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task GenerarPlanIA()
+    {
+        isGenerating = true;
+        isLoading = true;
+
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/provisionales/generar", request);
+            if (res.IsSuccessStatusCode)
+            {
+                await CargarPlanActivo();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al generar: " + ex.Message);
+        }
+        finally
+        {
+            isGenerating = false;
+            isLoading = false;
+        }
+    }
+
+    private async Task FinalizarDia()
+    {
+        if (DiaActual == null) return;
+        isSubmitting = true;
+
+        try
+        {
+            var req = new CompletarDiaProvisionalRequest { NotasAtleta = notasDia };
+            var res = await Http.PostAsJsonAsync($"api/provisionales/completar-dia/{DiaActual.Id}", req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                DiaActual.Completado = true;
+                notasDia = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al finalizar día: " + ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}

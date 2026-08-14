@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using Nomada.Shared.Models;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 
 namespace Nomada.API.Services
 {
@@ -156,6 +157,74 @@ Devuelve EXCLUSIVAMENTE un objeto JSON válido con los nuevos valores ajustados.
             {
                 Console.WriteLine("Error IA Ajuste: " + ex.Message);
                 return new RespuestaFatigaIA(); // Si falla, que devuelva vacío para no tumbar la app
+            }
+        }
+
+        public async Task<List<DiaGeneradoIADto>> GenerarPlanProvisionalIA(int dias, string entorno, string dificultad, string notas)
+        {
+            try
+            {
+                string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={_apiKey}";
+
+                string prompt = $@"
+Eres un Head Coach experto en programación deportiva de entrenamiento funcional y fuerza.
+Genera un plan de entrenamiento PROVISIONAL estructurado de {dias} día(s).
+
+Parámetros del Atleta:
+- Entorno/Equipamiento: {entorno} (Opciones: CasaAutocargas = peso corporal puro, CasaMancuernas = solo mancuernas/mancuerna única, Gimnasio = barras, máquinas, mancuernas).
+- Nivel de Dificultad: {dificultad}.
+- Notas especiales del atleta: ""{notas}"".
+
+Requisitos de respuesta:
+- Genera exactamente {dias} objeto(s) de entrenamiento.
+- Cada día debe incluir:
+  1. 'DiaNumero' (1 a {dias}).
+  2. 'TituloDia' conciso y motivador.
+  3. 'Secciones' estructuradas (ej. Warmup, Fuerza/Skill, WOD/Metcon o Circuito).
+  4. 'FatigaMuscular' estimando el impacto muscular base (0-100) en: Pecho, Espalda Alta, Lumbares, Hombros, Bíceps, Tríceps, Antebrazos, Abdomen, Oblicuos, Cuádriceps, Isquiotibiales, Glúteos, Pantorrillas, Trapecios, Full Body / Cardio.
+
+Devuelve EXCLUSIVAMENTE un arreglo JSON válido (sin bloques ```json ni texto extra):
+[
+  {{
+    ""DiaNumero"": 1,
+    ""TituloDia"": ""Nombre del día"",
+    ""Secciones"": [
+      {{ ""Subtitulo"": ""WARMUP"", ""Contenido"": ""3 Rondas de..."", ""Orden"": 1 }},
+      {{ ""Subtitulo"": ""WOD"", ""Contenido"": ""AMRAP 15 min..."", ""Orden"": 2 }}
+    ],
+    ""FatigaMuscular"": {{ ""Pecho"": 0, ""Espalda Alta"": 0, ""Lumbares"": 0, ""Hombros"": 0, ""Bíceps"": 0, ""Tríceps"": 0, ""Antebrazos"": 0, ""Abdomen"": 0, ""Oblicuos"": 0, ""Cuádriceps"": 0, ""Isquiotibiales"": 0, ""Glúteos"": 0, ""Pantorrillas"": 0, ""Trapecios"": 0, ""Full Body / Cardio"": 0 }}
+  }}
+]";
+
+                var requestBody = new
+                {
+                    contents = new[] { new { parts = new object[] { new { text = prompt } } } }
+                };
+
+                var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(responseString);
+                    var textResult = doc.RootElement
+                        .GetProperty("candidates")[0]
+                        .GetProperty("content")
+                        .GetProperty("parts")[0]
+                        .GetProperty("text").GetString();
+
+                    textResult = textResult.Replace("```json", "").Replace("```", "").Trim();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    return JsonSerializer.Deserialize<List<DiaGeneradoIADto>>(textResult, options) ?? new();
+                }
+
+                return new();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error IA Plan Provisional: " + ex.Message);
+                return new();
             }
         }
     }

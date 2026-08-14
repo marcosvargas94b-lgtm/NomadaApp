@@ -3,11 +3,12 @@
 @using Nomada.Shared.Models
 @using Microsoft.Maui.Storage
 @using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
 @inject HttpClient Http
 @inject NavigationManager NavManager
 
-<div class="app-container">
-    <div class="feed-content" style="padding-top: 10px;">
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
         <!-- ENCABEZADO -->
         <div style="display: flex; align-items: center; margin-bottom: 25px;">
@@ -24,76 +25,91 @@
 
         @if (isPageLoading)
         {
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
-                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: #33b5e5; margin: 0 0 20px 0;"></span>
-                <p style="color: var(--text-muted); font-weight: 800;">CARGANDO BÓVEDA...</p>
-            </div>
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
         }
         else
         {
-            <div class="admin-section">
-
-                <!-- ================= FORMULARIO CREADOR ================= -->
-                <div class="login-card fade-in-up" style="padding: 20px; margin-bottom: 30px; border-top: 4px solid #33b5e5;">
-                    <h3 style="color: white; font-weight: 900; margin-bottom: 20px; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                        NUEVA RUTINA
-                    </h3>
-
-                    <div class="input-group modern-input">
-                        <label>Título del Entrenamiento</label>
-                        <input type="text" @bind="request.Titulo" class="ink-input" placeholder="Ej: Fuerza de Pierna + Cardio Ligero" />
+            <!-- ================= FORMULARIO CREADOR ================= -->
+            <div class="fade-in-up">
+                
+                @if (!string.IsNullOrEmpty(mensajeError))
+                {
+                    <div style="background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.3); color: #ff4444; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; font-weight: 800; text-align: center;">
+                        @mensajeError
                     </div>
+                }
 
-                    <div style="margin-top: 25px;">
-                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; display: block; text-transform: uppercase;">Bloques de Trabajo</label>
+                <input type="text" @bind="request.Titulo" placeholder="Título de la rutina (Ej. Fuerza de Pierna + Cardio)" class="search-input" style="font-size: 1.1rem; font-weight: 900; margin-bottom: 20px; border-color: #33b5e5;" />
 
-                        @foreach (var seccion in request.Secciones)
-                        {
-                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; position: relative;">
-                                <button type="button" @onclick="() => RemoverSeccion(seccion)" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: #ff4444; cursor: pointer;">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                                </button>
+                <!-- SECCIONES DINÁMICAS -->
+                @foreach (var seccion in request.Secciones)
+                {
+                    <div class="modern-row" style="flex-direction: column; padding: 15px; margin-bottom: 15px; border-left: 4px solid #33b5e5;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
+                            <input type="text" @bind="seccion.Subtitulo" placeholder="Subtítulo (Ej. WARMUP)"
+                                   class="search-input" style="flex: 1; padding: 10px 15px; margin: 0; font-size: 0.95rem; font-weight: 800; color: #33b5e5;" />
 
-                                <input type="text" @bind="seccion.Subtitulo" class="ink-input" placeholder="Subtítulo (Ej: WARMUP)" style="margin-bottom: 10px; font-weight: 800; font-size: 0.9rem;" />
-                                <textarea @bind="seccion.Contenido" class="ink-input" rows="3" placeholder="Detalle (Ej: 3 Rondas de 10 Squats...)"></textarea>
-                            </div>
-                        }
-
-                        <button type="button" class="ink-btn-outline" @onclick="AgregarSeccion" style="width: 100%; border-style: dashed; padding: 10px; color: #33b5e5;">
-                            + AGREGAR BLOQUE
-                        </button>
+                            <button style="background: none; border: none; color: #ff4444; padding: 10px; cursor: pointer; flex-shrink: 0;" @onclick="() => RemoverSeccion(seccion)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                        <textarea @bind="seccion.Contenido" placeholder="Ej.10 DU;3 Rondas x 5 Pull-ups ;10 Squats x 3 ;15 Push-ups" class="search-input" style="min-height: 100px; resize: none; font-size: 0.95rem; line-height: 1.5; font-weight: 600;"></textarea>
                     </div>
+                }
 
-                    <div style="margin-top: 25px;">
-                        <label style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; display: block; text-transform: uppercase;">Guía de Movimientos (Catálogo)</label>
-                        <div style="max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                            @foreach (var ej in catalogo)
+                <button class="ink-btn-outline" style="border-style: dashed; border-color: var(--text-muted); color: var(--text-main); margin-bottom: 25px;" @onclick="AgregarSeccion">
+                    + AGREGAR SECCIÓN
+                </button>
+
+                <!-- CATÁLOGO DE VIDEOS -->
+                <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">Movimientos (@request.EjerciciosIds.Count)</span>
+                        <button class="ink-btn glow-btn" style="margin: 0; margin-left:10px; padding: 5px 15px; font-size: 0.75rem; width: auto; background-color: #333;" @onclick="AbrirCatalogo">CATÁLOGO</button>
+                    </div>
+                    @if (request.EjerciciosIds.Any())
+                    {
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            @foreach (var id in request.EjerciciosIds)
                             {
-                                <div style="display: flex; align-items: center; padding: 5px 0;">
-                                    <input type="checkbox" id="ej_@ej.Id" checked="@request.EjerciciosIds.Contains(ej.Id)" @onchange="@(e => ToggleEjercicio(ej.Id, e.Value))" style="accent-color: #33b5e5; margin-right: 10px; width: 18px; height: 18px;" />
-                                    <label for="ej_@ej.Id" style="color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer;">@ej.Nombre</label>
-                                </div>
+                                var ej = catalogo.FirstOrDefault(c => c.Id == id);
+                                if (ej != null)
+                                {
+                                    <span style="background: rgba(51,181,229,0.1); color: #33b5e5; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">@ej.Nombre</span>
+                                }
                             }
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700;">No has anexado referencias a esta rutina.</span>
+                    }
+                </div>
 
-                    <button class="ink-btn glow-btn" @onclick="GuardarRutina" disabled="@isSaving" style="width: 100%; margin-top: 25px; background: #33b5e5;">
+              <div style="display: flex; gap: 10px; margin-bottom: 40px;">
+                    @if (modoEdicion)
+                    {
+                        <button class="ink-btn-outline" style="flex: 1; border-color: var(--text-muted); color: var(--text-main);" @onclick="CancelarEdicion" disabled="@isSaving">
+                            CANCELAR
+                        </button>
+                    }
+                    
+                    <button class="ink-btn glow-btn" @onclick="GuardarRutina" disabled="@isSaving" style="flex: 1; background: linear-gradient(135deg, #33b5e5, #0099CC);">
                         @if (isSaving)
                         {
-                            <span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span>
+                            <span class="spinner"></span>
                         }
                         else
                         {
-                            <span>ASIGNAR ENTRENAMIENTO</span>
+                            <span>@(modoEdicion ? "ACTUALIZAR RUTINA" : "ASIGNAR ENTRENAMIENTO")</span>
                         }
                     </button>
                 </div>
 
                 <!-- ================= HISTORIAL DEL ATLETA ================= -->
-                <div style="margin-top: 40px;">
+                <div>
                     <h4 style="color: white; font-weight: 900; font-size: 1rem; margin-bottom: 15px; text-transform: uppercase; border-left: 4px solid #00C851; padding-left: 10px;">
-                        HISTORIAL ASIGNADO
+                        HISTORIAL DE RUTINAS
                     </h4>
 
                     @if (!historial.Any())
@@ -108,18 +124,28 @@
                         @foreach (var rutina in historial)
                         {
                             <div class="modern-row" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 10px;">
-                                <div>
-                                    <h4 style="color: white; font-weight: 800; font-size: 0.95rem; margin: 0 0 5px 0;">@rutina.Titulo</h4>
+                                <div style="flex: 1; overflow: hidden; margin-right: 10px;">
+                                    <h4 style="color: white; font-weight: 800; font-size: 0.95rem; margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@rutina.Titulo</h4>
                                     <span style="color: var(--text-muted); font-size: 0.75rem;">Creado: @rutina.FechaCreacion.ToString("dd MMM yyyy")</span>
                                 </div>
-                                @if (rutina.RealizadoHoy)
-                                {
-                                    <span style="background: rgba(0, 200, 81, 0.1); color: #00C851; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; border: 1px solid rgba(0,200,81,0.3);">COMPLETADO</span>
-                                }
-                                else
-                                {
-                                    <span style="background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800;">PENDIENTE</span>
-                                }
+                                <div style="display: flex; gap: 10px; align-items: center; flex-shrink: 0;">
+                                    @if (rutina.RealizadoHoy)
+                                    {
+                                        <span style="background: rgba(0, 200, 81, 0.1); color: #00C851; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; border: 1px solid rgba(0,200,81,0.3);">COMPLETADO</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="background: rgba(255, 255, 255, 0.05); color: #aaa; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 800;">PENDIENTE</span>
+                                    }
+
+                                    <!-- Botones de Acción -->
+                                    <button style="background: rgba(51,181,229,0.1); border: none; color: #33b5e5; padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;" @onclick="() => CargarParaEdicion(rutina.Id)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <button style="background: rgba(255,68,68,0.1); border: none; color: #ff4444; padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;" @onclick="() => EliminarRutina(rutina.Id)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
                             </div>
                         }
                     }
@@ -127,6 +153,71 @@
             </div>
         }
     </div>
+
+    <!-- ====================================================================== -->
+    <!-- MODAL: CATÁLOGO DE EJERCICIOS (CON AZURE BLOB STORAGE)                 -->
+    <!-- ====================================================================== -->
+    @if (mostrarModalCatalogo)
+    {
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px;">
+            <div class="fade-in-up" style="width: 100%; max-width: 500px; max-height: 85vh; border-radius: 20px; padding: 25px 20px; flex-direction: column; overflow-y: auto; background-color: #1a1a1a; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: white; font-size: 1.2rem; font-weight: 900; margin: 0;">Catálogo de Movimientos</h3>
+                    <button style="background: none; border: none; color: #aaa; padding: 5px; cursor: pointer;" @onclick="() => mostrarModalCatalogo = false">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <!-- SUBIDA DE ARCHIVO A AZURE -->
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed rgba(255,255,255,0.2);">
+                    <input type="text" @bind="nuevoEjNombre" placeholder="Nombre (Ej. Bar Muscle Up)" class="search-input" style="margin-bottom: 10px; font-size: 0.9rem; background-color: rgba(0,0,0,0.2); color: white;" />
+                    
+                    <label class="ink-btn-outline" style="margin: 0 0 10px 0; border-color: rgba(255,255,255,0.5); color: white; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                        <InputFile OnChange="SeleccionarVideo" accept="video/*" style="display: none;" />
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        SELECCIONAR VIDEO
+                    </label>
+
+                    @if (!string.IsNullOrEmpty(nombreVideoSeleccionado))
+                    {
+                        <span style="color: #00C851; font-size: 0.75rem; display: block; margin-bottom: 10px; text-align: center;">Archivo: @nombreVideoSeleccionado</span>
+                    }
+
+                    <button class="ink-btn glow-btn" style="margin: 0; padding: 10px; background: #33b5e5; font-size: 0.8rem;" @onclick="SubirVideoAzure" disabled="@isUploadingVideo">
+                        @if (isUploadingVideo)
+                        {
+                            <span class="spinner" style="width: 14px; height: 14px;"></span> <span> SUBIENDO A LA NUBE...</span>
+                        }
+                        else
+                        {
+                            <span>GUARDAR EN CATÁLOGO</span>
+                        }
+                    </button>
+                </div>
+
+                @if (catalogo.Any())
+                {
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        @foreach (var ej in catalogo)
+                        {
+                            bool estaSeleccionado = request.EjerciciosIds.Contains(ej.Id);
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: 12px; border: 1px solid @(estaSeleccionado ? "#00C851" : "rgba(255,255,255,0.1)"); background: @(estaSeleccionado ? "rgba(0,200,81,0.1)" : "transparent");">
+                                <div style="flex: 1; cursor: pointer;" @onclick="() => ToggleSeleccionEjercicio(ej.Id)">
+                                    <span style="color: white; font-weight: 800; font-size: 0.9rem; display: block;">@ej.Nombre</span>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button style="background: none; border: none; color: #ff4444; cursor: pointer; padding: 5px;" @onclick="() => EliminarDelCatalogo(ej.Id)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -135,13 +226,143 @@
     private string gymCode = "NOMADA";
     private Guid coachId;
     private string nombreAtleta = "Cargando...";
+    private string mensajeError = "";
     private bool isPageLoading = true;
     private bool isSaving = false;
 
     // Modelos limpios
     private CrearWodPersonalizadoRequest request = new();
-    private List<CatalogoEjercicio> catalogo = new();
+    private List<EjercicioDto> catalogo = new();
     private List<RutinaAtletaResumenDto> historial = new();
+
+    // Catálogo Variables
+    private bool mostrarModalCatalogo = false;
+    private string nuevoEjNombre = "";
+    private IBrowserFile? videoSeleccionado;
+    private string nombreVideoSeleccionado = "";
+    private bool isUploadingVideo = false;
+    // --- VARIABLES DE EDICIÓN ---
+    private bool modoEdicion = false;
+    private int rutinaEditandoId = 0;
+
+    // --- CLASE TEMPORAL PARA DESERIALIZAR DETALLE ---
+    private class DetalleRutinaDto
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public List<WodSeccionDto> Secciones { get; set; } = new();
+        public List<EjercicioDto> Ejercicios { get; set; } = new();
+    }
+
+    private async Task CargarParaEdicion(int id)
+    {
+        try
+        {
+            // Usamos el mismo endpoint que consume el atleta para ver sus detalles
+            var detalle = await Http.GetFromJsonAsync<DetalleRutinaDto>($"api/personalizados/detalle/{id}");
+            if (detalle != null)
+            {
+                modoEdicion = true;
+                rutinaEditandoId = id;
+                request.Titulo = detalle.Titulo;
+                
+                request.Secciones = detalle.Secciones.Select(s => new WodSeccionDto 
+                { 
+                    Subtitulo = s.Subtitulo, Contenido = s.Contenido, Orden = s.Orden 
+                }).ToList();
+                
+                request.EjerciciosIds = detalle.Ejercicios.Select(e => e.Id).ToList();
+                
+                // Desplazamos la vista hacia arriba
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "Error al cargar la rutina: " + ex.Message;
+        }
+    }
+
+    private void CancelarEdicion()
+    {
+        modoEdicion = false;
+        rutinaEditandoId = 0;
+        request.Titulo = "";
+        request.Secciones.Clear();
+        request.EjerciciosIds.Clear();
+        AgregarSeccion();
+    }
+
+    private async Task EliminarRutina(int id)
+    {
+        try
+        {
+            var res = await Http.DeleteAsync($"api/personalizados/{id}");
+            if (res.IsSuccessStatusCode)
+            {
+                await CargarHistorial();
+            }
+        }
+        catch { }
+    }
+
+    // ================= GUARDADO FINAL (CREAR Y ACTUALIZAR) =================
+    private async Task GuardarRutina()
+    {
+        mensajeError = "";
+
+        if (string.IsNullOrWhiteSpace(request.Titulo))
+        {
+            mensajeError = "Por favor, ponle un título a la rutina.";
+            return;
+        }
+
+        if (!request.Secciones.Any(s => !string.IsNullOrWhiteSpace(s.Contenido)))
+        {
+            mensajeError = "La rutina debe tener al menos una sección con contenido.";
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            HttpResponseMessage res;
+
+            if (modoEdicion)
+            {
+                var updateRequest = new ActualizarWodPersonalizadoRequest
+                {
+                    Titulo = request.Titulo,
+                    Secciones = request.Secciones.Where(s => !string.IsNullOrWhiteSpace(s.Contenido)).ToList(),
+                    EjerciciosIds = request.EjerciciosIds
+                };
+                res = await Http.PutAsJsonAsync($"api/personalizados/{rutinaEditandoId}", updateRequest);
+            }
+            else
+            {
+                res = await Http.PostAsJsonAsync("api/personalizados", request);
+            }
+            
+            if (res.IsSuccessStatusCode)
+            {
+                CancelarEdicion(); // Limpia todo el form
+                await CargarHistorial();
+            }
+            else
+            {
+                mensajeError = $"Error del servidor: {await res.Content.ReadAsStringAsync()}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "Error de red: " + ex.Message;
+        }
+        finally 
+        { 
+            isSaving = false; 
+            StateHasChanged();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,25 +383,56 @@
 
     private async Task CargarDatos()
     {
+        isPageLoading = true;
+
+        // ==============================================================
+        // 1. OBTENER NOMBRE (Aislado para que no rompa lo demás si falla)
+        // ==============================================================
         try
         {
-            // 1. Obtener nombre del atleta
-            var perfil = await Http.GetFromJsonAsync<Usuario>($"api/usuarios/{AtletaId}");
-            if (perfil != null) nombreAtleta = $"{perfil.Nombre} {perfil.ApellidoPaterno}";
+            var perfil = await Http.GetFromJsonAsync<Usuario>($"api/personalizados/{gymCode}/usuario/{AtletaId}");
+            if (perfil != null) 
+            {
+                nombreAtleta = $"{perfil.Nombre} {perfil.ApellidoPaterno}".Trim();
+            }
+        }
+        catch
+        {
+            // Si la ruta del usuario falla, le ponemos un nombre por defecto
+            nombreAtleta = "ATLETA SELECCIONADO";
+        }
 
-            // 2. Obtener el catálogo de videos
-            catalogo = await Http.GetFromJsonAsync<List<CatalogoEjercicio>>($"api/wod/{gymCode}/catalogo") ?? new();
+        // ==============================================================
+        // 2. OBTENER CATÁLOGO E HISTORIAL (Tienen sus propios try-catch)
+        // ==============================================================
+        await CargarCatalogo();
+        await CargarHistorial();
 
-            // 3. Obtener el historial
+        isPageLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task CargarCatalogo()
+    {
+        try 
+        { 
+            catalogo = await Http.GetFromJsonAsync<List<EjercicioDto>>($"api/wod/{gymCode}/catalogo") ?? new(); 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar catálogo: " + ex.Message);
+        }
+    }
+
+    private async Task CargarHistorial()
+    {
+        try
+        {
             historial = await Http.GetFromJsonAsync<List<RutinaAtletaResumenDto>>($"api/personalizados/{gymCode}/atleta/{AtletaId}") ?? new();
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
-        }
-        finally
-        {
-            isPageLoading = false;
+            Console.WriteLine("Error al cargar historial: " + ex.Message);
         }
     }
 
@@ -199,33 +451,74 @@
         }
     }
 
-    private void ToggleEjercicio(int id, object checkedValue)
+    // ================= MÉTODOS DEL CATÁLOGO =================
+    private void AbrirCatalogo()
     {
-        bool isChecked = (bool)checkedValue;
-        if (isChecked && !request.EjerciciosIds.Contains(id)) request.EjerciciosIds.Add(id);
-        else if (!isChecked) request.EjerciciosIds.Remove(id);
+        mostrarModalCatalogo = true;
     }
 
-    private async Task GuardarRutina()
+    private void ToggleSeleccionEjercicio(int id)
     {
-        if (string.IsNullOrWhiteSpace(request.Titulo)) return;
-        isSaving = true;
+        if (request.EjerciciosIds.Contains(id)) request.EjerciciosIds.Remove(id);
+        else request.EjerciciosIds.Add(id);
+    }
+
+    private void SeleccionarVideo(InputFileChangeEventArgs e)
+    {
+        videoSeleccionado = e.File;
+        nombreVideoSeleccionado = e.File.Name;
+    }
+
+    private async Task SubirVideoAzure()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoEjNombre) || videoSeleccionado == null) return;
+        
+        isUploadingVideo = true;
 
         try
         {
-            var res = await Http.PostAsJsonAsync("api/personalizados", request);
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(gymCode), "gymCode");
+            content.Add(new StringContent(nuevoEjNombre), "nombre");
+
+            long maxAllowedSize = 500L * 1024 * 1024;
+            using var stream = videoSeleccionado.OpenReadStream(maxAllowedSize);
+            
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(videoSeleccionado.ContentType);
+            
+            content.Add(fileContent, "video", videoSeleccionado.Name);
+
+            var res = await Http.PostAsync("api/wod/catalogo/subir-video", content);
+            
             if (res.IsSuccessStatusCode)
             {
-                // Limpiamos el form y recargamos el historial
-                request.Titulo = "";
-                request.Secciones.Clear();
-                request.EjerciciosIds.Clear();
-                AgregarSeccion();
-
-                await CargarDatos(); // Refresca la lista
+                nuevoEjNombre = "";
+                videoSeleccionado = null;
+                nombreVideoSeleccionado = "";
+                await CargarCatalogo();
             }
         }
-        catch { }
-        finally { isSaving = false; }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al subir video: " + ex.Message);
+        }
+        finally
+        {
+            isUploadingVideo = false;
+        }
     }
+
+    private async Task EliminarDelCatalogo(int id)
+    {
+        try
+        {
+            await Http.DeleteAsync($"api/wod/catalogo/{id}");
+            request.EjerciciosIds.Remove(id);
+            await CargarCatalogo();
+        }
+        catch { }
+    }
+
+   
 }

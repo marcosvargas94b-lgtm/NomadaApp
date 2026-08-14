@@ -16,7 +16,12 @@ namespace Nomada.Shared.Models
         public List<WodSeccionDto> Secciones { get; set; } = new();
         public List<int> EjerciciosIds { get; set; } = new();
     }
-
+    public class ActualizarWodPersonalizadoRequest
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public List<WodSeccionDto> Secciones { get; set; } = new();
+        public List<int> EjerciciosIds { get; set; } = new();
+    }
     public class FinalizarEntrenoRequest
     {
         public string NotasAtleta { get; set; } = string.Empty;

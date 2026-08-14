@@ -230,5 +230,109 @@ namespace Nomada.API.Controllers
 
             return Ok();
         }
+
+        // ======================================================================
+        // 0. OBTENER DATOS BÁSICOS DEL ATLETA
+        // ======================================================================
+        [HttpGet("{gymCode}/usuario/{id}")]
+        public async Task<IActionResult> GetUsuarioBasico(string gymCode, Guid id)
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.GymCode == gymCode && u.Id == id);
+
+            if (usuario == null) return NotFound();
+
+            return Ok(usuario);
+        }
+
+        // ======================================================================
+        // 5. COACH: ELIMINAR UNA RUTINA
+        // ======================================================================
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarRutina(int id)
+        {
+            var wod = await _context.WodsPersonalizados.FindAsync(id);
+            if (wod != null)
+            {
+                _context.WodsPersonalizados.Remove(wod);
+                await _context.SaveChangesAsync();
+            }
+            return Ok();
+        }
+
+        // ======================================================================
+        // 6. COACH: ACTUALIZAR UNA RUTINA
+        // ======================================================================
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ActualizarRutina(int id, [FromBody] ActualizarWodPersonalizadoRequest request)
+        {
+            var wod = await _context.WodsPersonalizados.FindAsync(id);
+            if (wod == null) return NotFound();
+
+            wod.Titulo = request.Titulo;
+
+            // Limpiamos los datos viejos
+            var seccionesViejas = _context.WodsPersonalizadosSecciones.Where(s => s.WodPersonalizadoId == id);
+            _context.WodsPersonalizadosSecciones.RemoveRange(seccionesViejas);
+
+            var ejerciciosViejos = _context.WodsPersonalizadosEjercicios.Where(e => e.WodPersonalizadoId == id);
+            _context.WodsPersonalizadosEjercicios.RemoveRange(ejerciciosViejos);
+
+            await _context.SaveChangesAsync();
+
+            // Metemos los nuevos
+            if (request.Secciones.Any())
+            {
+                _context.WodsPersonalizadosSecciones.AddRange(request.Secciones.Select(s => new WodPersonalizadoSeccion
+                {
+                    WodPersonalizadoId = id,
+                    Subtitulo = s.Subtitulo,
+                    Contenido = s.Contenido,
+                    Orden = s.Orden
+                }));
+            }
+
+            if (request.EjerciciosIds.Any())
+            {
+                _context.WodsPersonalizadosEjercicios.AddRange(request.EjerciciosIds.Select(eId => new WodPersonalizadoEjercicio
+                {
+                    WodPersonalizadoId = id,
+                    EjercicioId = eId
+                }));
+            }
+
+            await _context.SaveChangesAsync();
+
+            // DISPARAMOS RE-ANÁLISIS DE LA IA EN SEGUNDO PLANO
+            string textoWod = string.Join("\n", request.Secciones.Select(s => $"{s.Subtitulo}\n{s.Contenido}"));
+
+            _ = Task.Run(async () =>
+            {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var scopedContext = scope.ServiceProvider.GetRequiredService<NomadaDbContext>();
+                    var iaServ = scope.ServiceProvider.GetRequiredService<GeminiAIService>();
+
+                    try
+                    {
+                        var analisis = await iaServ.AnalizarImpactoWod(textoWod);
+
+                        var wodParaActualizar = await scopedContext.WodsPersonalizados.FindAsync(id);
+                        if (wodParaActualizar != null)
+                        {
+                            wodParaActualizar.JsonFatigaMuscular = JsonSerializer.Serialize(analisis.FatigaMuscular);
+                            wodParaActualizar.TienePesos = analisis.TienePesos;
+                            await scopedContext.SaveChangesAsync();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error Background IA (Actualizar WOD): {ex.Message}");
+                    }
+                }
+            });
+
+            return Ok();
+        }
     }
 }

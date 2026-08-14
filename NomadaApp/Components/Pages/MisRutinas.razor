@@ -1,0 +1,341 @@
+﻿@page "/perfil/mis-rutinas"
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="app-container font-modern">
+    <!-- ================= HEADER ================= -->
+    <div class="resumen-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="background: none; border: none; color: white; cursor: pointer; padding: 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h2 class="greeting-title" style="margin: 0; font-size: 1.3rem; letter-spacing: 1px; text-transform: uppercase; color: #9b59b6; text-shadow: 0 0 15px rgba(155, 89, 182, 0.4);">MI PROGRAMACIÓN</h2>
+        <div style="width: 24px;"></div>
+    </div>
+
+    <div class="feed-content" style="padding-top: 20px; padding-bottom: 80px;">
+        @if (isLoading)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: #9b59b6;"></span>
+                <p style="margin-top: 20px; color: #888; font-weight: 800; letter-spacing: 1px;">CARGANDO TU CATÁLOGO...</p>
+            </div>
+        }
+        else if (!misRutinas.Any())
+        {
+            <div class="fade-in-up" style="text-align: center; padding: 40px 20px;">
+                <div style="background: rgba(155, 89, 182, 0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <h3 style="color: white; font-weight: 900; font-size: 1.2rem; margin-bottom: 10px;">AÚN NO HAY RUTINAS</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">No tienes una programación personalizada asignada en este momento. Si te interesa llevar tu entrenamiento al siguiente nivel, contacta a tu coach.</p>
+            </div>
+        }
+        else
+        {
+            <div style="padding: 0 15px;">
+                <!-- ================= LISTA DE RUTINAS ================= -->
+                @foreach (var rutina in misRutinas)
+                {
+                    <div class="modern-row fade-in-up" style="padding: 0; margin-bottom: 15px; border-color: @(rutina.RealizadoHoy ? "#00C851" : "rgba(155, 89, 182, 0.3)"); overflow: hidden; cursor: pointer;" @onclick="() => AbrirDetalleRutina(rutina)">
+                        <div style="display: flex; align-items: center; padding: 20px;">
+                            <div style="background: @(rutina.RealizadoHoy ? "rgba(0, 200, 81, 0.1)" : "rgba(155, 89, 182, 0.1)"); padding: 12px; border-radius: 12px; margin-right: 15px;">
+                                @if (rutina.RealizadoHoy)
+                                {
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                }
+                                else
+                                {
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                }
+                            </div>
+                            <div style="flex: 1; overflow: hidden;">
+                                <h3 style="color: white; font-weight: 900; font-size: 1.05rem; margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@rutina.Titulo</h3>
+                                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                                    Asignada: @rutina.FechaCreacion.ToString("dd MMM")
+                                </span>
+                            </div>
+                        </div>
+                        @if (rutina.RealizadoHoy)
+                        {
+                            <div style="background: #00C851; color: black; font-weight: 900; font-size: 0.7rem; text-align: center; padding: 5px; text-transform: uppercase; letter-spacing: 1px;">
+                                COMPLETADO HOY
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- ================= MODAL: DETALLE DE LA RUTINA ================= -->
+    @if (mostrarModalRutina && rutinaActual != null)
+    {
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; justify-content: center; align-items: flex-end; padding: 0;">
+            <div class="fade-in-up" style="width: 100%; max-width: 600px; height: 90vh; border-radius: 25px 25px 0 0; display: flex; flex-direction: column; background-color: #121212; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <!-- HEADER DEL MODAL -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.5); border-radius: 25px 25px 0 0;">
+                    <div style="flex: 1; overflow: hidden; padding-right: 15px;">
+                        <h3 style="color: white; font-size: 1.2rem; font-weight: 900; margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@rutinaActual.Titulo</h3>
+                        <span style="color: #9b59b6; font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">TU ENTRENAMIENTO</span>
+                    </div>
+                    <button style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px; border-radius: 50%; cursor: pointer;" @onclick="CerrarModal">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <!-- CONTENIDO SCROLLEABLE -->
+                <div style="flex: 1; overflow-y: auto; padding: 20px;">
+
+                    @if (isLoadingDetalle)
+                    {
+                        <div style="display: flex; justify-content: center; padding: 40px;"><span class="spinner" style="border-top-color: #9b59b6;"></span></div>
+                    }
+                    else if (detalleRutina != null)
+                    {
+                        <!-- SECCIONES DEL WOD -->
+                        @foreach (var seccion in detalleRutina.Secciones)
+                        {
+                            <div style="margin-bottom: 25px;">
+                                <h4 style="color: #9b59b6; font-size: 1rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; border-left: 3px solid #9b59b6; padding-left: 10px;">@seccion.Subtitulo</h4>
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+                                    <pre style="color: white; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; line-height: 1.6; margin: 0; font-weight: 600; white-space: pre-wrap;">@seccion.Contenido</pre>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- VIDEOS DE REFERENCIA (AHORA SON BOTONES) -->
+                        @if (detalleRutina.Ejercicios.Any())
+                        {
+                            <div style="margin-bottom: 30px;">
+                                <h4 style="color: var(--text-muted); font-size: 0.85rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase;">Movimientos a realizar</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                    @foreach (var ej in detalleRutina.Ejercicios)
+                                    {
+                                        <button @onclick="() => AbrirReproductor(ej)" style="background: rgba(51,181,229,0.1); border: 1px solid rgba(51,181,229,0.3); color: #33b5e5; padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                            @ej.Nombre
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- ÁREA DE FINALIZACIÓN Y NOTAS (LA MAGIA DE LA IA) -->
+                        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                            @if (rutinaActual.RealizadoHoy)
+                            {
+                                <div style="background: rgba(0, 200, 81, 0.1); border: 1px solid rgba(0,200,81,0.3); padding: 20px; border-radius: 12px; text-align: center;">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    <h4 style="color: #00C851; font-weight: 900; margin: 0 0 5px 0;">¡ENTRENAMIENTO COMPLETADO!</h4>
+                                    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Tu fatiga muscular ya fue analizada por la IA y sumada a tu Laboratorio de Recuperación.</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 16px;">
+                                    <h4 style="color: white; font-weight: 900; font-size: 1rem; margin-bottom: 5px;">NOTAS DEL ENTRENAMIENTO</h4>
+                                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;">¿Le subiste peso? ¿Te dolió algo? Escríbelo aquí para que nuestro algoritmo ajuste tu fatiga con mayor precisión.</p>
+
+                                    <textarea @bind="notasAtleta" class="search-input" rows="3" placeholder="Ej. Lo sentí muy fácil, le subí 10 lbs a la sentadilla..." style="background: #1a1a1a; margin-bottom: 15px; resize: none; font-size: 0.9rem;"></textarea>
+
+                                    <button class="ink-btn glow-btn" @onclick="FinalizarEntrenamiento" disabled="@isSubmitting" style="width: 100%; background: linear-gradient(135deg, #9b59b6, #8e44ad); margin: 0;">
+                                        @if (isSubmitting)
+                                        {
+                                            <span class="spinner"></span>
+                                        }
+                                        else
+                                        {
+                                            <span>TERMINAR ENTRENAMIENTO</span>
+                                        }
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ================= REPRODUCTOR DE VIDEO ================= -->
+    @if (videoSeleccionado != null)
+    {
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
+
+            <div style="width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: white; font-size: 1.1rem; font-weight: 900; margin: 0;">@videoSeleccionado.Nombre</h3>
+                <button style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px; border-radius: 50%; cursor: pointer;" @onclick="CerrarReproductor">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <!-- Contenedor del video con esquinas redondeadas -->
+            <div style="width: 100%; max-width: 600px; background: black; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(51,181,229,0.2); border: 1px solid rgba(51,181,229,0.3);">
+                <!-- La etiqueta 'controls' pone los botones nativos del cel (play, pausa, fullscreen) -->
+                <!-- 'autoplay' hace que empiece solito al abrirse -->
+                <!-- 'playsinline' es crucial para que en iPhone no se abra en pantalla completa a la fuerza -->
+                <video src="@videoSeleccionado.UrlVideo" controls autoplay playsinline style="width: 100%; height: auto; max-height: 70vh; display: block;"></video>
+            </div>
+
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 20px;">Revisa tu postura y técnica antes de comenzar.</p>
+        </div>
+    }
+</div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .font-digital {
+        font-family: 'Orbitron', monospace;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+@code {
+    private string gymCode = "NOMADA";
+    private Guid currentUserId;
+    private bool isLoading = true;
+
+    // Lista principal
+    private List<RutinaAtletaResumenDto> misRutinas = new();
+
+    // Variables del Modal de Rutina
+    private bool mostrarModalRutina = false;
+    private bool isLoadingDetalle = false;
+    private bool isSubmitting = false;
+    private RutinaAtletaResumenDto? rutinaActual;
+    private DetalleRutinaDto? detalleRutina;
+    private string notasAtleta = "";
+
+    // Variables del Reproductor de Video
+    private EjercicioDto? videoSeleccionado = null;
+
+    // Clases temporales
+    private class DetalleRutinaDto
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public List<WodSeccionDto> Secciones { get; set; } = new();
+        public List<EjercicioDto> Ejercicios { get; set; } = new();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        var userIdStr = Preferences.Get("userId", string.Empty);
+
+        if (Guid.TryParse(userIdStr, out currentUserId))
+        {
+            await CargarCatalogoRutinas();
+        }
+    }
+
+    private async Task CargarCatalogoRutinas()
+    {
+        isLoading = true;
+        try
+        {
+            misRutinas = await Http.GetFromJsonAsync<List<RutinaAtletaResumenDto>>($"api/personalizados/{gymCode}/atleta/{currentUserId}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar rutinas: " + ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task AbrirDetalleRutina(RutinaAtletaResumenDto rutina)
+    {
+        rutinaActual = rutina;
+        mostrarModalRutina = true;
+        isLoadingDetalle = true;
+        notasAtleta = "";
+
+        try
+        {
+            detalleRutina = await Http.GetFromJsonAsync<DetalleRutinaDto>($"api/personalizados/detalle/{rutina.Id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar detalle: " + ex.Message);
+        }
+        finally
+        {
+            isLoadingDetalle = false;
+        }
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModalRutina = false;
+        rutinaActual = null;
+        detalleRutina = null;
+    }
+
+    // ================= MÉTODOS DEL REPRODUCTOR =================
+    private void AbrirReproductor(EjercicioDto ejercicio)
+    {
+        videoSeleccionado = ejercicio;
+    }
+
+    private void CerrarReproductor()
+    {
+        videoSeleccionado = null;
+    }
+
+    // ================= FINALIZACIÓN =================
+    private async Task FinalizarEntrenamiento()
+    {
+        if (rutinaActual == null) return;
+
+        isSubmitting = true;
+
+        try
+        {
+            var req = new FinalizarEntrenoRequest { NotasAtleta = notasAtleta };
+
+            var res = await Http.PostAsJsonAsync($"api/personalizados/finalizar/{gymCode}/{rutinaActual.Id}/{currentUserId}", req);
+
+            if (res.IsSuccessStatusCode)
+            {
+                rutinaActual.RealizadoHoy = true;
+                notasAtleta = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al finalizar: " + ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}

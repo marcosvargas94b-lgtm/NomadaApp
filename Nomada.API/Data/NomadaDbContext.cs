@@ -34,6 +34,8 @@ namespace Nomada.API.Data
         public DbSet<WodPersonalizadoSeccion> WodsPersonalizadosSecciones { get; set; }
         public DbSet<WodPersonalizadoEjercicio> WodsPersonalizadosEjercicios { get; set; }
         public DbSet<EntrenoPersonalizadoRealizado> EntrenosPersonalizadosRealizados { get; set; }
+        public DbSet<RutinaProvisionalIA> RutinasProvisionalesIA { get; set; }
+        public DbSet<RutinaProvisionalDia> RutinasProvisionalesDias { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Siempre es buena práctica llamar al método base
