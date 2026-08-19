@@ -1,0 +1,280 @@
+﻿@page "/comunidad/album"
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
+
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 25px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/comunidad")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">VITRINA</h2>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: #FFD700;"></span></div>
+        }
+        else
+        {
+            <!-- ================= BARRA DE PROGRESO ================= -->
+            <div class="fade-in-up" style="padding: 0 15px; margin-bottom: 30px;">
+                <div class="modern-row" style="padding: 20px; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.05); display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <span style="color: #FFD700; font-size: 2rem; font-weight: 900; line-height: 1; text-shadow: 0 0 10px rgba(255,215,0,0.5);">@TotalDesbloqueadas <span style="color: var(--text-muted); font-size: 1.2rem;">/ @catalogo.Count</span></span>
+                    <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin: 5px 0 15px 0; text-transform: uppercase;">Logros Desbloqueados</h3>
+
+                    <!-- Barra visual -->
+                    <div style="width: 100%; height: 8px; background: rgba(128,128,128,0.2); border-radius: 4px; overflow: hidden; position: relative;">
+                        <div style="height: 100%; width: @(PorcentajeProgreso)%; background: linear-gradient(90deg, #ffbb33, #FFD700); box-shadow: 0 0 10px rgba(255,215,0,0.8); transition: width 0.5s ease-out;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= ÁLBUM DE MEDALLAS ================= -->
+            <div class="fade-in-up" style="padding: 0 15px; animation-delay: 0.1s;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+
+                    @foreach (var reto in catalogo.OrderByDescending(r => r.EsPremioMaximo).ThenBy(r => r.Id))
+                    {
+                        <!-- Si es premio máximo ocupa las 3 columnas y se ve más épico -->
+                        <div class="medal-card @(reto.EsPremioMaximo ? "premium-medal" : "")" style="@(reto.EsPremioMaximo ? "grid-column: span 3;" : "")" @onclick="() => AbrirDetalleReto(reto)">
+                            <div class="medal-icon @(reto.Desbloqueado ? "unlocked" : "locked")" style="@(reto.EsPremioMaximo && reto.Desbloqueado ? "box-shadow: 0 0 25px rgba(255,215,0,0.6); border-color: #FFD700;" : "")">
+                                @if (reto.Desbloqueado)
+                                {
+                                    <svg width="@(reto.EsPremioMaximo ? "40" : "28")" height="@(reto.EsPremioMaximo ? "40" : "28")" viewBox="0 0 24 24" fill="@(reto.EsPremioMaximo ? "#FFD700" : "none")" stroke="@(reto.EsPremioMaximo ? "#FFD700" : "currentColor")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px currentColor);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                }
+                                else
+                                {
+                                    <svg width="@(reto.EsPremioMaximo ? "40" : "28")" height="@(reto.EsPremioMaximo ? "40" : "28")" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                }
+                            </div>
+                            <span class="medal-title" style="color: @(reto.Desbloqueado ? "var(--text-main)" : "var(--text-muted)");">@reto.Titulo</span>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ================= MODAL: DETALLE DE LA MEDALLA ================= -->
+@if (mostrarModal && retoActivo != null)
+{
+    <div class="modal-overlay glass-overlay" style="z-index: 2000;" @onclick="CerrarModal">
+        <div class="fade-in-up login-card modal-content premium-modal" style="width: 100%; max-width: 400px; background: var(--card-bg); border: 1px solid @(retoActivo.Desbloqueado ? "#FFD700" : "rgba(128,128,128,0.2)"); text-align: center; position: relative;" @onclick:stopPropagation="true">
+
+            <button style="position: absolute; top: 15px; right: 15px; background: rgba(128,128,128,0.1); border: none; color: var(--text-muted); padding: 8px; border-radius: 50%; cursor: pointer;" @onclick="CerrarModal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <!-- Ícono Gigante -->
+            <div class="medal-icon @(retoActivo.Desbloqueado ? "unlocked" : "locked")" style="width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto; border-width: 4px; box-shadow: @(retoActivo.Desbloqueado ? "0 0 30px rgba(255,215,0,0.5)" : "none");">
+                @if (retoActivo.Desbloqueado)
+                {
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="@(retoActivo.EsPremioMaximo ? "#FFD700" : "none")" stroke="@(retoActivo.EsPremioMaximo ? "#FFD700" : "currentColor")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                }
+                else
+                {
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                }
+            </div>
+
+            <h3 style="color: var(--text-main); font-size: 1.3rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase;">@retoActivo.Titulo</h3>
+
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; font-weight: 600; margin-bottom: 25px;">
+                @retoActivo.Descripcion
+            </p>
+
+            @if (retoActivo.Desbloqueado)
+            {
+                <div style="background: rgba(0,200,81,0.1); border: 1px solid rgba(0,200,81,0.3); padding: 12px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span style="color: #00C851; font-weight: 900; font-size: 0.85rem; text-transform: uppercase;">DESBLOQUEADO EL @retoActivo.FechaDesbloqueo?.ToString("dd MMM yyyy")</span>
+                </div>
+            }
+            else
+            {
+                <div style="background: rgba(128,128,128,0.1); border: 1px dashed rgba(128,128,128,0.3); padding: 12px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px; justify-content: center; width: 100%;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span style="color: var(--text-muted); font-weight: 800; font-size: 0.85rem; text-transform: uppercase;">MISION PENDIENTE</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .adaptive-shadow {
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.15);
+    }
+
+    @@media (prefers-color-scheme: dark) {
+        .adaptive-shadow {
+            text-shadow: 2px 2px 15px rgba(255,255,255,0.2);
+        }
+    }
+
+    /* Estilos del Grid de Medallas */
+    .medal-card {
+        background: var(--card-bg);
+        border: 1px solid rgba(128,128,128,0.15);
+        border-radius: 16px;
+        padding: 20px 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .medal-card:active {
+            transform: scale(0.95);
+        }
+
+        .medal-card.premium-medal {
+            padding: 30px 15px;
+            background: linear-gradient(145deg, rgba(255,215,0,0.05), transparent);
+            border-color: rgba(255,215,0,0.3);
+        }
+
+    .medal-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        border: 2px solid transparent;
+        transition: all 0.3s;
+    }
+
+        /* Modificadores de Estado (Bloqueado/Desbloqueado) */
+        .medal-icon.locked {
+            background: rgba(128,128,128,0.1);
+            border-color: rgba(128,128,128,0.3);
+            color: var(--text-muted);
+            filter: grayscale(100%);
+        }
+
+        .medal-icon.unlocked {
+            background: rgba(255,215,0,0.15);
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+
+    .medal-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .premium-medal .medal-title {
+        font-size: 1rem;
+        color: #FFD700 !important;
+    }
+</style>
+
+@code {
+    private string gymCode = "NOMADA";
+    private Guid currentUserId;
+    private bool isPageLoading = true;
+
+    private List<RetoCatalogoDto> catalogo = new();
+
+    private int TotalDesbloqueadas => catalogo.Count(c => c.Desbloqueado);
+    private int PorcentajeProgreso => catalogo.Any() ? (int)Math.Round((double)TotalDesbloqueadas / catalogo.Count * 100) : 0;
+
+    // Modal
+    private bool mostrarModal = false;
+    private RetoCatalogoDto? retoActivo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        var userIdStr = Preferences.Get("userId", string.Empty);
+
+        if (Guid.TryParse(userIdStr, out currentUserId))
+        {
+            await CargarAlbum();
+        }
+    }
+
+    private async Task CargarAlbum()
+    {
+        isPageLoading = true;
+        try
+        {
+            // Este endpoint (que programamos antes) evalúa reglas automáticamente ANTES de devolver la lista
+            catalogo = await Http.GetFromJsonAsync<List<RetoCatalogoDto>>($"api/retos/{gymCode}/album/{currentUserId}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isPageLoading = false;
+        }
+    }
+
+    private void AbrirDetalleReto(RetoCatalogoDto reto)
+    {
+        retoActivo = reto;
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+        retoActivo = null;
+    }
+
+    // CLASE DTO LOCAL
+    public class RetoCatalogoDto
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = "";
+        public string Descripcion { get; set; } = "";
+        public string UrlImagen { get; set; } = "";
+        public bool EsPremioMaximo { get; set; }
+        public bool EsAutomatico { get; set; }
+        public bool Desbloqueado { get; set; }
+        public DateTime? FechaDesbloqueo { get; set; }
+    }
+}

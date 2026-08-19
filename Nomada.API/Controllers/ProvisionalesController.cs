@@ -135,5 +135,18 @@ namespace Nomada.API.Controllers
             await _context.SaveChangesAsync();
             return Ok();
         }
+
+        // 4. ELIMINAR PLAN ACTUAL (REGENERAR)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarPlanProvisional(int id)
+        {
+            var plan = await _context.RutinasProvisionalesIA.FindAsync(id);
+            if (plan != null)
+            {
+                _context.RutinasProvisionalesIA.Remove(plan);
+                await _context.SaveChangesAsync();
+            }
+            return Ok();
+        }
     }
 }

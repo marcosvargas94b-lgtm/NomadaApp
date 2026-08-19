@@ -3,38 +3,39 @@
 @using Microsoft.Maui.Storage
 @using System.Net.Http.Json
 @inject HttpClient Http
+@inject NavigationManager NavManager
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-<div class="app-container">
-    <div class="feed-content" style="padding-top: 10px;">
-
-        <!-- TOP BAR -->
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </a>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">AGENDAR CLASE</h2>
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 20px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">AGENDAR CLASE</h2>
         </div>
 
         @if (isPageLoading && !diasDisponibles.Any())
         {
-            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: #33b5e5;"></span></div>
         }
         else
         {
             <!-- SELECTOR HORIZONTAL DE 7 DÍAS -->
-            <div style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 15px; margin-bottom: 15px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+            <div class="fade-in-up" style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 15px; margin-bottom: 25px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
                 @foreach (var dia in diasDisponibles)
                 {
                     bool esSeleccionado = dia.Fecha.Date == fechaSeleccionada.Date;
 
-                    <div style="min-width: 60px; height: 75px; border-radius: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s;
-                                                background: @(esSeleccionado ? "linear-gradient(145deg, #33b5e5, #00C851)" : "var(--card-bg)");
-                                                border: 1px solid @(esSeleccionado ? "transparent" : "rgba(128,128,128,0.2)");
-                                                box-shadow: @(esSeleccionado ? "0 4px 15px rgba(51, 181, 229, 0.3)" : "none");"
+                    <div style="min-width: 65px; height: 80px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+                                        background: @(esSeleccionado ? "linear-gradient(145deg, #33b5e5, #0099CC)" : "var(--card-bg)");
+                                        border: 1px solid @(esSeleccionado ? "transparent" : "rgba(128,128,128,0.2)");
+                                        box-shadow: @(esSeleccionado ? "0 5px 15px rgba(51, 181, 229, 0.4)" : "none");
+                                        transform: @(esSeleccionado ? "translateY(-3px)" : "none");"
                          @onclick="() => SeleccionarDia(dia.Fecha)">
 
-                        <span style="font-size: 0.75rem; font-weight: 800; color: @(esSeleccionado ? "white" : "var(--text-muted)"); margin-bottom: 4px;">@dia.DiaSemana</span>
-                        <span style="font-size: 1.3rem; font-weight: 900; color: @(esSeleccionado ? "white" : "var(--text-main)");">@dia.NumeroDia</span>
+                        <span style="font-size: 0.75rem; font-weight: 800; color: @(esSeleccionado ? "white" : "var(--text-muted)"); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;">@dia.DiaSemana</span>
+                        <span style="font-size: 1.4rem; font-weight: 900; color: @(esSeleccionado ? "white" : "var(--text-main)");">@dia.NumeroDia</span>
                     </div>
                 }
             </div>
@@ -42,22 +43,28 @@
             <!-- BANNER DE ERRORES DEL SERVIDOR -->
             @if (!string.IsNullOrEmpty(mensajeError))
             {
-                <div class="fade-in-up" style="background-color: rgba(255, 68, 68, 0.1); border-left: 4px solid #ff4444; color: var(--text-main); padding: 12px 15px; margin-bottom: 15px; border-radius: 0 8px 8px 0; display: flex; align-items: center; gap: 10px;">
+                <div class="fade-in-up" style="background-color: rgba(255, 68, 68, 0.1); border-left: 4px solid #ff4444; color: var(--text-main); padding: 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0; display: flex; align-items: center; gap: 10px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <span style="font-size: 0.85rem; font-weight: 700;">@mensajeError</span>
                 </div>
             }
 
+            <!-- Subtítulo de Clases Disponibles -->
+            <div class="fade-in-up" style="display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed rgba(128,128,128,0.2); animation-delay: 0.1s;">
+                <div style="width: 5px; height: 22px; background: #00C851; border-radius: 5px; margin-right: 12px; box-shadow: 0 0 10px rgba(0, 200, 81, 0.4);"></div>
+                <h3 style="color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin: 0;">CLASES DISPONIBLES</h3>
+            </div>
+
             <!-- CARGADOR INTERNO DE HORARIOS -->
             @if (isHorariosLoading)
             {
-                <div style="display: flex; justify-content: center; padding: 40px;"><span class="spinner" style="width: 30px; height: 30px; border-width: 3px;"></span></div>
+                <div style="display: flex; justify-content: center; padding: 40px;"><span class="spinner" style="width: 30px; height: 30px; border-width: 3px; border-top-color: #00C851;"></span></div>
             }
             else if (!horariosDelDia.Any())
             {
-                <div style="text-align: center; padding: 40px 20px;">
-                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700;">No hay clases programadas para este día.</p>
+                <div class="fade-in-up" style="text-align: center; padding: 40px 20px; background: rgba(128,128,128,0.05); border-radius: 16px; border: 1px dashed rgba(128,128,128,0.2); animation-delay: 0.2s;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin: 0;">No hay clases programadas para este día.</p>
                 </div>
             }
             else
@@ -68,42 +75,44 @@
                     {
                         bool mostrarAtletas = atletasExpandidos.ContainsKey(horario.HorarioId) && atletasExpandidos[horario.HorarioId];
 
-                        <div class="modern-row" style="flex-direction: column; padding: 0; margin-bottom: 15px; background-color: @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.05)" : "var(--card-bg)"); border: 1px solid @(horario.YoEstoyAgendado ? "#00C851" : "rgba(128,128,128,0.2)"); overflow: hidden; box-shadow: @(horario.YoEstoyAgendado ? "0 4px 15px rgba(0, 200, 81, 0.1)" : "none"); transition: all 0.3s;">
+                        <div class="modern-row fade-in-up" style="flex-direction: column; padding: 0; margin-bottom: 15px; background-color: @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.05)" : "var(--card-bg)"); border: 1px solid @(horario.YoEstoyAgendado ? "#00C851" : "rgba(128,128,128,0.2)"); overflow: hidden; box-shadow: @(horario.YoEstoyAgendado ? "0 4px 15px rgba(0, 200, 81, 0.1)" : "none"); transition: all 0.3s; animation-delay: 0.15s;">
 
                             <!-- Cabecera de la Clase -->
                             <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center; background-color: transparent;">
 
                                 <div style="flex: 1;">
-                                    <h3 style="color: var(--text-main); margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 900;">@horario.HoraTexto</h3>
+                                    <h3 style="color: var(--text-main); margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 900; letter-spacing: 1px;">@horario.HoraTexto</h3>
 
                                     <div style="display: flex; align-items: center; gap: 8px;">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="@(horario.EstaLleno ? "#ff4444" : "var(--text-muted)")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                                        <span style="color: @(horario.EstaLleno ? "#ff4444" : "var(--text-muted)"); font-size: 0.85rem; font-weight: 800;">
-                                            @horario.OcupacionActual / @horario.AforoMaximo Atletas
-                                        </span>
+                                        <div style="background: @(horario.EstaLleno ? "rgba(255, 68, 68, 0.1)" : "rgba(128,128,128,0.1)"); padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 6px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="@(horario.EstaLleno ? "#ff4444" : "var(--text-muted)")" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                            <span style="color: @(horario.EstaLleno ? "#ff4444" : "var(--text-muted)"); font-size: 0.8rem; font-weight: 800;">
+                                                @horario.OcupacionActual / @horario.AforoMaximo Atletas
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div style="flex-shrink: 0; margin-left: 15px; display: flex; align-items: center; justify-content: flex-end; min-width: 90px;">
                                     @if (horario.YoEstoyAgendado)
                                     {
-                                        <button class="ink-btn-outline" style="margin: 0; padding: 8px 15px; border-color: #ff4444; color: #ff4444; font-size: 0.8rem; background-color: transparent;" @onclick="() => ProcesarReserva(horario.HorarioId)" disabled="@isProcessing">
+                                        <button class="ink-btn-outline" style="margin: 0; padding: 10px 15px; border-color: #ff4444; color: #ff4444; font-size: 0.8rem; background-color: rgba(255,68,68,0.05);" @onclick="() => ProcesarReserva(horario.HorarioId)" disabled="@isProcessing">
                                             CANCELAR
                                         </button>
                                     }
                                     else if (YaTengoClaseHoy)
                                     {
-                                        <span style="color: var(--text-muted); font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Máx. 1 al día</span>
+                                        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; background: rgba(128,128,128,0.1); padding: 5px 10px; border-radius: 6px;">Máx. 1 al día</span>
                                     }
                                     else if (horario.EstaLleno)
                                     {
-                                        <button class="ink-btn-outline" style="margin: 0; padding: 8px 15px; border-color: var(--text-muted); color: var(--text-muted); font-size: 0.8rem;" disabled>
+                                        <button class="ink-btn-outline" style="margin: 0; padding: 10px 15px; border-color: var(--text-muted); color: var(--text-muted); font-size: 0.8rem; opacity: 0.6;" disabled>
                                             LLENO
                                         </button>
                                     }
                                     else
                                     {
-                                        <button class="ink-btn glow-btn" style="margin: 0; padding: 8px 15px; font-size: 0.8rem;" @onclick="() => ProcesarReserva(horario.HorarioId)" disabled="@isProcessing">
+                                        <button class="ink-btn glow-btn" style="margin: 0; padding: 10px 20px; font-size: 0.85rem; background: linear-gradient(135deg, #00C851, #007E33); color: white; border: none;" @onclick="() => ProcesarReserva(horario.HorarioId)" disabled="@isProcessing">
                                             RESERVAR
                                         </button>
                                     }
@@ -112,21 +121,21 @@
 
                             @if (horario.OcupacionActual > 0)
                             {
-                                <div style="border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)"); padding: 10px 20px; background-color: transparent; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px;" @onclick="() => ToggleAtletas(horario.HorarioId)">
-                                    <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">
+                                <div style="border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)"); padding: 12px 20px; background-color: transparent; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s;" @onclick="() => ToggleAtletas(horario.HorarioId)">
+                                    <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
                                         @(mostrarAtletas ? "Ocultar Atletas" : "Ver Atletas Agendados")
                                     </span>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(@(mostrarAtletas ? "180deg" : "0deg")); transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(@(mostrarAtletas ? "180deg" : "0deg")); transition: transform 0.3s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                 </div>
 
                                 @if (mostrarAtletas)
                                 {
-                                    <div style="padding: 15px 20px; background-color: transparent; border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)");">
+                                    <div style="padding: 15px 20px; background-color: rgba(128,128,128,0.03); border-top: 1px solid @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.2)" : "rgba(128,128,128,0.1)");">
                                         <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start;">
                                             @foreach (var atleta in horario.AtletasAgendados)
                                             {
-                                                <div style="display: flex; align-items: center; gap: 8px; background: @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.1)" : "rgba(128,128,128,0.1)"); padding: 5px 12px; border-radius: 20px;">
-                                                    <div style="width: 24px; height: 24px; font-size: 0.65rem; margin: 0; background-color: #333; color: #fff; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 800; letter-spacing: 0.5px;">
+                                                <div style="display: flex; align-items: center; gap: 8px; background: @(horario.YoEstoyAgendado ? "rgba(0, 200, 81, 0.1)" : "rgba(128,128,128,0.1)"); padding: 6px 12px; border-radius: 20px; border: 1px solid @(horario.YoEstoyAgendado ? "rgba(0,200,81,0.2)" : "rgba(128,128,128,0.15)");">
+                                                    <div style="width: 24px; height: 24px; font-size: 0.65rem; margin: 0; background: linear-gradient(135deg, var(--text-muted), var(--text-main)); color: var(--card-bg); display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; letter-spacing: 0.5px;">
                                                         @atleta.Iniciales
                                                     </div>
                                                     <span style="color: var(--text-main); font-size: 0.8rem; font-weight: 700;">@atleta.NombreCompleto</span>
@@ -144,9 +153,32 @@
     </div>
 </div>
 
-@code {
-    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
 
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+@code {
+    private string gymCode = "NOMADA";
     private bool isPageLoading = true;
     private bool isHorariosLoading = false;
     private bool isProcessing = false;
@@ -164,8 +196,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS LA SUCURSAL
-
+        gymCode = Preferences.Get("gymCode", "NOMADA");
         var userIdStr = Preferences.Get("userId", string.Empty);
         if (Guid.TryParse(userIdStr, out currentUserId))
         {
@@ -205,7 +236,6 @@
         try
         {
             string fechaStr = fechaSeleccionada.ToString("yyyy-MM-dd");
-            // INYECTAMOS EL GYM CODE EN LA CONSULTA
             horariosDelDia = await Http.GetFromJsonAsync<List<HorarioDisponibleDto>>($"api/reservas/{gymCode}/horarios/{fechaStr}/{currentUserId}") ?? new();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
@@ -232,7 +262,7 @@
 
         var req = new HacerReservaRequest
         {
-            GymCode = gymCode, // <--- GUARDAMOS LA RESERVA EN ESTE GIMNASIO
+            GymCode = gymCode,
             UsuarioId = currentUserId,
             HorarioId = horarioId,
             FechaReserva = fechaSeleccionada

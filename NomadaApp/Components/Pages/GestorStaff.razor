@@ -3,15 +3,17 @@
 @using Microsoft.Maui.Storage
 @using System.Net.Http.Json
 @inject HttpClient Http
+@inject NavigationManager NavManager
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-<div class="app-container">
-    <div class="feed-content" style="padding-top: 10px;">
-
-        <div style="display: flex; align-items: center; margin-bottom: 25px;">
-            <a href="/inicio" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </a>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.6rem; text-shadow: 0 0 15px rgba(255,255,255,0.2);">STAFF Y ROLES</h2>
+        <!-- TOP BAR PREMIUM -->
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 20px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">STAFF Y ROLES</h2>
         </div>
 
         @if (isPageLoading)
@@ -22,56 +24,63 @@
         }
         else
         {
-            <!-- Buscador en tiempo real tipo píldora -->
-            <div class="search-wrapper">
-                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" @bind="textoBusqueda" @bind:event="oninput" placeholder="Buscar usuario o coach..." class="search-input" />
-            </div>
+            <div class="fade-in-up">
+                <!-- Buscador en tiempo real tipo píldora -->
+                <div class="search-wrapper" style="margin-bottom: 25px;">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" @bind="textoBusqueda" @bind:event="oninput" placeholder="Buscar usuario o coach..." class="search-input" style="background: var(--card-bg); border-color: rgba(128,128,128,0.2); font-weight: 700;" />
+                </div>
 
-            <div class="user-list">
-                @if (UsuariosFiltrados.Any())
-                {
-                    @foreach (var usuario in UsuariosFiltrados)
+                <div style="display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed rgba(128,128,128,0.2);">
+                    <div style="width: 5px; height: 22px; background: var(--text-main); border-radius: 5px; margin-right: 12px;"></div>
+                    <h3 style="color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin: 0;">LISTA DE INTEGRANTES</h3>
+                </div>
+
+                <div class="user-list">
+                    @if (UsuariosFiltrados.Any())
                     {
-                        <div class="modern-row" style="flex-wrap: wrap;">
-                            <div class="user-avatar">
-                                @(string.IsNullOrWhiteSpace(usuario.Nombre) ? "N" : usuario.Nombre.Substring(0, 1).ToUpper())@(string.IsNullOrWhiteSpace(usuario.ApellidoPaterno) ? "" : usuario.ApellidoPaterno.Substring(0, 1).ToUpper())
-                            </div>
-
-                            <div class="user-info">
-                                <span class="user-name">@usuario.Nombre @usuario.ApellidoPaterno</span>
-                                <span class="user-email">@usuario.Correo</span>
-                            </div>
-
-                            <!-- Toggle Switch para Coach -->
-                            <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
-                                <span style="font-size: 0.8rem; font-weight: 800; color: @(usuario.RolId == 2 ? "#00C851" : "var(--text-muted)")">COACH</span>
-                                <label class="switch">
-                                    <input type="checkbox" checked="@(usuario.RolId == 2)" @onchange="@((ChangeEventArgs e) => ToggleRolCoach(usuario, (bool)e.Value))">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-
-                            <!-- Botón de Permisos (Solo aparece si es Coach) -->
-                            @if (usuario.RolId == 2)
-                            {
-                                <div style="width: 100%; margin-top: 15px; border-top: 1px solid rgba(128,128,128,0.2); padding-top: 15px; display: flex; justify-content: flex-end;">
-                                    <button class="ink-btn-outline" style="margin: 0; padding: 8px 15px; font-size: 0.8rem; width: auto; display: flex; align-items: center; gap: 8px;" @onclick="() => AbrirModalPermisos(usuario)">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                        GESTIONAR PERMISOS
-                                    </button>
+                        @foreach (var usuario in UsuariosFiltrados)
+                        {
+                            <div class="modern-row" style="flex-wrap: wrap; padding: 15px 20px; margin-bottom: 15px; border-left: 3px solid @(usuario.RolId == 2 ? "#00C851" : "transparent"); background: var(--card-bg);">
+                                <div class="user-avatar" style="width: 45px; height: 45px; font-size: 1.1rem; margin-right: 15px; background: @(usuario.RolId == 2 ? "linear-gradient(135deg, #00C851, #007E33)" : "rgba(128,128,128,0.2)"); color: @(usuario.RolId == 2 ? "white" : "var(--text-muted)");">
+                                    @(string.IsNullOrWhiteSpace(usuario.Nombre) ? "N" : usuario.Nombre.Substring(0, 1).ToUpper())@(string.IsNullOrWhiteSpace(usuario.ApellidoPaterno) ? "" : usuario.ApellidoPaterno.Substring(0, 1).ToUpper())
                                 </div>
-                            }
+
+                                <div class="user-info">
+                                    <span class="user-name" style="font-size: 1.05rem; font-weight: 800;">@usuario.Nombre @usuario.ApellidoPaterno</span>
+                                    <span class="user-email" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">@usuario.Correo</span>
+                                </div>
+
+                                <!-- Toggle Switch para Coach (Estilizado Premium) -->
+                                <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
+                                    <span style="font-size: 0.8rem; font-weight: 900; letter-spacing: 1px; color: @(usuario.RolId == 2 ? "#00C851" : "var(--text-muted)")">COACH</span>
+                                    <label class="switch">
+                                        <input type="checkbox" checked="@(usuario.RolId == 2)" @onchange="@((ChangeEventArgs e) => ToggleRolCoach(usuario, (bool)e.Value))">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+
+                                <!-- Botón de Permisos (Solo aparece si es Coach) -->
+                                @if (usuario.RolId == 2)
+                                {
+                                    <div style="width: 100%; margin-top: 15px; border-top: 1px dashed rgba(128,128,128,0.2); padding-top: 15px; display: flex; justify-content: flex-end;">
+                                        <button class="ink-btn-outline" style="margin: 0; padding: 10px 20px; font-size: 0.8rem; width: auto; display: flex; align-items: center; gap: 8px; border-color: #00C851; color: #00C851;" @onclick="() => AbrirModalPermisos(usuario)">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                            GESTIONAR PERMISOS
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 40px 0; background: rgba(128,128,128,0.05); border-radius: 16px; border: 1px dashed rgba(128,128,128,0.2);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.6;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <p style="color: var(--text-muted); font-size: 1rem; margin-top: 10px; font-weight: 700;">No se encontraron resultados.</p>
                         </div>
                     }
-                }
-                else
-                {
-                    <div style="text-align: center; padding: 40px 0;">
-                        <span style="font-size: 3rem; opacity: 0.5;">🔍</span>
-                        <p style="color: var(--text-muted); font-size: 1rem; margin-top: 15px; font-weight: 700;">No se encontraron resultados.</p>
-                    </div>
-                }
+                </div>
             </div>
         }
     </div>
@@ -82,28 +91,29 @@
 {
     <div class="modal-overlay glass-overlay">
         <div class="login-card modal-content premium-modal">
-            <h3 class="modal-title" style="color: #33b5e5; font-size: 1.1rem;">PERMISOS DE @usuarioSeleccionado.Nombre.ToUpper()</h3>
+            <h3 class="modal-title" style="color: #00C851; font-size: 1.2rem; text-shadow: 0 0 10px rgba(0,200,81,0.2);">PERMISOS: @usuarioSeleccionado.Nombre.ToUpper()</h3>
 
-            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px;">
                 @foreach (var permiso in catalogoPermisos)
                 {
-                    <label style="display: flex; align-items: center; gap: 12px; color: var(--text-main); font-weight: 700; cursor: pointer; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px solid rgba(128,128,128,0.1);">
-                        <input type="checkbox" checked="@usuarioSeleccionado.PermisosIds.Contains(permiso.Id)" @onchange="@((ChangeEventArgs e) => TogglePermiso(permiso.Id, (bool)e.Value))" style="width: 20px; height: 20px; accent-color: #33b5e5;" />
+                    bool tienePermiso = usuarioSeleccionado.PermisosIds.Contains(permiso.Id);
+
+                    <label style="display: flex; align-items: center; gap: 12px; color: var(--text-main); font-weight: 800; font-size: 0.95rem; cursor: pointer; padding: 12px 15px; background: @(tienePermiso ? "rgba(0, 200, 81, 0.05)" : "rgba(128,128,128,0.05)"); border-radius: 12px; border: 1px solid @(tienePermiso ? "#00C851" : "rgba(128,128,128,0.2)"); transition: all 0.2s;">
+                        <input type="checkbox" checked="@tienePermiso" @onchange="@((ChangeEventArgs e) => TogglePermiso(permiso.Id, (bool)e.Value))" style="width: 20px; height: 20px; accent-color: #00C851;" />
                         @permiso.Nombre
                     </label>
                 }
             </div>
 
-            <div class="modal-actions">
-                <button class="ink-btn-outline" disabled="@isSaving" @onclick="CerrarModal">CANCELAR</button>
-                <button class="ink-btn glow-btn" disabled="@isSaving" @onclick="GuardarPermisos">
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="ink-btn-outline" style="color: var(--text-main); border-color: var(--text-muted);" disabled="@isSaving" @onclick="CerrarModal">CANCELAR</button>
+                <button class="ink-btn glow-btn" style="background: #00C851; color: white; border: none;" disabled="@isSaving" @onclick="GuardarPermisos">
                     @if (isSaving)
                     {
-                        <span class="spinner"></span>
+                        <span class="spinner" style="border-top-color: white;"></span>
                     }
                     else
                     {
-
                         <span>GUARDAR</span>
                     }
                 </button>
@@ -113,12 +123,34 @@
 }
 
 <style>
-    /* Switch estilo iOS */
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Switch estilo iOS Premium adaptado a Nómada */
     .switch {
         position: relative;
         display: inline-block;
-        width: 50px;
-        height: 26px;
+        width: 46px;
+        height: 24px;
     }
 
         .switch input {
@@ -134,8 +166,9 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(128,128,128,0.3);
+        background-color: rgba(128,128,128,0.2);
         transition: .3s;
+        border: 1px solid rgba(128,128,128,0.1);
     }
 
         .slider:before {
@@ -143,19 +176,21 @@
             content: "";
             height: 18px;
             width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .3s;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-muted);
+            transition: .3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
     input:checked + .slider {
-        background-color: #00C851;
-        box-shadow: 0 0 10px rgba(0,200,81,0.5);
+        background-color: rgba(0,200,81,0.2);
+        border-color: rgba(0,200,81,0.5);
     }
 
         input:checked + .slider:before {
-            transform: translateX(24px);
+            transform: translateX(22px);
+            background-color: #00C851;
+            box-shadow: 0 0 8px rgba(0,200,81,0.6);
         }
 
     .slider.round {
@@ -168,7 +203,7 @@
 </style>
 
 @code {
-    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+    private string gymCode = "NOMADA";
 
     private bool isPageLoading = true;
     private bool isSaving = false;
@@ -187,14 +222,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS LA SUCURSAL
+        gymCode = Preferences.Get("gymCode", "NOMADA");
 
         try
         {
-            // INYECTAMOS EL GYM CODE PARA VER SOLO STAFF DE ESTA SUCURSAL
             usuarios = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/admin/{gymCode}/usuarios/Aprobado") ?? new();
-
-            // Este endpoint NO lleva gymCode porque los permisos son universales del sistema
             catalogoPermisos = await Http.GetFromJsonAsync<List<PermisoDto>>("api/admin/permisos-catalogo") ?? new();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }

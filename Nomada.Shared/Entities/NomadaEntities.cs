@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Nomada.Shared.Entities
 {
@@ -304,4 +305,79 @@ namespace Nomada.Shared.Entities
         public string? JsonFatigaAjustada { get; set; }
     }
 
+    public class EvaluacionCatalogo
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public string GymCode { get; set; } = string.Empty;
+
+        [Required]
+        public string Nombre { get; set; } = string.Empty; // Ej: "Max Push Ups", "5K Run", "Back Squat 1RM"
+
+        [Required]
+        public string TipoMedida { get; set; } = string.Empty; // "Repeticiones", "Tiempo", "Libras", "Kilos", "Metros"
+
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    }
+
+    public class EvaluacionAtleta
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public string GymCode { get; set; } = string.Empty;
+
+        [Required]
+        public Guid AtletaId { get; set; }
+
+        [Required]
+        public int EvaluacionCatalogoId { get; set; }
+
+        [ForeignKey("EvaluacionCatalogoId")]
+        public virtual EvaluacionCatalogo? EvaluacionCatalogo { get; set; }
+
+        [Required]
+        public string Resultado { get; set; } = string.Empty;
+
+        // Nuevos campos:
+        public bool RegistradoPorCoach { get; set; } = false;
+        public Guid? RegistradoPorUsuarioId { get; set; } // Quién lo anotó
+
+        public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+    }
+    public class RetoCatalogo
+    {
+        [Key]
+        public int Id { get; set; }
+        [Required]
+        public string GymCode { get; set; } = string.Empty;
+        [Required]
+        public string Titulo { get; set; } = string.Empty;
+        [Required]
+        public string Descripcion { get; set; } = string.Empty;
+        [Required]
+        public string UrlImagen { get; set; } = string.Empty;
+        public bool EsPremioMaximo { get; set; }
+        public bool EsAutomatico { get; set; }
+        public string? ReglaInterna { get; set; }
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    }
+
+    public class RetoAtleta
+    {
+        [Key]
+        public int Id { get; set; }
+        [Required]
+        public string GymCode { get; set; } = string.Empty;
+        [Required]
+        public Guid AtletaId { get; set; }
+        [Required]
+        public int RetoCatalogoId { get; set; }
+        [ForeignKey("RetoCatalogoId")]
+        public virtual RetoCatalogo? RetoCatalogo { get; set; }
+        public DateTime FechaDesbloqueo { get; set; } = DateTime.UtcNow;
+    }
 }

@@ -8,6 +8,7 @@ namespace Nomada.Shared.Models
     {
         public Guid Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
+        public string? FotoPerfil { get; set; }
         public string ApellidoPaterno { get; set; } = string.Empty;
         public string Correo { get; set; } = string.Empty;
         public string? TipoSuscripcion { get; set; } // Puede ser "Mensual", "Semanal", "PaqueteClases", o null si es nuevo

@@ -1,35 +1,77 @@
 ﻿@page "/comunidad"
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
 
-<div class="app-container">
-    <div class="feed-content">
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-        <div class="top-bar" style="margin-bottom: 30px;">
-            <h1 class="greeting-title" style="margin: 0; font-size: 1.6rem; text-shadow: 0 0 15px rgba(255,255,255,0.2);">COMUNIDAD</h1>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">Conecta con tus compañeros.</p>
+        <!-- TOP BAR (Izquierda, con sombra adaptativa) -->
+        <div style="display: flex; align-items: center; margin-bottom: 30px; padding: 20px 0;">
+            <h1 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.6rem; text-transform: uppercase; color: var(--text-main); letter-spacing: 1px;">COMUNIDAD</h1>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 15px;">
 
-            <!-- TARJETA RANKING LIKES (Amarillo) -->
-            <a href="/comunidad/ranking" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; cursor: pointer; text-decoration: none;">
-                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">RANKING LIKES</h3>
-                <span style="color: #ffbb33; font-weight: 900; font-size: 1.1rem;">@DateTime.Now.Year</span>
+            <!-- FILA 1: DOS COLUMNAS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+
+                <!-- TARJETA RANKING LIKES (Amarillo) -->
+                <a href="/comunidad/ranking" class="modern-row fade-in-up" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; cursor: pointer; text-decoration: none; border-color: #ffbb33; background: linear-gradient(145deg, rgba(255,187,51,0.05), transparent);">
+                    <div style="background-color: rgba(255,187,51,0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    </div>
+                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">RANKING LIKES</h3>
+                    <span style="color: #ffbb33; font-weight: 800; font-size: 0.8rem;">Top @DateTime.Now.Year</span>
+                </a>
+
+                <!-- TARJETA LEADERBOARD WOD (Azul) -->
+                <a href="/comunidad/rankingwod" class="modern-row fade-in-up" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; cursor: pointer; text-decoration: none; border-color: #33b5e5; background: linear-gradient(145deg, rgba(51,181,229,0.05), transparent); animation-delay: 0.1s;">
+                    <div style="background-color: rgba(51,181,229,0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10"></path><path d="M5 4h14v7a7 7 0 0 1-14 0V4z"></path></svg>
+                    </div>
+                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">LEADERBOARD</h3>
+                    <span style="color: #33b5e5; font-weight: 800; font-size: 0.8rem;">Resultados de Hoy</span>
+                </a>
+
+            </div>
+
+            <!-- FILA 2: ANCHO COMPLETO -->
+            <!-- TARJETA ASISTENCIAS (Verde) -->
+            <a href="/comunidad/ranking-asistencias" class="modern-row fade-in-up" style="flex-direction: column; justify-content: center; text-align: center; padding: 20px 15px; margin: 0; cursor: pointer; text-decoration: none; border-color: #00C851; background: linear-gradient(145deg, rgba(0,200,81,0.05), transparent); animation-delay: 0.2s;">
+                <div style="background-color: rgba(0,200,81,0.1); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 12"></polyline></svg>
+                </div>
+                <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">TOP ASISTENCIAS</h3>
+                <span style="color: #00C851; font-weight: 800; font-size: 0.85rem;">Los más disciplinados</span>
             </a>
 
-            <!-- TARJETA LEADERBOARD WOD (Azul) -->
-            <a href="/comunidad/rankingwod" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; cursor: pointer; text-decoration: none;">
-                <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10"></path><path d="M5 4h14v7a7 7 0 0 1-14 0V4z"></path></svg>
-                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">LEADERBOARD</h3>
-                <span style="color: #33b5e5; font-weight: 900; font-size: 0.8rem; text-transform: uppercase;">Resultados de Hoy</span>
+            <!-- FILA 3: VITRINA DE LOGROS (PÚBLICA PARA TODOS) -->
+            <a href="/comunidad/album" class="modern-row fade-in-up" style="display: flex; align-items: center; padding: 20px 25px; margin: 0; cursor: pointer; text-decoration: none; border-color: #FFD700; background: linear-gradient(145deg, rgba(255,215,0,0.05), transparent); animation-delay: 0.3s;">
+                <div style="background-color: rgba(255,215,0,0.1); border-radius: 12px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; margin-right: 20px; border: 1px solid rgba(255,215,0,0.3);">
+                    <span style="font-size: 1.5rem; filter: drop-shadow(0 0 5px rgba(255,215,0,0.5));">🏆</span>
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin-bottom: 5px; text-transform: uppercase;">VITRINA DE LOGROS</h3>
+                    <span style="color: #FFD700; font-weight: 800; font-size: 0.8rem;">Tu Colección de Medallas</span>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </a>
 
-            <!-- TARJETA ASISTENCIAS (Verde) - OCUPA LAS DOS COLUMNAS -->
-            <a href="/comunidad/ranking-asistencias" class="modern-row" style="grid-column: span 2; flex-direction: column; justify-content: center; text-align: center; padding: 20px 15px; margin: 0; cursor: pointer; text-decoration: none;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 10px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 12"></polyline></svg>
-                <h3 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin-bottom: 5px;">TOP ASISTENCIAS</h3>
-                <span style="color: #00C851; font-weight: 900; font-size: 0.8rem; text-transform: uppercase;">Los más disciplinados</span>
-            </a>
+            <!-- FILA 4: GESTIÓN DE RETOS (SOLO ADMIN/COACH CON PERMISO) -->
+            @if (!isPageLoading && (esSuperAdmin || misPermisos.Contains("Gestionar Retos")))
+            {
+                <a href="/admin/retos" class="modern-row fade-in-up" style="display: flex; align-items: center; padding: 20px 25px; margin-top: 10px; cursor: pointer; text-decoration: none; border-color: rgba(255,68,68,0.4); background: linear-gradient(145deg, rgba(255,68,68,0.05), transparent); animation-delay: 0.4s;">
+                    <div style="background-color: rgba(255,68,68,0.1); border-radius: 12px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; margin-right: 20px;">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L2.5 10l5.5 5.5-5 5c-.5.5-.5 1.4 0 1.9s1.4.5 1.9 0l5-5 5.5 5.5c.4.4 1 .2 1.2-.2L19.2 14c0-.5-.2-1-.4-1.2z"></path></svg>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin-bottom: 5px; text-transform: uppercase;">ADMIN: RETOS Y MEDALLAS</h3>
+                        <span style="color: #ff4444; font-weight: 800; font-size: 0.8rem;">Gestionar Catálogo y Asignar</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            }
 
         </div>
     </div>
@@ -42,3 +84,66 @@
         <a href="/perfil" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span><span class="nav-text">Perfil</span></a>
     </nav>
 </div>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .adaptive-shadow {
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.15);
+    }
+
+    @@media (prefers-color-scheme: dark) {
+        .adaptive-shadow {
+            text-shadow: 2px 2px 15px rgba(255,255,255,0.2);
+        }
+    }
+</style>
+
+@code {
+    private bool isPageLoading = true;
+    private bool esSuperAdmin = false;
+    private List<string> misPermisos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        int rolId = Preferences.Get("rolId", 3);
+        esSuperAdmin = (rolId == 1);
+        var userId = Preferences.Get("userId", string.Empty);
+
+        try
+        {
+            if (!string.IsNullOrEmpty(userId))
+            {
+                misPermisos = await Http.GetFromJsonAsync<List<string>>($"api/admin/mis-permisos/{userId}") ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isPageLoading = false;
+        }
+    }
+}

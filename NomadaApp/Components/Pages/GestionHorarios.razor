@@ -3,102 +3,148 @@
 @using System.Net.Http.Json
 @using Microsoft.Maui.Storage
 @inject HttpClient Http
+@inject NavigationManager NavManager
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-<div class="app-container">
-    <div class="feed-content" style="padding-top: 10px;">
-
-        <!-- TOP BAR -->
-        <div style="display: flex; align-items: center; margin-bottom: 25px;">
-            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center; transition: opacity 0.2s;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </a>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem; text-transform: uppercase;">Gestión de Horarios</h2>
+        <!-- TOP BAR PREMIUM -->
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 20px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">GESTIÓN DE HORARIOS</h2>
         </div>
 
         @if (isPageLoading)
         {
-            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: #33b5e5;"></span></div>
         }
         else
         {
-            <!-- AFORO MÁXIMO -->
-            <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    <span style="color: var(--text-main); font-weight: 800; font-size: 0.9rem;">AFORO GLOBAL DEL BOX</span>
+            <!-- ================= SECCIÓN 1: AFORO MÁXIMO ================= -->
+            <div class="fade-in-up">
+
+                <div style="display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed rgba(128,128,128,0.2);">
+                    <div style="width: 5px; height: 22px; background: #33b5e5; border-radius: 5px; margin-right: 12px; box-shadow: 0 0 10px rgba(51, 181, 229, 0.5);"></div>
+                    <h3 style="color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin: 0;">CONFIGURACIÓN GLOBAL</h3>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" @bind="aforoMaximo" class="search-input" style="flex: 1; text-align: center; font-size: 1.2rem; font-weight: 900;" />
-                    <button class="ink-btn glow-btn" style="margin: 0; padding: 0 25px; width: auto;" @onclick="GuardarAforo">GUARDAR</button>
-                </div>
-                @if (mostrarExitoAforo)
-                {
-                    <span style="color: #00C851; font-size: 0.75rem; margin-top: 10px; font-weight: 700;">¡Aforo actualizado con éxito!</span>
-                }
-            </div>
 
-            <!-- CREAR NUEVO HORARIO -->
-            <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px; border-style: dashed;">
-                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 15px;">AGREGAR NUEVA CLASE</span>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <!-- Selector de reloj que abarca todo el espacio sin cortarse -->
-                    <input type="time" @bind="nuevoHoraOrden" class="search-input" style="flex: 1; text-align: center; font-size: 1.1rem;" />
-
-                    <button class="ink-btn-outline" style="margin: 0; padding: 0 20px; height: 45px; border-color: #00C851; color: #00C851;" @onclick="CrearHorario">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- LISTA DE HORARIOS -->
-            <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; display: block;">HORARIOS ESTABLECIDOS</span>
-            <div class="user-list">
-                @foreach (var horario in horarios)
-                {
-                    <div class="modern-row" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 10px; opacity: @(horario.Activo ? "1" : "0.5");">
-                        <div>
-                            <h3 style="color: var(--text-main); margin: 0 0 5px 0; font-size: 1.1rem; font-weight: 900;">@horario.HoraTexto</h3>
-                            <span style="color: var(--text-muted); font-size: 0.75rem;">Orden interno: @horario.HoraOrden.ToString(@"hh\:mm")</span>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <!-- Botón Toggle Activo/Inactivo -->
-                            <button style="background: none; border: 1px solid @(horario.Activo ? "#00C851" : "var(--text-muted)"); border-radius: 8px; padding: 8px 12px; color: @(horario.Activo ? "#00C851" : "var(--text-muted)"); cursor: pointer;" @onclick="() => ToggleHorario(horario.Id)">
-                                @if (horario.Activo)
-                                {
-                                    <span style="font-weight: 800; font-size: 0.75rem;">ACTIVO</span>
-                                }
-                                else
-                                {
-                                    <span style="font-weight: 800; font-size: 0.75rem;">PAUSADO</span>
-                                }
-                            </button>
-
-                            <!-- Botón Eliminar -->
-                            <button style="background: none; border: none; padding: 8px; color: #ff4444; cursor: pointer;" @onclick="() => EliminarHorario(horario.Id)">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            </button>
-                        </div>
+                <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 35px; border-color: rgba(51,181,229,0.3); background: var(--card-bg);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <span style="color: var(--text-muted); font-weight: 800; font-size: 0.85rem; text-transform: uppercase;">Aforo Máximo del Box</span>
                     </div>
-                }
+
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" @bind="aforoMaximo" class="search-input" style="flex: 1; text-align: center; font-size: 1.2rem; font-weight: 900; background: rgba(128,128,128,0.05);" />
+                        <button class="ink-btn glow-btn" style="margin: 0; padding: 0 25px; width: auto; background: #33b5e5; color: white; border: none;" @onclick="GuardarAforo">GUARDAR</button>
+                    </div>
+
+                    @if (mostrarExitoAforo)
+                    {
+                        <span class="fade-in-up" style="color: #00C851; font-size: 0.75rem; margin-top: 10px; font-weight: 800; display: flex; align-items: center; gap: 5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            ¡Aforo actualizado!
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <!-- ================= SECCIÓN 2: HORARIOS ================= -->
+            <div class="fade-in-up" style="animation-delay: 0.1s;">
+
+                <div style="display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed rgba(128,128,128,0.2);">
+                    <div style="width: 5px; height: 22px; background: #00C851; border-radius: 5px; margin-right: 12px; box-shadow: 0 0 10px rgba(0, 200, 81, 0.5);"></div>
+                    <h3 style="color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin: 0;">ITINERARIO DE CLASES</h3>
+                </div>
+
+                <!-- CREAR NUEVO HORARIO -->
+                <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px; border-style: dashed; border-color: rgba(0,200,81,0.4); background: rgba(0,200,81,0.03);">
+                    <span style="color: var(--text-main); font-size: 0.85rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase;">Agregar nueva hora</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="time" @bind="nuevoHoraOrden" class="search-input" style="flex: 1; text-align: center; font-size: 1.1rem; font-weight: 800; background: var(--card-bg);" />
+
+                        <button class="ink-btn glow-btn" style="margin: 0; padding: 0 20px; height: 45px; background: #00C851; color: white; border: none;" @onclick="CrearHorario">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LISTA DE HORARIOS -->
+                <div class="user-list">
+                    @foreach (var horario in horarios)
+                    {
+                        <div class="modern-row" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 12px; background: var(--card-bg); opacity: @(horario.Activo ? "1" : "0.5"); transition: opacity 0.3s; border-left: 4px solid @(horario.Activo ? "#00C851" : "var(--text-muted)");">
+
+                            <div>
+                                <h3 style="color: var(--text-main); margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 900; letter-spacing: 1px;">@horario.HoraTexto</h3>
+                                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700;">Orden interno: @horario.HoraOrden.ToString(@"hh\:mm")</span>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <!-- Botón Toggle Activo/Inactivo -->
+                                <button class="icon-btn" style="border-color: @(horario.Activo ? "rgba(0,200,81,0.3)" : "rgba(128,128,128,0.3)"); background: @(horario.Activo ? "rgba(0,200,81,0.05)" : "transparent"); padding: 8px 15px; color: @(horario.Activo ? "#00C851" : "var(--text-muted)");" @onclick="() => ToggleHorario(horario.Id)">
+                                    @if (horario.Activo)
+                                    {
+                                        <span style="font-weight: 900; font-size: 0.75rem; letter-spacing: 0.5px;">ACTIVO</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px;">PAUSADO</span>
+                                    }
+                                </button>
+
+                                <!-- Botón Eliminar -->
+                                <button class="icon-btn" style="background: rgba(255,68,68,0.05); border-color: rgba(255,68,68,0.3); color: #ff4444; padding: 8px;" @onclick="() => EliminarHorario(horario.Id)">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         }
     </div>
 </div>
 
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
 @code {
-    private string gymCode = "NOMADA"; // <--- VARIABLE DE SUCURSAL
+    private string gymCode = "NOMADA";
 
     private bool isPageLoading = true;
     private int aforoMaximo = 20;
     private bool mostrarExitoAforo = false;
 
-    // Lo inicializamos a las 7:00 AM para que no empiece en "12:00"
     private DateTime nuevoHoraOrden = DateTime.Today.AddHours(7);
 
     private class HorarioClaseModel
     {
         public int Id { get; set; }
-        public string GymCode { get; set; } = string.Empty; // <--- AÑADIDO AL MODELO LOCAL
+        public string GymCode { get; set; } = string.Empty;
         public string HoraTexto { get; set; } = string.Empty;
         public TimeSpan HoraOrden { get; set; }
         public bool Activo { get; set; }
@@ -109,7 +155,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAR DE PREFERENCIAS
+        gymCode = Preferences.Get("gymCode", "NOMADA");
         await CargarDatos();
     }
 
@@ -118,7 +164,6 @@
         isPageLoading = true;
         try
         {
-            // Filtramos la configuración y horarios por GIMNASIO
             var config = await Http.GetFromJsonAsync<ConfigModel>($"api/reservas/{gymCode}/admin/config");
             if (config != null) aforoMaximo = config.AforoMaximo;
 
@@ -134,20 +179,21 @@
         {
             await Http.PutAsJsonAsync($"api/reservas/{gymCode}/admin/config", new ConfigModel { AforoMaximo = aforoMaximo });
             mostrarExitoAforo = true;
+            StateHasChanged();
             await Task.Delay(3000);
             mostrarExitoAforo = false;
+            StateHasChanged();
         }
         catch { }
     }
 
     private async Task CrearHorario()
     {
-        // 1. Extraemos el texto bonito (Ej. "07:00 AM" o "06:00 PM") automáticamente usando formato de 12 horas
         string textoGenerado = nuevoHoraOrden.ToString("hh:mm tt", new System.Globalization.CultureInfo("en-US"));
 
         var nuevo = new HorarioClaseModel
         {
-            GymCode = gymCode, // <--- ENLAZAR AL GIMNASIO AL CREAR
+            GymCode = gymCode,
             HoraTexto = textoGenerado,
             HoraOrden = nuevoHoraOrden.TimeOfDay
         };
@@ -155,8 +201,6 @@
         try
         {
             await Http.PostAsJsonAsync("api/reservas/admin/horarios", nuevo);
-
-            // Le sumamos 1 hora al input para que sea fácil agregar el siguiente
             nuevoHoraOrden = nuevoHoraOrden.AddHours(1);
             await CargarDatos();
         }

@@ -11,7 +11,7 @@ namespace Nomada.Shared.Models
         public DateTime FechaNacimiento { get; set; }
         public string Sexo { get; set; } = string.Empty;
         public string Correo { get; set; } = string.Empty;
-
+        public bool MostrarPRsPublicos { get; set; } = false; // Por defecto es privado
         public byte[] PasswordHash { get; set; }
         public byte[] PasswordSalt { get; set; }
 

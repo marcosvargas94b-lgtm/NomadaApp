@@ -1,0 +1,663 @@
+﻿@page "/comunidad/prs"
+@using Nomada.Shared.Models
+@using Microsoft.Maui.Storage
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
+
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 25px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/comunidad")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">MEJORES MARCAS</h2>
+        </div>
+
+        @if (isPageLoading)
+        {
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: #9b59b6;"></span></div>
+        }
+        else
+        {
+            <!-- ================= PESTAÑAS ================= -->
+            <div class="segmented-control fade-in-up" style="margin-bottom: 25px; background: rgba(128,128,128,0.1);">
+                <div class="segment @(tabActual == "MisMarcas" ? "active" : "")" style="@(tabActual == "MisMarcas" ? "background: #9b59b6; color: white; box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3); border: none;" : "color: var(--text-muted);")" @onclick="@(() => tabActual = "MisMarcas")">MIS MARCAS</div>
+                <div class="segment @(tabActual == "Tribu" ? "active" : "")" style="@(tabActual == "Tribu" ? "background: #9b59b6; color: white; box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3); border: none;" : "color: var(--text-muted);")" @onclick="CargarTribu">LA TRIBU</div>
+            </div>
+
+            @if (tabActual == "MisMarcas")
+            {
+                <div class="fade-in-up" style="animation-delay: 0.1s;">
+
+                    <!-- SWITCH DE PRIVACIDAD -->
+                    <div class="modern-row" style="padding: 20px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); border-color: rgba(155, 89, 182, 0.3);">
+                        <div style="flex: 1; padding-right: 15px;">
+                            <h4 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin: 0 0 5px 0;">Mostrar a la Comunidad</h4>
+                            <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; line-height: 1.4; display: block;">Si activas esta opción, podrás ver las marcas de los demás atletas y ellos las tuyas.</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked="@mostrarMisPRs" @onchange="@((ChangeEventArgs e) => TogglePrivacidad((bool)e.Value))">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <button class="ink-btn-outline" style="border-style: dashed; border-color: #9b59b6; color: #9b59b6; width: 100%; margin-bottom: 30px; font-weight: 900;" @onclick="AbrirModalAgregarPR">
+                        + REGISTRAR NUEVO PR
+                    </button>
+
+                    <!-- HISTORIAL AGRUPADO POR PRUEBA (ACORDEÓN) -->
+                    @if (misMarcasAgrupadas.Any())
+                    {
+                        @foreach (var grupo in misMarcasAgrupadas)
+                        {
+                            var marcas = grupo.Value.OrderByDescending(m => m.FechaRegistro).ToList();
+                            var mejorMarca = marcas.First();
+                            bool estaExpandido = misPrsExpandidos.Contains(grupo.Key);
+
+                            <div class="modern-row" style="flex-direction: column; padding: 0; margin-bottom: 25px; background: var(--card-bg); border-left: 4px solid #9b59b6; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+
+                                <!-- ENCABEZADO DE LA PRUEBA (Clickeable) -->
+                                <div @onclick="() => ToggleMiPr(grupo.Key)" style="background: @(estaExpandido ? "rgba(155, 89, 182, 0.1)" : "rgba(155, 89, 182, 0.05)"); padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: @(estaExpandido ? "1px dashed rgba(128,128,128,0.2)" : "none"); width: 100%; cursor: pointer; transition: background 0.3s;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(@(estaExpandido ? "180deg" : "0deg")); transition: transform 0.3s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                        <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin: 0; text-transform: uppercase;">@grupo.Key</h3>
+                                    </div>
+                                    <div style="background: #9b59b6; color: white; padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; margin-left: 15px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(155,89,182,0.3);">
+                                        @marcas.Count Registros
+                                    </div>
+                                </div>
+
+                                <!-- CONTENIDO EXPANDIBLE -->
+                                @if (estaExpandido)
+                                {
+                                    <div style="padding: 10px 20px 20px 20px; width: 100%; animation: fadeIn 0.3s ease;">
+                                        @foreach (var marca in marcas)
+                                        {
+                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(128,128,128,0.1); width: 100%;">
+
+                                                <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+                                                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                                                        <span class="font-digital" style="color: @(marca.Id == mejorMarca.Id ? "#00C851" : "var(--text-main)"); font-size: 1.3rem; font-weight: 900; text-shadow: @(marca.Id == mejorMarca.Id ? "0 0 10px rgba(0,200,81,0.2)" : "none"); line-height: 1;">
+                                                            @marca.Resultado
+                                                        </span>
+                                                        <span style="font-size: 0.8rem; color: var(--text-muted); font-family: 'Montserrat', sans-serif; font-weight: 800;">@marca.TipoMedida</span>
+                                                    </div>
+                                                    <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700;">@marca.FechaRegistro.ToString("dd MMM yyyy")</span>
+                                                </div>
+
+                                                <div style="display: flex; align-items: center; justify-content: flex-end; padding-left: 15px; flex-shrink: 0;">
+                                                    @if (marca.RegistradoPorCoach)
+                                                    {
+                                                        <span style="background: rgba(51, 181, 229, 0.1); color: #33b5e5; padding: 5px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 900; border: 1px solid rgba(51, 181, 229, 0.3); display: flex; align-items: center; gap: 5px;">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> COACH
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="icon-btn" style="color: #ff4444; border-color: rgba(255,68,68,0.2); background: rgba(255,68,68,0.05); padding: 10px; border-radius: 50%;" @onclick="() => EliminarMiMarca(marca.Id)">
+                                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 40px 20px; background: rgba(128,128,128,0.05); border-radius: 16px; border: 1px dashed rgba(128,128,128,0.2);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.6;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin: 0;">Aún no tienes marcas registradas.</p>
+                        </div>
+                    }
+                </div>
+            }
+            else if (tabActual == "Tribu")
+            {
+                <div class="fade-in-up" style="animation-delay: 0.1s;">
+
+                    @if (!mostrarMisPRs && !esCoach)
+                    {
+                        <div class="modern-row" style="flex-direction: column; align-items: center; text-align: center; padding: 40px 20px; border-color: #ffbb33; background: rgba(255, 187, 51, 0.05);">
+                            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#ffbb33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <h3 style="color: var(--text-main); font-weight: 900; margin-bottom: 10px; font-size: 1.2rem;">TRIBU RESTRINGIDA</h3>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px; font-weight: 600;">Debes activar la visibilidad de tus PRs en la pestaña "Mis Marcas" para poder ver el progreso de tus compañeros.</p>
+                            <button class="ink-btn glow-btn" style="background: #ffbb33; color: black; font-weight: 900; border: none; padding: 12px 25px;" @onclick="@(() => tabActual = "MisMarcas")">IR A MIS MARCAS</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="search-wrapper" style="margin-bottom: 25px;">
+                            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" @bind="textoBusquedaAtleta" @bind:event="oninput" placeholder="Buscar compañero..." class="search-input" style="background: var(--card-bg); font-weight: 700; border-color: rgba(128,128,128,0.2);" />
+                        </div>
+
+                        @if (isCargandoTribu)
+                        {
+                            <div style="display: flex; justify-content: center; padding: 30px;"><span class="spinner" style="border-top-color: #9b59b6;"></span></div>
+                        }
+                        else if (AtletasTribuFiltrados.Any())
+                        {
+                            <div class="user-list">
+                                @foreach (var atleta in AtletasTribuFiltrados)
+                                {
+                                    <div class="modern-row" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 12px; background: var(--card-bg); cursor: pointer; transition: transform 0.2s;" @onclick="() => VerPRsCompanero(atleta)">
+                                        <div class="user-avatar" style="width: 45px; height: 45px; font-size: 1.1rem; margin-right: 15px; background: linear-gradient(135deg, var(--text-muted), var(--text-main)); color: var(--card-bg); font-weight: 900;">
+                                            @if (!string.IsNullOrEmpty(atleta.FotoPerfil))
+                                            {
+                                                <img src="@atleta.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                            }
+                                            else
+                                            {
+
+                                                <span>@ObtenerIniciales(atleta.Nombre, atleta.ApellidoPaterno)</span>
+                                            }
+                                        </div>
+                                        <div class="user-info" style="flex: 1; overflow: hidden;">
+                                            <span class="user-name" style="font-size: 1.05rem; font-weight: 800; color: var(--text-main);">@atleta.Nombre @atleta.ApellidoPaterno</span>
+                                            <span class="user-email" style="font-size: 0.8rem; color: #9b59b6; font-weight: 800; text-transform: uppercase;">Ver Historial de Marcas</span>
+                                        </div>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="text-align: center; padding: 40px 0;">
+                                <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700;">Nadie ha compartido sus marcas aún.</p>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- ================= MODAL: AGREGAR MI PR ================= -->
+@if (mostrarModalAgregar)
+{
+    <div class="modal-overlay glass-overlay" style="z-index: 2000;">
+        <div class="fade-in-up login-card modal-content premium-modal" style="width: 100%; max-width: 500px; background: var(--card-bg);">
+            <h3 class="modal-title" style="color: #9b59b6; font-size: 1.2rem; text-shadow: 0 0 10px rgba(155, 89, 182, 0.3); margin-bottom: 25px;">NUEVA MARCA</h3>
+
+            <div class="input-group modern-input" style="margin-bottom: 15px;">
+                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; display: block;">Evaluación del Catálogo</label>
+                <select @bind="requestMarca.EvaluacionCatalogoId" class="search-input" style="font-weight: 800; background: rgba(128,128,128,0.05); border-color: rgba(128,128,128,0.2); color: var(--text-main); appearance: none;">
+                    <option value="0" style="color: black;">Seleccione prueba...</option>
+                    @foreach (var ev in catalogo)
+                    {
+                        <option value="@ev.Id" style="color: black;">@ev.Nombre (@ev.TipoMedida)</option>
+                    }
+                </select>
+            </div>
+
+            @if (requestMarca.EvaluacionCatalogoId > 0)
+            {
+                <div class="input-group modern-input" style="margin-bottom: 15px;">
+                    <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; display: block;">Resultado Alcanzado</label>
+                    <input type="text" @bind="requestMarca.Resultado" placeholder="@PlaceholderDinamico" class="search-input" style="font-weight: 900; font-size: 1.1rem; background: rgba(128,128,128,0.05); border-color: #9b59b6; color: var(--text-main);" />
+                </div>
+
+                <div class="input-group modern-input" style="margin-bottom: 25px;">
+                    <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; display: block;">Fecha del Logro</label>
+                    <input type="date" @bind="requestMarca.FechaRegistro" class="search-input" style="font-weight: 800; background: rgba(128,128,128,0.05); border-color: rgba(128,128,128,0.2); color: var(--text-main);" />
+                </div>
+            }
+
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button class="ink-btn-outline" style="color: var(--text-main); border-color: var(--text-muted);" disabled="@isProcessing" @onclick="() => mostrarModalAgregar = false">CANCELAR</button>
+                <button class="ink-btn glow-btn" style="background: #9b59b6; color: white; border: none;" disabled="@(requestMarca.EvaluacionCatalogoId == 0 || isProcessing)" @onclick="GuardarMiMarca">
+                    @if (isProcessing)
+                    {
+                        <span class="spinner" style="border-top-color: white;"></span>
+                    }
+                    else
+                    {
+
+                        <span>GUARDAR</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ================= MODAL: VER PRS DE COMPAÑERO ================= -->
+@if (mostrarModalCompanero && atletaSeleccionado != null)
+{
+    <div class="modal-overlay glass-overlay" style="z-index: 2000;">
+        <div class="fade-in-up login-card modal-content premium-modal" style="width: 100%; max-width: 600px; height: 90vh; border-radius: 25px 25px 0 0; padding: 0; display: flex; flex-direction: column; background: var(--card-bg);">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px dashed rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); border-radius: 25px 25px 0 0;">
+                <div style="display: flex; align-items: center; gap: 15px; flex: 1; overflow: hidden;">
+                    <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #33b5e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1rem;">
+                        @if (!string.IsNullOrEmpty(atletaSeleccionado.FotoPerfil))
+                        {
+                            <img src="@atletaSeleccionado.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                        }
+                        else
+                        {
+
+                            <span>@ObtenerIniciales(atletaSeleccionado.Nombre, atletaSeleccionado.ApellidoPaterno)</span>
+                        }
+                    </div>
+                    <div style="flex: 1; overflow: hidden; padding-right: 15px;">
+                        <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin: 0 0 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@atletaSeleccionado.Nombre @atletaSeleccionado.ApellidoPaterno</h3>
+                        <span style="color: #9b59b6; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">HISTORIAL DE MARCAS</span>
+                    </div>
+                </div>
+                <button style="background: rgba(128,128,128,0.1); border: none; color: var(--text-muted); padding: 8px; border-radius: 50%; cursor: pointer; flex-shrink: 0;" @onclick="() => mostrarModalCompanero = false">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding: 20px;">
+                @if (isModalLoading)
+                {
+                    <div style="display: flex; justify-content: center; padding: 40px;"><span class="spinner" style="border-top-color: #9b59b6;"></span></div>
+                }
+                else if (marcasCompaneroAgrupadas.Any())
+                {
+                    @foreach (var grupo in marcasCompaneroAgrupadas)
+                    {
+                        var marcas = grupo.Value.OrderByDescending(m => m.FechaRegistro).ToList();
+                        var mejorMarca = marcas.First();
+                        bool estaExpandido = companeroPrsExpandidos.Contains(grupo.Key);
+
+                        <div class="modern-row" style="flex-direction: column; padding: 0; margin-bottom: 20px; background: var(--card-bg); border-left: 4px solid #33b5e5; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+
+                            <!-- ENCABEZADO DE LA PRUEBA DEL COMPAÑERO (Ancho Completo y Clickeable) -->
+                            <div @onclick="() => ToggleCompaneroPr(grupo.Key)" style="background: @(estaExpandido ? "rgba(51, 181, 229, 0.1)" : "rgba(51, 181, 229, 0.05)"); padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: @(estaExpandido ? "1px dashed rgba(128,128,128,0.2)" : "none"); width: 100%; cursor: pointer; transition: background 0.3s;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(@(estaExpandido ? "180deg" : "0deg")); transition: transform 0.3s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin: 0; text-transform: uppercase;">@grupo.Key</h3>
+                                </div>
+                                <div style="background: #33b5e5; color: white; padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; margin-left: 15px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(51,181,229,0.3);">
+                                    @marcas.Count Registros
+                                </div>
+                            </div>
+
+                            @if (estaExpandido)
+                            {
+                                <div style="padding: 10px 20px 20px 20px; width: 100%; animation: fadeIn 0.3s ease;">
+                                    @foreach (var marca in marcas)
+                                    {
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(128,128,128,0.1); width: 100%;">
+                                            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1; padding-right: 15px;">
+                                                <div style="display: flex; align-items: baseline; gap: 8px;">
+                                                    <span class="font-digital" style="color: @(marca.Id == mejorMarca.Id ? "#00C851" : "var(--text-main)"); font-size: 1.3rem; font-weight: 900; text-shadow: @(marca.Id == mejorMarca.Id ? "0 0 10px rgba(0,200,81,0.2)" : "none"); line-height: 1;">
+                                                        @marca.Resultado
+                                                    </span>
+                                                    <span style="font-size: 0.8rem; color: var(--text-muted); font-family: 'Montserrat', sans-serif; font-weight: 800;">@marca.TipoMedida</span>
+                                                </div>
+                                                <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700;">@marca.FechaRegistro.ToString("dd MMM yyyy")</span>
+                                            </div>
+
+                                            <div style="display: flex; align-items: center; justify-content: flex-end; padding-left: 15px; flex-shrink: 0;">
+                                                @if (marca.RegistradoPorCoach)
+                                                {
+                                                    <span style="background: rgba(51, 181, 229, 0.1); color: #33b5e5; padding: 5px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 900; border: 1px solid rgba(51, 181, 229, 0.3); display: flex; align-items: center; gap: 5px;">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> COACH
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; font-weight: 700; margin: 0;">Este atleta no tiene marcas registradas.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .font-digital {
+        font-family: 'Orbitron', monospace;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes fadeIn {
+        0% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .adaptive-shadow {
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.15);
+    }
+
+    @@media (prefers-color-scheme: dark) {
+        .adaptive-shadow {
+            text-shadow: 2px 2px 15px rgba(255,255,255,0.2);
+        }
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 12px 10px;
+        background: rgba(128,128,128,0.05);
+        border: 1px solid rgba(128,128,128,0.1);
+        color: var(--text-muted);
+        font-weight: 900;
+        font-size: 0.85rem;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        letter-spacing: 1px;
+    }
+
+        .tab-btn.active {
+            background: #9b59b6;
+            color: white;
+            border-color: #9b59b6;
+            box-shadow: 0 4px 15px rgba(155,89,182,0.3);
+        }
+
+    /* Switch estilo iOS */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 46px;
+        height: 24px;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(128,128,128,0.2);
+        transition: .3s;
+        border: 1px solid rgba(128,128,128,0.1);
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-muted);
+            transition: .3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+    input:checked + .slider {
+        background-color: rgba(155,89,182,0.2);
+        border-color: rgba(155,89,182,0.5);
+    }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+            background-color: #9b59b6;
+            box-shadow: 0 0 8px rgba(155,89,182,0.6);
+        }
+
+    .slider.round {
+        border-radius: 34px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+</style>
+
+@code {
+    private string gymCode = "NOMADA";
+    private Guid currentUserId;
+    private bool esCoach = false;
+    private bool isPageLoading = true;
+    private bool isProcessing = false;
+    private bool isModalLoading = false;
+
+    private string tabActual = "MisMarcas";
+    private bool mostrarMisPRs = false;
+
+    // CATÁLOGO DE EVALUACIONES
+    private List<EvaluacionCatalogoDto> catalogo = new();
+
+    // MIS MARCAS
+    private Dictionary<string, List<EvaluacionAtletaDto>> misMarcasAgrupadas = new();
+    private bool mostrarModalAgregar = false;
+    private RegistrarMarcaAtletaRequest requestMarca = new();
+
+    // ESTADO PARA COLLAPSABLES (ACORDEONES)
+    private HashSet<string> misPrsExpandidos = new();
+    private HashSet<string> companeroPrsExpandidos = new();
+
+    // COMUNIDAD
+    private bool isCargandoTribu = false;
+    private string textoBusquedaAtleta = "";
+    private List<UsuarioAdminDto> atletasTribu = new();
+    private IEnumerable<UsuarioAdminDto> AtletasTribuFiltrados => atletasTribu
+        .Where(a => string.IsNullOrWhiteSpace(textoBusquedaAtleta) || (a.Nombre + " " + a.ApellidoPaterno).Contains(textoBusquedaAtleta, StringComparison.OrdinalIgnoreCase));
+
+    // MODAL VER COMPAÑERO
+    private bool mostrarModalCompanero = false;
+    private UsuarioAdminDto? atletaSeleccionado;
+    private Dictionary<string, List<EvaluacionAtletaDto>> marcasCompaneroAgrupadas = new();
+
+    private string PlaceholderDinamico
+    {
+        get
+        {
+            var ev = catalogo.FirstOrDefault(c => c.Id == requestMarca.EvaluacionCatalogoId);
+            if (ev == null) return "Resultado...";
+            if (ev.TipoMedida.Contains("Tiempo")) return "Ej. 19:00, 5:30...";
+            if (ev.TipoMedida.Contains("Repeticiones")) return "Ej. 50, 100...";
+            if (ev.TipoMedida.Contains("Lbs")) return "Ej. 135 Lbs...";
+            if (ev.TipoMedida.Contains("Kgs")) return "Ej. 100 Kgs...";
+            if (ev.TipoMedida.Contains("Distancia")) return "Ej. 5000 Mts...";
+            if (ev.TipoMedida.Contains("Calorías")) return "Ej. 50 Cals...";
+            return "Ingresa el resultado...";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        gymCode = Preferences.Get("gymCode", "NOMADA");
+        var userIdStr = Preferences.Get("userId", string.Empty);
+
+        if (Guid.TryParse(userIdStr, out currentUserId))
+        {
+            int rolId = Preferences.Get("rolId", 3);
+            esCoach = (rolId == 1 || rolId == 2);
+            await CargarDatosIniciales();
+        }
+    }
+
+    private async Task CargarDatosIniciales()
+    {
+        isPageLoading = true;
+        try
+        {
+            catalogo = await Http.GetFromJsonAsync<List<EvaluacionCatalogoDto>>($"api/evaluaciones/{gymCode}/catalogo") ?? new();
+            mostrarMisPRs = await Http.GetFromJsonAsync<bool>($"api/evaluaciones/{gymCode}/privacidad/{currentUserId}");
+            await CargarMisMarcas();
+        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isPageLoading = false; }
+    }
+
+    // ================================= MÓDULO: MIS MARCAS =================================
+    private async Task CargarMisMarcas()
+    {
+        try
+        {
+            var misMarcas = await Http.GetFromJsonAsync<List<EvaluacionAtletaDto>>($"api/evaluaciones/{gymCode}/atleta/{currentUserId}/historial") ?? new();
+            misMarcasAgrupadas = misMarcas.GroupBy(m => m.NombreEvaluacion).ToDictionary(g => g.Key, g => g.ToList());
+        }
+        catch { }
+    }
+
+    private void ToggleMiPr(string key)
+    {
+        if (misPrsExpandidos.Contains(key)) misPrsExpandidos.Remove(key);
+        else misPrsExpandidos.Add(key);
+    }
+
+    private async Task TogglePrivacidad(bool mostrar)
+    {
+        mostrarMisPRs = mostrar;
+        try
+        {
+            await Http.PutAsJsonAsync($"api/evaluaciones/{gymCode}/privacidad/{currentUserId}", mostrar);
+        }
+        catch { }
+    }
+
+    private void AbrirModalAgregarPR()
+    {
+        requestMarca = new RegistrarMarcaAtletaRequest
+        {
+            GymCode = gymCode,
+            AtletaId = currentUserId,
+            FechaRegistro = DateTime.Today,
+            EsCoach = false,
+            RegistradoPorId = currentUserId
+        };
+        mostrarModalAgregar = true;
+    }
+
+    private async Task GuardarMiMarca()
+    {
+        isProcessing = true;
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/evaluaciones/marca", requestMarca);
+            if (res.IsSuccessStatusCode)
+            {
+                mostrarModalAgregar = false;
+                await CargarMisMarcas();
+
+                // Expandimos el grupo que acaba de actualizar
+                var evEditada = catalogo.FirstOrDefault(c => c.Id == requestMarca.EvaluacionCatalogoId);
+                if (evEditada != null && !misPrsExpandidos.Contains(evEditada.Nombre))
+                {
+                    misPrsExpandidos.Add(evEditada.Nombre);
+                }
+            }
+        }
+        catch { }
+        finally { isProcessing = false; }
+    }
+
+    private async Task EliminarMiMarca(int id)
+    {
+        try
+        {
+            var res = await Http.DeleteAsync($"api/evaluaciones/marca/{id}/{currentUserId}");
+            if (res.IsSuccessStatusCode)
+            {
+                await CargarMisMarcas();
+            }
+            else
+            {
+                Console.WriteLine("No se puede borrar una marca registrada por el Coach.");
+            }
+        }
+        catch { }
+    }
+
+    // ================================= MÓDULO: COMUNIDAD =================================
+    private async Task CargarTribu()
+    {
+        tabActual = "Tribu";
+        if (mostrarMisPRs || esCoach)
+        {
+            isCargandoTribu = true;
+            try
+            {
+                atletasTribu = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/evaluaciones/{gymCode}/comunidad-prs/{currentUserId}") ?? new();
+            }
+            catch { }
+            finally { isCargandoTribu = false; }
+        }
+    }
+
+    private async Task VerPRsCompanero(UsuarioAdminDto atleta)
+    {
+        atletaSeleccionado = atleta;
+        companeroPrsExpandidos.Clear(); // Inicia siempre colapsado
+        mostrarModalCompanero = true;
+        isModalLoading = true;
+        try
+        {
+            var marcasComp = await Http.GetFromJsonAsync<List<EvaluacionAtletaDto>>($"api/evaluaciones/{gymCode}/atleta/{atleta.Id}/historial") ?? new();
+            marcasCompaneroAgrupadas = marcasComp.GroupBy(m => m.NombreEvaluacion).ToDictionary(g => g.Key, g => g.ToList());
+        }
+        catch { }
+        finally { isModalLoading = false; }
+    }
+
+    private void ToggleCompaneroPr(string key)
+    {
+        if (companeroPrsExpandidos.Contains(key)) companeroPrsExpandidos.Remove(key);
+        else companeroPrsExpandidos.Add(key);
+    }
+
+    // Helper
+    private string ObtenerIniciales(string n, string a)
+    {
+        var ini = "";
+        if (!string.IsNullOrWhiteSpace(n)) ini += n.Substring(0, 1).ToUpper();
+        if (!string.IsNullOrWhiteSpace(a)) ini += a.Substring(0, 1).ToUpper();
+        return ini == "" ? "N" : ini;
+    }
+
+    // CLASES LOCALES DTO
+    public class EvaluacionCatalogoDto { public int Id { get; set; } public string Nombre { get; set; } = ""; public string TipoMedida { get; set; } = ""; }
+    public class EvaluacionAtletaDto { public int Id { get; set; } public int EvaluacionCatalogoId { get; set; } public string NombreEvaluacion { get; set; } = ""; public string TipoMedida { get; set; } = ""; public string Resultado { get; set; } = ""; public DateTime FechaRegistro { get; set; } public bool RegistradoPorCoach { get; set; } }
+    public class RegistrarMarcaAtletaRequest { public string GymCode { get; set; } = ""; public Guid AtletaId { get; set; } public int EvaluacionCatalogoId { get; set; } public string Resultado { get; set; } = ""; public DateTime FechaRegistro { get; set; } public bool EsCoach { get; set; } public Guid RegistradoPorId { get; set; } }
+}

@@ -6,93 +6,109 @@
 @inject HttpClient Http
 @inject NavigationManager NavManager
 
-<div class="app-container">
+<div class="app-container font-modern">
     <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </a>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">ARMAR CLASE (WOD)</h2>
+<!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 20px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">ARMAR CLASE (WOD)</h2>
         </div>
 
         @if (isPageLoading)
         {
-            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: #33b5e5;"></span></div>
         }
         else
         {
-            <!-- 1. SELECTOR DE FECHA -->
-            <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 20px;">
-                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; text-transform: uppercase;">Selecciona el Día</span>
-                <input type="date" @bind="fechaWod" @bind:after="VerificarWodsExistentes" class="search-input" />
+            <!-- ================= 1. SELECTOR DE FECHA ================= -->
+            <div class="fade-in-up">
+                <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px; border-left: 4px solid #00C851;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span style="color: var(--text-main); font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">Selecciona el Día</span>
+                    </div>
+                    <input type="date" @bind="fechaWod" @bind:after="VerificarWodsExistentes" class="search-input" style="font-weight: 800; font-size: 1.05rem;" />
+                </div>
             </div>
 
-            <!-- 2. CONTROL DE FLUJO: LISTA DE WODS VS FORMULARIO -->
+            <!-- ================= 2. CONTROL DE FLUJO ================= -->
             @if (!mostrandoFormulario)
             {
-                <div class="modern-row" style="flex-direction: column; padding: 20px; background: transparent; border: none; box-shadow: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin: 0;">Clases Programadas</h3>
-                        <span style="background: rgba(51, 181, 229, 0.2); color: #33b5e5; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 800;">
+                <div class="fade-in-up" style="animation-delay: 0.1s;">
+                    
+                    <div style="display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed rgba(128,128,128,0.2);">
+                        <div style="width: 5px; height: 22px; background: #33b5e5; border-radius: 5px; margin-right: 12px; box-shadow: 0 0 10px rgba(51, 181, 229, 0.5);"></div>
+                        <h3 style="color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin: 0; flex: 1;">Clases Programadas</h3>
+                        <span style="background: rgba(51, 181, 229, 0.15); color: #33b5e5; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 900; border: 1px solid rgba(51,181,229,0.3);">
                             @misWodsDelDia.Count WOD(s)
                         </span>
                     </div>
 
-                    @foreach (var w in misWodsDelDia)
-                    {
-                        <div style="background: var(--card-bg); border: 1px solid rgba(128,128,128,0.2); border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="flex: 1; overflow: hidden;">
-                                <h4 style="color: var(--text-main); margin: 0 0 5px 0; font-size: 1.05rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@w.Titulo</h4>
-                                <span style="color: var(--text-muted); font-size: 0.8rem;">@w.Secciones.Count secciones | @w.Ejercicios.Count videos anexados</span>
+                    <div class="user-list">
+                        @foreach (var w in misWodsDelDia)
+                        {
+                            <div class="modern-row" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; margin-bottom: 15px; border-color: rgba(51,181,229,0.2); background: var(--card-bg);">
+                                <div style="flex: 1; overflow: hidden; margin-right: 15px;">
+                                    <h4 style="color: var(--text-main); margin: 0 0 5px 0; font-size: 1.1rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@w.Titulo</h4>
+                                    <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600;">@w.Secciones.Count bloques | @w.Ejercicios.Count videos anexados</span>
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                    <button class="icon-btn" style="color: #33b5e5; border-color: rgba(51,181,229,0.3); background: rgba(51,181,229,0.05); padding: 8px;" @onclick="() => CargarParaEdicion(w)">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <button class="icon-btn" style="color: #ff4444; border-color: rgba(255,68,68,0.3); background: rgba(255,68,68,0.05); padding: 8px;" @onclick="() => EliminarWodExistente(w.Id)">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 10px; flex-shrink: 0;">
-                                <button style="background: rgba(51,181,229,0.1); border: none; color: #33b5e5; padding: 10px; border-radius: 8px; cursor: pointer;" @onclick="() => CargarParaEdicion(w)">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                </button>
-                                <button style="background: rgba(255,68,68,0.1); border: none; color: #ff4444; padding: 10px; border-radius: 8px; cursor: pointer;" @onclick="() => EliminarWodExistente(w.Id)">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                </button>
-                            </div>
-                        </div>
-                    }
+                        }
+                    </div>
 
                     <button class="ink-btn-outline" style="border-style: dashed; border-color: #00C851; color: #00C851; margin-top: 10px;" @onclick="PrepararNuevoWod">
-                        + ARMAR OTRO WOD PARA ESTE DÍA
+                        <span style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            ARMAR OTRO WOD PARA ESTE DÍA
+                        </span>
                     </button>
                 </div>
             }
             else
             {
-                <div class="fade-in-up">
-                    <input type="text" @bind="tituloWod" placeholder="Título de la clase (Ej. WOD 7:00 AM)" class="search-input" style="font-size: 1.1rem; font-weight: 900; margin-bottom: 20px; border-color: #33b5e5;" />
+                <div class="fade-in-up" style="animation-delay: 0.1s;">
+                    <input type="text" @bind="tituloWod" placeholder="Título de la clase (Ej. WOD 7:00 AM)" class="search-input" style="font-size: 1.1rem; font-weight: 900; margin-bottom: 20px; border-color: #33b5e5; background: var(--card-bg);" />
 
                     <!-- SECCIONES DINÁMICAS -->
                     @foreach (var seccion in secciones)
                     {
-                        <div class="modern-row" style="flex-direction: column; padding: 15px; margin-bottom: 15px; border-left: 4px solid #33b5e5;">
+                        <div class="modern-row" style="flex-direction: column; padding: 15px; margin-bottom: 15px; border-left: 4px solid #33b5e5; background: var(--card-bg);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px;">
                                 <input type="text" @bind="seccion.Subtitulo" placeholder="Subtítulo (Ej. AMRAP 15 Min)"
-                                       class="search-input" style="flex: 1; padding: 10px 15px; margin: 0; font-size: 0.95rem; font-weight: 800; color: #33b5e5;" />
+                                       class="search-input" style="flex: 1; padding: 10px 15px; margin: 0; font-size: 0.95rem; font-weight: 900; color: #33b5e5; background: transparent;" />
 
-                                <button style="background: none; border: none; color: #ff4444; padding: 10px; cursor: pointer; flex-shrink: 0;" @onclick="() => EliminarSeccion(seccion)">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <button style="background: none; border: none; color: #ff4444; padding: 10px; cursor: pointer; flex-shrink: 0; opacity: 0.8;" @onclick="() => EliminarSeccion(seccion)">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                             </div>
-                            <textarea @bind="seccion.Contenido" placeholder="Ej.3 vueltas;10 Burpees;15 Pull-ups, 4x12 Reps Squat" class="search-input" style="min-height: 100px; resize: none; font-size: 0.95rem; line-height: 1.5; font-weight: 600;"></textarea>
+                            <textarea @bind="seccion.Contenido" placeholder="Ej. 3 vueltas&#10;10 Burpees&#10;15 Pull-ups" class="search-input" style="min-height: 100px; resize: none; font-size: 0.9rem; line-height: 1.5; font-weight: 600; background: rgba(128,128,128,0.05);"></textarea>
                         </div>
                     }
 
-                    <button class="ink-btn-outline" style="border-style: dashed; border-color: var(--text-muted); color: var(--text-main); margin-bottom: 25px;" @onclick="AgregarSeccion">
+                    <button class="ink-btn-outline" style="border-style: dashed; border-color: var(--text-muted); color: var(--text-main); margin-bottom: 30px;" @onclick="AgregarSeccion">
                         + AGREGAR SECCIÓN
                     </button>
 
                     <!-- CATÁLOGO DE VIDEOS -->
-                    <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 20px;">
+                    <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px; border-color: rgba(128,128,128,0.2);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">Movimientos (@ejerciciosSeleccionados.Count)</span>
-                            <button class="ink-btn glow-btn" style="margin: 0; margin-left:10px; padding: 5px 15px; font-size: 0.75rem; width: auto; background-color: #333;" @onclick="AbrirCatalogo">CATÁLOGO</button>
+                            <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 900; text-transform: uppercase;">Movimientos (@ejerciciosSeleccionados.Count)</span>
+                            <button class="ink-btn glow-btn" style="margin: 0; padding: 6px 15px; font-size: 0.75rem; width: auto; background-color: var(--text-main); color: var(--card-bg); box-shadow: none;" @onclick="AbrirCatalogo">
+                                VER CATÁLOGO
+                            </button>
                         </div>
+                        
                         @if (ejerciciosSeleccionados.Any())
                         {
                             <div style="display: flex; flex-wrap: wrap; gap: 10px;">
@@ -101,7 +117,7 @@
                                     var ej = catalogo.FirstOrDefault(c => c.Id == id);
                                     if (ej != null)
                                     {
-                                        <span style="background: rgba(51,181,229,0.1); color: #33b5e5; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">@ej.Nombre</span>
+                                        <span style="background: rgba(51,181,229,0.1); color: #33b5e5; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; border: 1px solid rgba(51,181,229,0.3);">@ej.Nombre</span>
                                     }
                                 }
                             </div>
@@ -112,8 +128,7 @@
                         }
                     </div>
 
-                    <div style="display: flex; gap: 10px;">
-                        <!-- Si el coach ya tiene clases este día, el botón dice Cancelar, para volver a la lista -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 40px;">
                         @if (misWodsDelDia.Any())
                         {
                             <button class="ink-btn-outline" style="flex: 1; border-color: var(--text-muted); color: var(--text-main);" @onclick="CancelarFormulario" disabled="@isProcessing">
@@ -121,10 +136,10 @@
                             </button>
                         }
                         
-                        <button class="ink-btn glow-btn" style="flex: 1; background: linear-gradient(135deg, #00C851, #007E33);" @onclick="GuardarWod" disabled="@isProcessing">
+                        <button class="ink-btn glow-btn" style="flex: 1; background: linear-gradient(135deg, #00C851, #007E33); color: white; border: none;" @onclick="GuardarWod" disabled="@isProcessing">
                             @if (isProcessing)
                             {
-                                <span class="spinner"></span>
+                                <span class="spinner" style="border-top-color: white;"></span>
                             }
                             else
                             {
@@ -137,24 +152,24 @@
         }
     </div>
 
-    <!-- MODAL: CATÁLOGO DE EJERCICIOS (CON AZURE BLOB STORAGE) -->
+    <!-- ================= MODAL: CATÁLOGO DE EJERCICIOS ================= -->
     @if (mostrarModalCatalogo)
     {
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 20px;">
-            <div class="fade-in-up" style="width: 100%; max-width: 500px; max-height: 85vh; border-radius: 20px; padding: 25px 20px; flex-direction: column; overflow-y: auto; background-color: #1a1a1a; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 3000; display: flex; justify-content: center; align-items: center; padding: 20px;">
+            <div class="fade-in-up" style="width: 100%; max-width: 500px; max-height: 85vh; border-radius: 20px; padding: 25px 20px; flex-direction: column; overflow-y: auto; background-color: var(--card-bg); box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid rgba(128,128,128,0.2);">
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="color: white; font-size: 1.2rem; font-weight: 900; margin: 0;">Catálogo de Movimientos</h3>
-                    <button style="background: none; border: none; color: #aaa; padding: 5px; cursor: pointer;" @onclick="() => mostrarModalCatalogo = false">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3 style="color: var(--text-main); font-size: 1.2rem; font-weight: 900; margin: 0; text-transform: uppercase;">Catálogo</h3>
+                    <button style="background: none; border: none; color: var(--text-muted); padding: 5px; cursor: pointer;" @onclick="() => mostrarModalCatalogo = false">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
 
                 <!-- SUBIDA DE ARCHIVO A AZURE -->
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed rgba(255,255,255,0.2);">
-                    <input type="text" @bind="nuevoEjNombre" placeholder="Nombre (Ej. Bar Muscle Up)" class="search-input" style="margin-bottom: 10px; font-size: 0.9rem; background-color: rgba(0,0,0,0.2); color: white;" />
+                <div style="background: rgba(128,128,128,0.05); padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px dashed rgba(128,128,128,0.3);">
+                    <input type="text" @bind="nuevoEjNombre" placeholder="Nombre (Ej. Bar Muscle Up)" class="search-input" style="margin-bottom: 12px; font-size: 0.9rem; background-color: var(--card-bg);" />
                     
-                    <label class="ink-btn-outline" style="margin: 0 0 10px 0; border-color: rgba(255,255,255,0.5); color: white; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                    <label class="ink-btn-outline" style="margin: 0 0 12px 0; border-color: var(--text-muted); color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; padding: 10px;">
                         <InputFile OnChange="SeleccionarVideo" accept="video/*" style="display: none;" />
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                         SELECCIONAR VIDEO
@@ -162,13 +177,13 @@
 
                     @if (!string.IsNullOrEmpty(nombreVideoSeleccionado))
                     {
-                        <span style="color: #00C851; font-size: 0.75rem; display: block; margin-bottom: 10px; text-align: center;">Archivo: @nombreVideoSeleccionado</span>
+                        <span style="color: #00C851; font-size: 0.75rem; display: block; margin-bottom: 12px; text-align: center; font-weight: 800;">Archivo: @nombreVideoSeleccionado</span>
                     }
 
-                    <button class="ink-btn glow-btn" style="margin: 0; padding: 10px; background: #33b5e5; font-size: 0.8rem;" @onclick="SubirVideoAzure" disabled="@isUploadingVideo">
+                    <button class="ink-btn glow-btn" style="margin: 0; padding: 10px; background: #33b5e5; font-size: 0.85rem; color: white; border: none;" @onclick="SubirVideoAzure" disabled="@isUploadingVideo">
                         @if (isUploadingVideo)
                         {
-                            <span class="spinner" style="width: 14px; height: 14px;"></span> <span> SUBIENDO A LA NUBE...</span>
+                            <span class="spinner" style="width: 14px; height: 14px; border-top-color: white;"></span> <span> SUBIENDO...</span>
                         }
                         else
                         {
@@ -177,21 +192,27 @@
                     </button>
                 </div>
 
+                <!-- LISTA DE EJERCICIOS -->
                 @if (catalogo.Any())
                 {
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         @foreach (var ej in catalogo)
                         {
                             bool estaSeleccionado = ejerciciosSeleccionados.Contains(ej.Id);
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: 12px; border: 1px solid @(estaSeleccionado ? "#00C851" : "rgba(255,255,255,0.1)"); background: @(estaSeleccionado ? "rgba(0,200,81,0.1)" : "transparent");">
-                                <div style="flex: 1; cursor: pointer;" @onclick="() => ToggleSeleccionEjercicio(ej.Id)">
-                                    <span style="color: white; font-weight: 800; font-size: 0.9rem; display: block;">@ej.Nombre</span>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: 12px; border: 1px solid @(estaSeleccionado ? "#00C851" : "rgba(128,128,128,0.2)"); background: @(estaSeleccionado ? "rgba(0,200,81,0.05)" : "transparent"); transition: all 0.2s;">
+                                <div style="flex: 1; cursor: pointer; display: flex; align-items: center; gap: 10px;" @onclick="() => ToggleSeleccionEjercicio(ej.Id)">
+                                    <div style="width: 20px; height: 20px; border-radius: 4px; border: 2px solid @(estaSeleccionado ? "#00C851" : "var(--text-muted)"); display: flex; align-items: center; justify-content: center;">
+                                        @if (estaSeleccionado)
+                                        {
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        }
+                                    </div>
+                                    <span style="color: var(--text-main); font-weight: 800; font-size: 0.9rem; display: block;">@ej.Nombre</span>
                                 </div>
-                                <div style="display: flex; gap: 10px;">
-                                    <button style="background: none; border: none; color: #ff4444; cursor: pointer; padding: 5px;" @onclick="() => EliminarDelCatalogo(ej.Id)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                    </button>
-                                </div>
+                                
+                                <button style="background: none; border: none; color: #ff4444; cursor: pointer; padding: 5px; opacity: 0.8;" @onclick="() => EliminarDelCatalogo(ej.Id)">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
                             </div>
                         }
                     </div>
@@ -201,34 +222,34 @@
     }
 </div>
 
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
+    .font-modern { font-family: 'Montserrat', sans-serif; }
+    .fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both; }
+    @@keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+</style>
+
 @code {
     private string gymCode = "NOMADA";
-
     private bool isPageLoading = true;
     private bool isProcessing = false;
     private bool isUploadingVideo = false;
     private Guid currentUserId;
 
     private DateTime fechaWod = DateTime.Today;
-    
-    // Lista de WODs para el día (Múltiples WODs)
     private List<WodGeneralDto> misWodsDelDia = new();
     
-    // Controles de estado del formulario
     private bool mostrandoFormulario = false;
     private bool modoEdicion = false;
     private int wodEditandoId = 0;
 
-    // Campos del formulario
     private string tituloWod = "";
     private List<WodSeccionDto> secciones = new();
     private HashSet<int> ejerciciosSeleccionados = new();
 
-    // Catálogo
     private bool mostrarModalCatalogo = false;
     private List<EjercicioDto> catalogo = new();
     
-    // Variables para subida a Azure
     private string nuevoEjNombre = "";
     private IBrowserFile? videoSeleccionado;
     private string nombreVideoSeleccionado = "";
@@ -252,18 +273,14 @@
         {
             string fStr = fechaWod.ToString("yyyy-MM-dd");
             var wodsDelDia = await Http.GetFromJsonAsync<List<WodGeneralDto>>($"api/wod/{gymCode}/dia/{fStr}") ?? new();
-
-            // Filtramos solo los WODs armados por el Coach actual
             misWodsDelDia = wodsDelDia.Where(w => w.CoachId == currentUserId).ToList();
 
             if (!misWodsDelDia.Any())
             {
-                // Si no tiene ninguno, abrimos automáticamente el formulario en blanco
                 PrepararNuevoWod();
             }
             else
             {
-                // Si tiene, ocultamos el formulario para mostrar la lista
                 mostrandoFormulario = false;
             }
         }
@@ -289,9 +306,7 @@
 
         secciones = w.Secciones.Select(s => new WodSeccionDto
         {
-            Subtitulo = s.Subtitulo,
-            Contenido = s.Contenido,
-            Orden = s.Orden
+            Subtitulo = s.Subtitulo, Contenido = s.Contenido, Orden = s.Orden
         }).ToList();
 
         ejerciciosSeleccionados = new HashSet<int>(w.Ejercicios.Select(e => e.Id));
@@ -351,23 +366,17 @@
         try
         {
             using var content = new MultipartFormDataContent();
-            
-            // Agregamos el texto normal
             content.Add(new StringContent(gymCode), "gymCode");
             content.Add(new StringContent(nuevoEjNombre), "nombre");
 
-            // Permitimos subir videos de hasta 100 MB
             long maxAllowedSize = 500L * 1024 * 1024;
             using var stream = videoSeleccionado.OpenReadStream(maxAllowedSize);
             
             var fileContent = new StreamContent(stream);
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(videoSeleccionado.ContentType);
-            
             content.Add(fileContent, "video", videoSeleccionado.Name);
 
-            // Llamamos a nuestro nuevo endpoint del backend que se conecta con Azure
             var res = await Http.PostAsync("api/wod/catalogo/subir-video", content);
-            
             if (res.IsSuccessStatusCode)
             {
                 nuevoEjNombre = "";
@@ -376,14 +385,8 @@
                 await CargarCatalogo();
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error al subir video: " + ex.Message);
-        }
-        finally
-        {
-            isUploadingVideo = false;
-        }
+        catch (Exception ex) { Console.WriteLine("Error al subir video: " + ex.Message); }
+        finally { isUploadingVideo = false; }
     }
 
     private async Task EliminarDelCatalogo(int id)

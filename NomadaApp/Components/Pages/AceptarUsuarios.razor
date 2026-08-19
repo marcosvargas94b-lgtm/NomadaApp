@@ -3,46 +3,49 @@
 @using System.Net.Http.Json
 @using Microsoft.Maui.Storage
 @inject HttpClient Http
+@inject NavigationManager NavManager
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-<div class="app-container">
-    <div class="feed-content" style="padding-top: 10px;">
-
-        <!-- ENCABEZADO PREMIUM -->
-        <div style="display: flex; align-items: center; margin-bottom: 25px;">
-            <a href="/inicio" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center; transition: opacity 0.2s;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 18l-6-6 6-6" />
-                </svg>
-            </a>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.6rem; text-shadow: 0 0 15px rgba(255,255,255,0.2);">SOLICITUDES</h2>
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 20px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">SOLICITUDES</h2>
         </div>
 
         @if (isPageLoading)
         {
             <!-- Loader a pantalla completa -->
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 50vh;">
-                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: var(--text-main); margin: 0 0 20px 0;"></span>
+                <span class="spinner" style="width: 50px; height: 50px; border-width: 4px; border-top-color: #33b5e5; margin: 0 0 20px 0;"></span>
                 <p style="color: var(--text-muted); font-weight: 800; letter-spacing: 2px;">CARGANDO LISTAS...</p>
             </div>
         }
         else
         {
-            <!-- SECCIÓN 1: USUARIOS EN ESPERA -->
-            <div class="admin-section" style="margin-bottom: 40px;">
-                <h3 style="color: var(--text-main); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 10px;">En Espera</h3>
+            <!-- ================= SECCIÓN 1: USUARIOS EN ESPERA ================= -->
+            <div class="admin-section fade-in-up" style="margin-bottom: 40px;">
+
+                <!-- Subtítulo Moderno con Glow -->
+                <div style="display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed rgba(128,128,128,0.2);">
+                    <div style="width: 5px; height: 22px; background: #33b5e5; border-radius: 5px; margin-right: 12px; box-shadow: 0 0 10px rgba(51, 181, 229, 0.5);"></div>
+                    <h3 style="color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin: 0;">EN ESPERA</h3>
+                </div>
 
                 @if (usuariosEnEspera.Any())
                 {
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 5px;">
-                        <label style="color: var(--text-main); font-size: 0.9rem; display: flex; align-items: center; font-weight: 700; cursor: pointer;">
-                            <input type="checkbox" @bind="SeleccionarTodos" style="margin-right: 10px; width: 18px; height: 18px; accent-color: var(--text-main);" />
+                        <label style="color: var(--text-main); font-size: 0.85rem; display: flex; align-items: center; font-weight: 800; cursor: pointer; text-transform: uppercase;">
+                            <input type="checkbox" @bind="SeleccionarTodos" style="margin-right: 10px; width: 18px; height: 18px; accent-color: #33b5e5;" />
                             Seleccionar Todos
                         </label>
-                        <button class="ink-btn glow-btn" style="width: auto; padding: 8px 15px; font-size: 0.8rem; margin: 0;"
+                        <button class="ink-btn glow-btn" style="width: auto; padding: 8px 15px; font-size: 0.75rem; margin: 0; background: #33b5e5; color: white; border: none;"
                                 disabled="@(!HaySeleccionados || isMassLoading)" @onclick="AceptarMasivo">
                             @if (isMassLoading)
                             {
-                                <span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span>
+                                <span class="spinner" style="width: 14px; height: 14px; border-width: 2px; border-top-color: white;"></span>
                             }
                             else
                             {
@@ -55,39 +58,37 @@
                         @foreach (var user in usuariosEnEspera)
                         {
                             <!-- Tarjeta Premium -->
-                            <div class="modern-row" style="padding: 12px 15px;">
-                                <input type="checkbox" @bind="user.Seleccionado" style="margin-right: 15px; width: 20px; height: 20px; accent-color: var(--text-main);" />
+                            <div class="modern-row" style="padding: 12px 15px; border-left: 3px solid #33b5e5;">
+                                <input type="checkbox" @bind="user.Seleccionado" style="margin-right: 15px; width: 20px; height: 20px; accent-color: #33b5e5;" />
 
-                                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 1rem; margin-right: 12px;">
+                                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 1rem; margin-right: 12px; background: linear-gradient(135deg, #33b5e5, #0099CC); color: white;">
                                     @ObtenerIniciales(user.Nombre, user.ApellidoPaterno)
                                 </div>
 
                                 <div class="user-info">
-                                    <span class="user-name">@user.Nombre @user.ApellidoPaterno</span>
-                                    <span class="user-email">@user.Correo</span>
+                                    <span class="user-name" style="font-size: 0.95rem; font-weight: 800;">@user.Nombre @user.ApellidoPaterno</span>
+                                    <span class="user-email" style="font-size: 0.75rem; color: var(--text-muted);">@user.Correo</span>
                                 </div>
 
-                                <div class="user-actions">
-                                    <button type="button" class="menu-btn" style="color: #00C851;" disabled="@user.IsLoading" @onclick="() => ProcesarUsuario(user, true)">
+                                <div class="user-actions" style="display: flex; gap: 8px;">
+                                    <button type="button" class="icon-btn" style="color: #00C851; border-color: rgba(0,200,81,0.3); background: rgba(0,200,81,0.05); padding: 8px;" disabled="@user.IsLoading" @onclick="() => ProcesarUsuario(user, true)">
                                         @if (user.IsLoading)
                                         {
-                                            <span class="spinner" style="width:16px;height:16px; border-top-color: #00C851;"></span>
+                                            <span class="spinner" style="width:16px;height:16px; border-top-color: #00C851; margin: 0;"></span>
                                         }
                                         else
                                         {
-
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                         }
                                     </button>
-                                    <button type="button" class="menu-btn" style="color: #ff4444;" disabled="@user.IsLoading" @onclick="() => ProcesarUsuario(user, false)">
+                                    <button type="button" class="icon-btn" style="color: #ff4444; border-color: rgba(255,68,68,0.3); background: rgba(255,68,68,0.05); padding: 8px;" disabled="@user.IsLoading" @onclick="() => ProcesarUsuario(user, false)">
                                         @if (user.IsLoading)
                                         {
-                                            <span class="spinner" style="width:16px;height:16px; border-top-color: #ff4444;"></span>
+                                            <span class="spinner" style="width:16px;height:16px; border-top-color: #ff4444; margin: 0;"></span>
                                         }
                                         else
                                         {
-
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                         }
                                     </button>
                                 </div>
@@ -97,39 +98,43 @@
                 }
                 else
                 {
-                    <div style="text-align: center; padding: 20px 0;">
-                        <span style="font-size: 2.5rem; opacity: 0.5;">✅</span>
+                    <div style="text-align: center; padding: 30px 0; background: rgba(128,128,128,0.05); border-radius: 16px; border: 1px dashed rgba(128,128,128,0.2);">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.8;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                         <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px; font-weight: 700;">No hay solicitudes pendientes.</p>
                     </div>
                 }
             </div>
 
-            <!-- SECCIÓN 2: USUARIOS RECHAZADOS -->
-            <div class="admin-section">
-                <h3 style="color: #ff4444; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 10px;">Rechazados</h3>
+            <!-- ================= SECCIÓN 2: USUARIOS RECHAZADOS ================= -->
+            <div class="admin-section fade-in-up" style="animation-delay: 0.1s;">
+
+                <!-- Subtítulo Moderno con Glow Rojo -->
+                <div style="display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px dashed rgba(128,128,128,0.2);">
+                    <div style="width: 5px; height: 22px; background: #ff4444; border-radius: 5px; margin-right: 12px; box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);"></div>
+                    <h3 style="color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin: 0;">RECHAZADOS</h3>
+                </div>
 
                 @if (usuariosRechazados.Any())
                 {
                     <div class="user-list">
                         @foreach (var user in usuariosRechazados)
                         {
-                            <!-- Tarjeta Premium -->
-                            <div class="modern-row" style="padding: 12px 15px; opacity: 0.8;">
-                                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 1rem; margin-right: 12px; background: linear-gradient(135deg, #333, #666);">
+                            <div class="modern-row" style="padding: 12px 15px; opacity: 0.85; border-left: 3px solid var(--text-muted);">
+                                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 1rem; margin-right: 12px; background: rgba(128,128,128,0.2); color: var(--text-muted);">
                                     @ObtenerIniciales(user.Nombre, user.ApellidoPaterno)
                                 </div>
 
                                 <div class="user-info">
-                                    <span class="user-name" style="text-decoration: line-through; color: var(--text-muted);">@user.Nombre @user.ApellidoPaterno</span>
-                                    <span class="user-email">@user.Correo</span>
+                                    <span class="user-name" style="text-decoration: line-through; color: var(--text-muted); font-size: 0.95rem; font-weight: 800;">@user.Nombre @user.ApellidoPaterno</span>
+                                    <span class="user-email" style="font-size: 0.75rem; color: var(--text-muted);">@user.Correo</span>
                                 </div>
 
-                                <div class="user-actions">
-                                    <button type="button" class="menu-btn" style="color: #33b5e5;" disabled="@user.IsLoading" @onclick="() => ConfirmarRestauracion(user)">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                                <div class="user-actions" style="display: flex; gap: 8px;">
+                                    <button type="button" class="icon-btn" style="color: #33b5e5; border-color: rgba(51,181,229,0.3); background: rgba(51,181,229,0.05); padding: 8px;" disabled="@user.IsLoading" @onclick="() => ConfirmarRestauracion(user)">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
                                     </button>
-                                    <button type="button" class="menu-btn" style="color: var(--text-muted);" disabled="@user.IsLoading" @onclick="() => EliminarDefinitivo(user)">
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    <button type="button" class="icon-btn" style="color: var(--text-muted); border-color: rgba(128,128,128,0.3); background: rgba(128,128,128,0.05); padding: 8px;" disabled="@user.IsLoading" @onclick="() => EliminarDefinitivo(user)">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                     </button>
                                 </div>
                             </div>
@@ -138,8 +143,8 @@
                 }
                 else
                 {
-                    <div style="text-align: center; padding: 20px 0;">
-                        <span style="font-size: 2.5rem; opacity: 0.3;">🗑️</span>
+                    <div style="text-align: center; padding: 30px 0; background: rgba(128,128,128,0.05); border-radius: 16px; border: 1px dashed rgba(128,128,128,0.2);">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.6;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                         <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px; font-weight: 700;">No hay usuarios rechazados.</p>
                     </div>
                 }
@@ -148,25 +153,24 @@
     </div>
 </div>
 
-<!-- Modal de Confirmación C# Puro Premium -->
+<!-- Modal de Confirmación -->
 @if (usuarioARestaurar != null)
 {
     <div class="modal-overlay glass-overlay">
         <div class="login-card modal-content premium-modal">
-            <h3 class="modal-title" style="color: #33b5e5;">¿RESTAURAR ATLETA?</h3>
-            <p class="modal-subtitle" style="margin-bottom: 25px;">
-                ¿Deseas ingresar a <strong>@usuarioARestaurar.Nombre.ToUpper()</strong> como usuario aprobado de la app?
+            <h3 class="modal-title" style="color: #33b5e5; font-size: 1.2rem; text-shadow: 0 0 10px rgba(51,181,229,0.3);">¿RESTAURAR ATLETA?</h3>
+            <p class="modal-subtitle" style="margin-bottom: 25px; color: var(--text-muted);">
+                ¿Deseas ingresar a <strong style="color: var(--text-main);">@usuarioARestaurar.Nombre.ToUpper()</strong> como usuario aprobado de la app?
             </p>
             <div class="modal-actions" style="margin-top: 20px;">
-                <button class="ink-btn-outline" @onclick="CancelarRestauracion">CANCELAR</button>
-                <button class="ink-btn glow-btn" @onclick="EjecutarRestauracion">
+                <button class="ink-btn-outline" style="color: var(--text-main); border-color: var(--text-muted);" @onclick="CancelarRestauracion">CANCELAR</button>
+                <button class="ink-btn glow-btn" style="background: #33b5e5; color: white; border: none;" @onclick="EjecutarRestauracion">
                     @if (isModalLoading)
                     {
-                        <span class="spinner"></span>
+                        <span class="spinner" style="border-top-color: white;"></span>
                     }
                     else
                     {
-
                         <span>APROBAR</span>
                     }
                 </button>
@@ -175,8 +179,32 @@
     </div>
 }
 
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
 @code {
-    private string gymCode = "NOMADA"; // Se sobreescribe en OnInitializedAsync
+    private string gymCode = "NOMADA";
     private List<UsuarioAdminDto> usuariosEnEspera = new();
     private List<UsuarioAdminDto> usuariosRechazados = new();
     private bool isMassLoading = false;
@@ -194,7 +222,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        gymCode = Preferences.Get("gymCode", "NOMADA"); // Obtenemos la sucursal del usuario logueado
+        gymCode = Preferences.Get("gymCode", "NOMADA");
         await CargarListas();
     }
 
@@ -203,7 +231,6 @@
         isPageLoading = true;
         try
         {
-            // Inyectamos el gymCode en la ruta para que el AdminController filtre
             usuariosEnEspera = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/admin/{gymCode}/usuarios/En%20Espera") ?? new();
             usuariosRechazados = await Http.GetFromJsonAsync<List<UsuarioAdminDto>>($"api/admin/{gymCode}/usuarios/Rechazado") ?? new();
         }
@@ -302,7 +329,6 @@
         user.IsLoading = false;
     }
 
-    // Helper de Avatares
     private string ObtenerIniciales(string n, string a)
     {
         var ini = "";

@@ -4,222 +4,230 @@
 @using System.Globalization
 @using Microsoft.Maui.Storage
 @inject HttpClient Http
+@inject NavigationManager NavManager
+<div class="app-container font-modern">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-<div class="app-container">
-    <div class="feed-content" style="padding-top: 10px;">
-
-        <!-- TOP BAR -->
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <a href="/acciones" style="color: var(--text-main); margin-right: 15px; display: flex; align-items: center;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </a>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">FINANZAS</h2>
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 20px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/acciones")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">FINANZAS</h2>
         </div>
 
         <!-- PESTAÑAS (TABS) -->
-        <div class="segmented-control" style="margin-bottom: 20px;">
-            <div class="segment @(tabActual == "Tickets" ? "active" : "")" @onclick="@(() => CambiarTab("Tickets"))">TICKETS</div>
-            <div class="segment @(tabActual == "Graficas" ? "active" : "")" @onclick="@(() => CambiarTab("Graficas"))">GRÁFICAS</div>
+        <div class="segmented-control fade-in-up" style="margin-bottom: 25px; background: rgba(128,128,128,0.1);">
+            <div class="segment @(tabActual == "Tickets" ? "active" : "")" style="@(tabActual == "Tickets" ? "background: #00C851; color: white; box-shadow: 0 4px 15px rgba(0,200,81,0.3); border: none;" : "")" @onclick="@(() => CambiarTab("Tickets"))">TICKETS</div>
+            <div class="segment @(tabActual == "Graficas" ? "active" : "")" style="@(tabActual == "Graficas" ? "background: #33b5e5; color: white; box-shadow: 0 4px 15px rgba(51,181,229,0.3); border: none;" : "")" @onclick="@(() => CambiarTab("Graficas"))">GRÁFICAS</div>
         </div>
 
         @if (isPageLoading)
         {
-            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: @(tabActual == "Tickets" ? "#00C851" : "#33b5e5");"></span></div>
         }
         else
         {
             <!-- ================= PESTAÑA 1: TICKETS ================= -->
             @if (tabActual == "Tickets")
             {
-                <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 20px;">
-                    <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px;">FILTRAR TICKETS</span>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <select class="search-input" style="flex: 1; padding: 10px; border-radius: 8px;" @bind="mesTickets">
-                            <option value="0">Todo el Año</option>
-                            <option value="1">Enero</option>
-                            <option value="2">Febrero</option>
-                            <option value="3">Marzo</option>
-                            <option value="4">Abril</option>
-                            <option value="5">Mayo</option>
-                            <option value="6">Junio</option>
-                            <option value="7">Julio</option>
-                            <option value="8">Agosto</option>
-                            <option value="9">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
+                <div class="fade-in-up" style="animation-delay: 0.1s;">
+                    <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px; border-left: 4px solid #00C851; background: var(--card-bg);">
+                        <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 900; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Filtrar Búsqueda</span>
 
-                        <select class="search-input" style="flex: 1; padding: 10px; border-radius: 8px;" @bind="anioTickets">
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
-                            <option value="2027">2027</option>
-                        </select>
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <select class="search-input" style="flex: 1; padding: 12px 15px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; border-color: rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); color: var(--text-main);" @bind="mesTickets">
+                                <option value="0" style="color: black;">Todo el Año</option>
+                                <option value="1" style="color: black;">Enero</option>
+                                <option value="2" style="color: black;">Febrero</option>
+                                <option value="3" style="color: black;">Marzo</option>
+                                <option value="4" style="color: black;">Abril</option>
+                                <option value="5" style="color: black;">Mayo</option>
+                                <option value="6" style="color: black;">Junio</option>
+                                <option value="7" style="color: black;">Julio</option>
+                                <option value="8" style="color: black;">Agosto</option>
+                                <option value="9" style="color: black;">Septiembre</option>
+                                <option value="10" style="color: black;">Octubre</option>
+                                <option value="11" style="color: black;">Noviembre</option>
+                                <option value="12" style="color: black;">Diciembre</option>
+                            </select>
 
-                        <button class="ink-btn glow-btn" style="margin: 0; padding: 0 15px; width: auto; border-radius: 8px;" @onclick="CargarTickets">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </button>
+                            <select class="search-input" style="flex: 1; padding: 12px 15px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; border-color: rgba(128,128,128,0.2); background: rgba(128,128,128,0.05); color: var(--text-main);" @bind="anioTickets">
+                                <option value="2025" style="color: black;">2025</option>
+                                <option value="2026" style="color: black;">2026</option>
+                                <option value="2027" style="color: black;">2027</option>
+                            </select>
+
+                            <button class="ink-btn glow-btn" style="margin: 0; padding: 0 15px; width: auto; border-radius: 8px; background: #00C851; color: white; border: none;" @onclick="CargarTickets">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </button>
+                        </div>
+
+                        <div style="background: rgba(0, 200, 81, 0.05); padding: 20px; border-radius: 12px; border: 1px dashed rgba(0, 200, 81, 0.3); text-align: center;">
+                            <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 5px;">Total Recaudado (Selección)</span>
+                            <h3 style="color: #00C851; font-size: 2rem; font-weight: 900; margin: 0; word-break: break-all; text-shadow: 0 0 10px rgba(0,200,81,0.2);">$@CalcularTotalTickets().ToString("N2")</h3>
+                        </div>
                     </div>
 
-                    <div style="background: rgba(0, 200, 81, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(0, 200, 81, 0.2);">
-                        <span style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 5px;">Total Recaudado (Selección)</span>
-                        <h3 style="color: #00C851; font-size: 1.5rem; font-weight: 900; margin: 0; word-break: break-all;">$@CalcularTotalTickets().ToString("N2")</h3>
+                    <div class="search-wrapper" style="margin-bottom: 25px;">
+                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" @bind="textoBusqueda" @bind:event="oninput" placeholder="Buscar ticket por nombre..." class="search-input" style="background: var(--card-bg); font-weight: 700; border-color: rgba(128,128,128,0.2);" />
                     </div>
-                </div>
 
-                <div class="search-wrapper" style="margin-bottom: 20px;">
-                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" @bind="textoBusqueda" @bind:event="oninput" placeholder="Buscar atleta por nombre..." class="search-input" />
-                </div>
-
-                @if (TicketsFiltrados.Any())
-                {
-                    <div class="user-list">
-                        @foreach (var ticket in TicketsFiltrados)
-                        {
-                            <div class="modern-row" style="flex-direction: column; align-items: flex-start; padding: 15px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: 10px; gap: 15px;">
-                                    <span style="font-weight: 900; color: var(--text-main); font-size: 1rem; flex: 1; word-wrap: break-word; line-height: 1.2;">@ticket.Atleta</span>
-                                    <span style="color: #00C851; font-weight: 900; font-size: 1.1rem; flex-shrink: 0;">+$@ticket.Monto.ToString("N2")</span>
-                                </div>
-
-                                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                                    <div style="display: flex; flex-direction: column; gap: 3px; flex: 1; padding-right: 10px;">
-                                        <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
-                                            @FormatearTipoCobro(ticket.TipoCobro)
-                                        </span>
-                                        @if (!string.IsNullOrEmpty(ticket.Descripcion))
-                                        {
-                                            <span style="color: var(--text-muted); font-size: 0.75rem;">@ticket.Descripcion</span>
-                                        }
+                    @if (TicketsFiltrados.Any())
+                    {
+                        <div class="user-list">
+                            @foreach (var ticket in TicketsFiltrados)
+                            {
+                                <div class="modern-row" style="flex-direction: column; align-items: stretch; padding: 15px 20px; border-color: rgba(128,128,128,0.2); background: var(--card-bg);">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: 10px; gap: 15px;">
+                                        <span style="font-weight: 900; color: var(--text-main); font-size: 1.05rem; flex: 1; word-wrap: break-word; line-height: 1.3;">@ticket.Atleta</span>
+                                        <span style="color: #00C851; font-weight: 900; font-size: 1.15rem; flex-shrink: 0;">+$@ticket.Monto.ToString("N2")</span>
                                     </div>
-                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0;">
-                                        <span style="color: var(--text-muted); font-size: 0.75rem;">@ticket.FechaCobro.ToLocalTime().ToString("dd MMM yy, HH:mm")</span>
-                                        <span style="color: #33b5e5; font-size: 0.7rem; font-weight: 800;">Coach: @ticket.Coach</span>
+
+                                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; border-top: 1px dashed rgba(128,128,128,0.2); padding-top: 10px;">
+                                        <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 10px;">
+                                            <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">
+                                                @FormatearTipoCobro(ticket.TipoCobro)
+                                            </span>
+                                            @if (!string.IsNullOrEmpty(ticket.Descripcion))
+                                            {
+                                                <span style="color: var(--text-main); font-size: 0.8rem; font-weight: 600;">@ticket.Descripcion</span>
+                                            }
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;">
+                                            <span style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600;">@ticket.FechaCobro.ToLocalTime().ToString("dd MMM yy, HH:mm")</span>
+                                            <span style="background: rgba(128,128,128,0.1); color: var(--text-main); padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800;">Coach: @ticket.Coach</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div style="text-align: center; padding: 40px 0;">
-                        <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700;">No se encontraron pagos.</p>
-                    </div>
-                }
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 40px 20px; background: rgba(128,128,128,0.05); border-radius: 16px; border: 1px dashed rgba(128,128,128,0.2);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.6;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin: 0;">No se encontraron pagos.</p>
+                        </div>
+                    }
+                </div>
             }
 
             <!-- ================= PESTAÑA 2: GRÁFICAS INTERACTIVAS ================= -->
             @if (tabActual == "Graficas" && resumenAnual != null)
             {
-                <!-- SELECTOR GLOBAL DE AÑO -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
-                    <span style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; letter-spacing: 1px;">AÑO FISCAL</span>
-                    <select class="search-input" style="padding: 8px 20px; border-radius: 8px; width: auto; font-size: 0.95rem; font-weight: 800; background-color: var(--card-bg); border: 2px solid #33b5e5;" @bind="anioGrafica" @bind:after="CargarGraficasTotales">
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                        <option value="2027">2027</option>
-                    </select>
-                </div>
+                <div class="fade-in-up" style="animation-delay: 0.1s;">
 
-                <!-- Info Flotante interactiva -->
-                @if (detalleSeleccionado != null)
-                {
-                    <div class="modern-row fade-in-up" style="background: linear-gradient(135deg, #111, #333); border-color: #33b5e5; flex-direction: column; align-items: center; padding: 15px; margin-bottom: 20px;">
-                        <span style="color: #33b5e5; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">@detalleSeleccionado.Titulo</span>
-                        <h2 style="color: white; margin: 5px 0 0 0; font-size: 1.8rem;">$@detalleSeleccionado.Monto.ToString("N2")</h2>
-                        <span style="color: #aaa; font-size: 0.75rem; margin-top: 5px;">@detalleSeleccionado.Subtitulo</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="modern-row" style="justify-content: center; padding: 15px; margin-bottom: 20px; border-style: dashed;">
-                        <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700;">Toca un punto o barra para ver detalles.</span>
-                    </div>
-                }
-
-                <!-- Gráfica 1: Puntos (Comportamiento Anual) -->
-                <div class="modern-row" style="flex-direction: column; padding: 20px 10px; margin-bottom: 20px;">
-                    <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; margin-bottom: 20px; padding-left: 10px; text-transform: uppercase;">REPORTE ANUAL</span>
-
-                    <div style="width: 100%; height: 160px; position: relative;">
-                        <svg width="100%" height="100%" viewBox="0 0 120 100" preserveAspectRatio="none">
-                            <polyline points="@ObtenerPuntosSVG()" fill="none" stroke="#33b5e5" stroke-width="1.5" stroke-linejoin="round" />
-                            @for (int i = 0; i < 12; i++)
-                            {
-                                int index = i;
-                                decimal montoMes = resumenAnual.IngresosPorMes[index];
-                                decimal maxMonto = resumenAnual.IngresosPorMes.Max() == 0 ? 1 : resumenAnual.IngresosPorMes.Max();
-
-                                double cx = 5 + (index * 10);
-                                double cy = 90 - (double)((montoMes / maxMonto) * 80);
-
-                                <circle cx="@cx" cy="@cy" r="3" fill="@(mesSeleccionadoGraph == (index + 1) ? "#00C851" : "#111")" stroke="@(mesSeleccionadoGraph == (index + 1) ? "#00C851" : "#33b5e5")" stroke-width="1.5"
-                                        style="cursor: pointer; pointer-events: all;"
-                                        @onclick="() => MostrarDetalleMes(index, montoMes)" />
-                            }
-                        </svg>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; width: 100%; padding: 0 5%; color: var(--text-muted); font-size: 0.6rem; font-weight: 700; margin-top: 5px;">
-                        <span>E</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
-                    </div>
-
-                    <div style="text-align: center; margin-top: 25px; border-top: 1px solid rgba(128,128,128,0.2); padding-top: 15px;">
-                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 800;">INGRESOS TOTALES DEL AÑO</span>
-                        <h4 style="color: var(--text-main); margin: 5px 0 0 0; font-size: 1.4rem;">$@resumenAnual.TotalAnio.ToString("N2")</h4>
-                    </div>
-                </div>
-
-                <!-- Gráfica 2: Barras (Ingreso Semanal) -->
-                <div class="modern-row" style="flex-direction: column; padding: 20px; margin-bottom: 25px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                        <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">INGRESOS SEMANALES  </span>
-
-                        <!-- El selector de mes ahora está más espaciado y limpio -->
-                        <select class="search-input" style="padding: 5px 10px; margin-left:5px; border-radius: 6px; width: auto; font-size: 0.8rem; background-color: transparent;" @bind="mesGrafica" @bind:after="CargarGraficaSemanal">
-                            <option value="1">Ene</option>
-                            <option value="2">Feb</option>
-                            <option value="3">Mar</option>
-                            <option value="4">Abr</option>
-                            <option value="5">May</option>
-                            <option value="6">Jun</option>
-                            <option value="7">Jul</option>
-                            <option value="8">Ago</option>
-                            <option value="9">Sep</option>
-                            <option value="10">Oct</option>
-                            <option value="11">Nov</option>
-                            <option value="12">Dic</option>
+                    <!-- SELECTOR GLOBAL DE AÑO -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding: 0 5px; border-bottom: 1px dashed rgba(128,128,128,0.2); padding-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 5px; height: 22px; background: #33b5e5; border-radius: 5px; box-shadow: 0 0 10px rgba(51, 181, 229, 0.5);"></div>
+                            <span style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; letter-spacing: 1.5px;">AÑO FISCAL</span>
+                        </div>
+                        <select class="search-input" style="padding: 8px 15px; border-radius: 8px; width: auto; font-size: 0.95rem; font-weight: 900; background-color: rgba(51,181,229,0.1); border: 1px solid rgba(51,181,229,0.5); color: #33b5e5; outline: none;" @bind="anioGrafica" @bind:after="CargarGraficasTotales">
+                            <option value="2025" style="color: black;">2025</option>
+                            <option value="2026" style="color: black;">2026</option>
+                            <option value="2027" style="color: black;">2027</option>
                         </select>
                     </div>
 
-                    <!-- Contenedor estricto para las barras -->
-                    <div style="display: flex; align-items: flex-end; justify-content: space-around; width: 100%; height: 140px; border-bottom: 2px solid rgba(128,128,128,0.2); padding-bottom: 5px;">
-                        @{
-                            var semanas = ObtenerIngresosSemanales();
-                            decimal maxSemana = semanas.Max() == 0 ? 1 : semanas.Max();
+                    <!-- Info Flotante interactiva -->
+                    @if (detalleSeleccionado != null)
+                    {
+                        <div class="modern-row fade-in-up" style="background: var(--card-bg); border: 1px solid #33b5e5; flex-direction: column; align-items: center; padding: 25px; margin-bottom: 25px; box-shadow: 0 5px 20px rgba(51,181,229,0.15);">
+                            <span style="color: #33b5e5; font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">@detalleSeleccionado.Titulo</span>
+                            <h2 style="color: var(--text-main); margin: 10px 0; font-size: 2.2rem; font-weight: 900;">$@detalleSeleccionado.Monto.ToString("N2")</h2>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600;">@detalleSeleccionado.Subtitulo</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="modern-row" style="justify-content: center; padding: 25px; margin-bottom: 25px; border-style: dashed; border-color: rgba(128,128,128,0.3); background: rgba(128,128,128,0.02);">
+                            <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Toca un punto o barra para ver detalles</span>
+                        </div>
+                    }
 
-                            for (int i = 0; i < semanas.Count; i++)
-                            {
-                                int index = i;
-                                decimal montoSemana = semanas[index];
-                                int porcentaje = (int)Math.Round((montoSemana / maxSemana) * 100);
+                    <!-- Gráfica 1: Puntos (Comportamiento Anual) -->
+                    <div class="modern-row" style="flex-direction: column; padding: 25px 15px; margin-bottom: 25px; background: var(--card-bg);">
+                        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 900; margin-bottom: 25px; padding-left: 5px; text-transform: uppercase; letter-spacing: 1px;">REPORTE ANUAL</span>
 
-                                <!-- Barra individual con ancho fijo para evitar empalmes -->
-                                <div style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; width: 40px; cursor: pointer;"
-                                     @onclick="() => MostrarDetalleSemana(index, montoSemana)">
-                                    <div style="width: 25px; height: @(porcentaje)%; min-height: 5px; background: linear-gradient(0deg, #00C851, #007E33); border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); opacity: @(semanaSeleccionadaGraph == index ? "1" : "0.6"); transition: height 0.4s ease-out, opacity 0.2s;"></div>
-                                </div>
-                            }
-                        }
+                        <div style="width: 100%; height: 160px; position: relative; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                            <svg width="100%" height="100%" viewBox="0 0 120 100" preserveAspectRatio="none" style="overflow: visible;">
+                                <polyline points="@ObtenerPuntosSVG()" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linejoin="round" />
+                                @for (int i = 0; i < 12; i++)
+                                {
+                                    int index = i;
+                                    decimal montoMes = resumenAnual.IngresosPorMes[index];
+                                    decimal maxMonto = resumenAnual.IngresosPorMes.Max() == 0 ? 1 : resumenAnual.IngresosPorMes.Max();
+
+                                    double cx = 5 + (index * 10);
+                                    double cy = 90 - (double)((montoMes / maxMonto) * 80);
+
+                                    <circle cx="@cx" cy="@cy" r="4" fill="@(mesSeleccionadoGraph == (index + 1) ? "#00C851" : "var(--card-bg)")" stroke="@(mesSeleccionadoGraph == (index + 1) ? "#00C851" : "#33b5e5")" stroke-width="2"
+                                            style="cursor: pointer; pointer-events: all; transition: all 0.2s;"
+                                            @onclick="() => MostrarDetalleMes(index, montoMes)" />
+                                }
+                            </svg>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; width: 100%; padding: 0 5%; color: var(--text-muted); font-size: 0.65rem; font-weight: 800; margin-top: 10px;">
+                            <span>E</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 30px; border-top: 1px dashed rgba(128,128,128,0.2); padding-top: 20px;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">INGRESOS TOTALES DEL AÑO</span>
+                            <h4 style="color: var(--text-main); margin: 5px 0 0 0; font-size: 1.6rem; font-weight: 900;">$@resumenAnual.TotalAnio.ToString("N2")</h4>
+                        </div>
                     </div>
 
-                    <!-- Etiquetas debajo de las barras -->
-                    <div style="display: flex; justify-content: space-around; width: 100%; margin-top: 10px; color: var(--text-muted); font-size: 0.75rem; font-weight: 800;">
-                        @for (int i = 0; i < ObtenerIngresosSemanales().Count; i++)
-                        {
-                            <span style="width: 40px; text-align: center;">S@(i + 1)</span>
-                        }
+                    <!-- Gráfica 2: Barras (Ingreso Semanal) -->
+                    <div class="modern-row" style="flex-direction: column; padding: 25px 20px; margin-bottom: 25px; background: var(--card-bg);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                            <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">INGRESOS SEMANALES</span>
+
+                            <select class="search-input" style="padding: 6px 12px; margin-left:10px; border-radius: 8px; width: auto; font-size: 0.85rem; font-weight: 800; background-color: rgba(128,128,128,0.1); border-color: rgba(128,128,128,0.2); color: var(--text-main); outline: none;" @bind="mesGrafica" @bind:after="CargarGraficaSemanal">
+                                <option value="1" style="color: black;">Ene</option>
+                                <option value="2" style="color: black;">Feb</option>
+                                <option value="3" style="color: black;">Mar</option>
+                                <option value="4" style="color: black;">Abr</option>
+                                <option value="5" style="color: black;">May</option>
+                                <option value="6" style="color: black;">Jun</option>
+                                <option value="7" style="color: black;">Jul</option>
+                                <option value="8" style="color: black;">Ago</option>
+                                <option value="9" style="color: black;">Sep</option>
+                                <option value="10" style="color: black;">Oct</option>
+                                <option value="11" style="color: black;">Nov</option>
+                                <option value="12" style="color: black;">Dic</option>
+                            </select>
+                        </div>
+
+                        <!-- Contenedor estricto para las barras -->
+                        <div style="display: flex; align-items: flex-end; justify-content: space-around; width: 100%; height: 150px; border-bottom: 1px solid rgba(128,128,128,0.2); padding-bottom: 5px;">
+                            @{
+                                var semanas = ObtenerIngresosSemanales();
+                                decimal maxSemana = semanas.Max() == 0 ? 1 : semanas.Max();
+
+                                for (int i = 0; i < semanas.Count; i++)
+                                {
+                                    int index = i;
+                                    decimal montoSemana = semanas[index];
+                                    int porcentaje = (int)Math.Round((montoSemana / maxSemana) * 100);
+
+                                    <div style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; width: 45px; cursor: pointer;"
+                                         @onclick="() => MostrarDetalleSemana(index, montoSemana)">
+                                        <div style="width: 28px; height: @(porcentaje)%; min-height: 8px; background: linear-gradient(0deg, #33b5e5, #0099CC); border-radius: 6px 6px 0 0; opacity: @(semanaSeleccionadaGraph == index ? "1" : "0.5"); transition: height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.2s; box-shadow: @(semanaSeleccionadaGraph == index ? "0 0 10px rgba(51,181,229,0.5)" : "none");"></div>
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <!-- Etiquetas debajo de las barras -->
+                        <div style="display: flex; justify-content: space-around; width: 100%; margin-top: 12px; color: var(--text-muted); font-size: 0.75rem; font-weight: 800;">
+                            @for (int i = 0; i < ObtenerIngresosSemanales().Count; i++)
+                            {
+                                <span style="width: 45px; text-align: center;">S@(i + 1)</span>
+                            }
+                        </div>
                     </div>
                 </div>
             }
@@ -227,8 +235,32 @@
     </div>
 </div>
 
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap');
+
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
 @code {
-    private string gymCode = "NOMADA"; // <--- VARIABLE PARA LA SUCURSAL
+    private string gymCode = "NOMADA";
 
     private bool isPageLoading = true;
     private string tabActual = "Tickets";
@@ -257,7 +289,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        gymCode = Preferences.Get("gymCode", "NOMADA"); // <--- CARGAMOS SUCURSAL
+        gymCode = Preferences.Get("gymCode", "NOMADA");
 
         await CargarTickets();
         await CargarGraficasTotales();
@@ -277,7 +309,6 @@
         isPageLoading = true;
         try
         {
-            // INYECTAMOS GYMCODE EN LA RUTA
             historialTickets = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/{gymCode}/historial?mes={mesTickets}&anio={anioTickets}") ?? new();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }
@@ -303,7 +334,6 @@
     {
         try
         {
-            // INYECTAMOS GYMCODE EN LA RUTA
             resumenAnual = await Http.GetFromJsonAsync<ResumenFinanzasDto>($"api/finanzas/{gymCode}/resumen/{anioGrafica}");
             await CargarGraficaSemanal();
         }
@@ -314,7 +344,6 @@
     {
         try
         {
-            // INYECTAMOS GYMCODE EN LA RUTA
             historialMesGrafica = await Http.GetFromJsonAsync<List<IngresoDto>>($"api/finanzas/{gymCode}/historial?mes={mesGrafica}&anio={anioGrafica}") ?? new();
         }
         catch (Exception ex) { Console.WriteLine(ex.Message); }

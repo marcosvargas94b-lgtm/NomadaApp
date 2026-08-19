@@ -30,12 +30,16 @@ namespace Nomada.API.Data
         public DbSet<CatalogoEjercicio> CatalogoEjercicios { get; set; }
         public DbSet<WodEjercicio> WodEjercicios { get; set; }
         public DbSet<WodScore> WodScores { get; set; }
+        public DbSet<RetoCatalogo> RetosCatalogo { get; set; }
+        public DbSet<RetoAtleta> RetosAtletas { get; set; }
         public DbSet<WodPersonalizado> WodsPersonalizados { get; set; }
         public DbSet<WodPersonalizadoSeccion> WodsPersonalizadosSecciones { get; set; }
         public DbSet<WodPersonalizadoEjercicio> WodsPersonalizadosEjercicios { get; set; }
         public DbSet<EntrenoPersonalizadoRealizado> EntrenosPersonalizadosRealizados { get; set; }
         public DbSet<RutinaProvisionalIA> RutinasProvisionalesIA { get; set; }
         public DbSet<RutinaProvisionalDia> RutinasProvisionalesDias { get; set; }
+        public DbSet<EvaluacionCatalogo> EvaluacionesCatalogo { get; set; }
+        public DbSet<EvaluacionAtleta> EvaluacionesAtletas { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Siempre es buena práctica llamar al método base
@@ -85,6 +89,28 @@ namespace Nomada.API.Data
             modelBuilder.Entity<EntrenoPersonalizadoRealizado>()
                 .HasIndex(e => new { e.AtletaId, e.FechaRealizacion });
 
+            modelBuilder.Entity<EvaluacionCatalogo>(entity =>
+            {
+                entity.ToTable("EvaluacionesCatalogo");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.GymCode).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.TipoMedida).IsRequired().HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<EvaluacionAtleta>(entity =>
+            {
+                entity.ToTable("EvaluacionesAtletas");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.GymCode).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Resultado).IsRequired().HasMaxLength(50);
+
+                // Relación
+                entity.HasOne(ea => ea.EvaluacionCatalogo)
+                      .WithMany()
+                      .HasForeignKey(ea => ea.EvaluacionCatalogoId)
+                      .OnDelete(DeleteBehavior.Cascade); // Si borras la evaluación del catálogo, se borran sus registros
+            });
 
             // ================= CONFIGURACIONES ESPECÍFICAS =================
             modelBuilder.Entity<ConfiguracionBox>()

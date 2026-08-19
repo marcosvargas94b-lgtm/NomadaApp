@@ -61,6 +61,16 @@
                                     Armar Clase (WOD)
                                 </a>
                             }
+                            <!-- En Acciones.razor, dentro del menú admin-dropdown -->
+                            @if (esSuperAdmin || misPermisos.Contains("Gestionar Evaluaciones"))
+                            {
+                                <a href="/admin/evaluaciones" class="dropdown-item">
+                                    <span class="dd-icon">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                    </span>
+                                    Evaluaciones (PRs)
+                                </a>
+                            }
 
                             <!-- NUEVO PERMISO PARA CREAR AVISOS -->
                             @if (esSuperAdmin || misPermisos.Contains("Crear Avisos"))
@@ -89,7 +99,7 @@
             <!-- ================= BANNER LOBBY (COACHES) ================= -->
             @if (esSuperAdmin || misPermisos.Contains("Armar WOD"))
             {
-                <a href="/admin/lobby" class="modern-row fade-in-up" style="display: flex; align-items: center; justify-content: space-between; padding: 20px; text-decoration: none; background: linear-gradient(135deg, #ff4444, #cc0000); border-color: #ff4444; margin-bottom: 25px;">
+                <a href="/admin/lobby" class="modern-row fade-in-up" style="display: flex; align-items: center; justify-content: space-between; padding: 20px; text-decoration: none; background: linear-gradient(135deg, #ff4444, #cc0000); border-color: #ff4444; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3);">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <div style="background: rgba(255,255,255,0.2); border-radius: 50%; padding: 10px;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -106,14 +116,13 @@
             <!-- ================= INGRESAR CÓDIGO (ATLETAS) ================= -->
             <div class="modern-row fade-in-up" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 15px; border-left: 4px solid #33b5e5;">
                 <input type="text" @bind="codigoIngresado" placeholder="Código de clase (Ej. A2B4C)" class="search-input" style="flex: 1; margin: 0 10px 0 0; padding: 10px 15px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase;" />
-                <button class="ink-btn glow-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 0.85rem; background: #33b5e5;" @onclick="IngresarConCodigo" disabled="@isJoiningCode">
+                <button class="ink-btn glow-btn" style="margin: 0; width: auto; padding: 10px 20px; font-size: 0.85rem; background: #33b5e5; color: white;" @onclick="IngresarConCodigo" disabled="@isJoiningCode">
                     @if (isJoiningCode)
                     {
                         <span class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></span>
                     }
                     else
                     {
-
                         <span>ENTRAR</span>
                     }
                 </button>
@@ -125,11 +134,11 @@
                 <div class="fade-in-up" style="background: @(codigoExitoso ? "rgba(0, 200, 81, 0.1)" : "rgba(255, 68, 68, 0.1)"); border: 1px solid @(codigoExitoso ? "rgba(0, 200, 81, 0.3)" : "rgba(255, 68, 68, 0.3)"); padding: 12px 15px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
                     @if (codigoExitoso)
                     {
-                        <span style="font-size: 1.2rem;">✅</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                     }
                     else
                     {
-                        <span style="font-size: 1.2rem;">❌</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                     }
                     <span style="color: @(codigoExitoso ? "#00C851" : "#ff4444"); font-size: 0.85rem; font-weight: 800; line-height: 1.4;">@mensajeCodigo</span>
                 </div>
@@ -158,7 +167,6 @@
                     <!-- Cabecera del Pizarrón -->
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px dashed rgba(255,255,255,0.3); padding-bottom: 10px;">
                         <span class="chalk-font" style="font-size: 1.4rem; color: #ffeb3b; transform: rotate(-2deg); display: inline-block;">@avisoActual.Titulo</span>
-                        <!-- SVG Campana de Alerta -->
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.8; transform: rotate(15deg);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                     </div>
 
@@ -167,7 +175,7 @@
                         @avisoActual.Mensaje
                     </div>
 
-                    <!-- Pie del Pizarrón y Controles (SIN VENCIMIENTO) -->
+                    <!-- Pie del Pizarrón y Controles -->
                     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                         <div style="display: flex; flex-direction: column;">
                             <span class="chalk-font" style="color: #ffaaaa; font-size: 0.9rem;">- Coach @avisoActual.NombreCoach</span>
@@ -191,10 +199,10 @@
             }
 
             <!-- ================= TARJETAS DEL BOX ================= -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
 
                 <!-- TARJETA: MAPA DE CALOR -->
-                <a href="/perfil/recuperacion" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; align-items: center; justify-content: center; padding: 20px 15px; margin: 0; text-decoration: none; border-color: @(dataRecuperacion?.RequiereRPEHoy == true ? "#ffbb33" : "rgba(128,128,128,0.2)"); background: @(dataRecuperacion?.RequiereRPEHoy == true ? "rgba(255,187,51,0.05)" : "var(--card-bg)"); position: relative; overflow: hidden;">
+                <a href="/perfil/recuperacion" class="modern-row" style="flex-direction: column; align-items: center; justify-content: center; padding: 20px 15px; margin: 0; text-decoration: none; border-color: @(dataRecuperacion?.RequiereRPEHoy == true ? "#ffbb33" : "rgba(128,128,128,0.2)"); background: @(dataRecuperacion?.RequiereRPEHoy == true ? "rgba(255,187,51,0.05)" : "var(--card-bg)"); position: relative; overflow: hidden;">
 
                     @if (isMapaLoading)
                     {
@@ -216,8 +224,9 @@
 
                         @if (dataRecuperacion.RequiereRPEHoy)
                         {
-                            <span class="fade-in-up" style="color: #ffbb33; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 15px; letter-spacing: 1px; z-index: 10;">
-                                ⚠️ TOQUE PARA CALIFICAR SU ESFUERZO DE HOY
+                            <span class="fade-in-up" style="color: #ffbb33; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 15px; letter-spacing: 1px; z-index: 10; display: flex; align-items: center; gap: 5px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                TOQUE PARA CALIFICAR SU ESFUERZO DE HOY
                             </span>
                         }
                         else
@@ -229,38 +238,42 @@
                     }
                 </a>
 
-                <!-- ================= TARJETA: ENTRENAMIENTO PERSONALIZADO ================= -->
-                <a href="/perfil/mis-rutinas" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #9b59b6; background: linear-gradient(145deg, rgba(155, 89, 182, 0.05), transparent); position: relative; overflow: hidden;">
+                <!-- TARJETA: ENTRENAMIENTO PERSONALIZADO -->
+                <a href="/perfil/mis-rutinas" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #9b59b6; background: linear-gradient(145deg, rgba(155, 89, 182, 0.05), transparent); position: relative; overflow: hidden;">
                     <!-- Etiqueta PRO -->
                     <div style="position: absolute; top: 10px; right: 10px; background: #9b59b6; color: white; font-size: 0.6rem; font-weight: 900; padding: 3px 8px; border-radius: 4px; letter-spacing: 1px;">PRO</div>
-                    
+
                     <div style="background-color: rgba(155, 89, 182, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     </div>
-                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px; text-transform: uppercase;">Programación Personal</h3>
+                    <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin-bottom: 5px; text-transform: uppercase;">Programación Personal</h3>
                     <span style="color: var(--text-muted); font-size: 0.8rem;">Accede a tu rutina específica</span>
                 </a>
 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <!-- TARJETA: AGENDAR CLASE -->
+                    <a href="/agendar" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #33b5e5; background: linear-gradient(145deg, rgba(51, 181, 229, 0.05), transparent);">
+                        <div style="background-color: rgba(51, 181, 229, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
+                        </div>
+                        <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">AGENDAR CLASE</h3>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">Reserva tu lugar</span>
+                    </a>
 
-                <a href="/agendar" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 30px 15px; margin: 0; text-decoration: none; border-color: #33b5e5; background: linear-gradient(145deg, rgba(51, 181, 229, 0.05), transparent);">
-                    <div style="background-color: rgba(51, 181, 229, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
-                    </div>
-                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">AGENDAR CLASE</h3>
-                    <span style="color: var(--text-muted); font-size: 0.8rem;">Reserva tu lugar</span>
-                </a>
+                    <!-- TARJETA: CLASE DE HOY -->
+                    <a href="/wod-hoy" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #00C851; background: linear-gradient(145deg, rgba(0, 200, 81, 0.05), transparent);">
+                        <div style="background-color: rgba(0, 200, 81, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12M6 20h12M4 9h16M4 15h16M6 4v16M18 4v16M9 9v6M15 9v6"></path></svg>
+                        </div>
+                        <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">CLASE DE HOY</h3>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">Consulta el WOD</span>
+                    </a>
+                </div>
 
-                <a href="/wod-hoy" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #00C851; background: linear-gradient(145deg, rgba(0, 200, 81, 0.05), transparent);">
-                    <svg width="45" height="45" viewBox="0 0 24 24" fill="none" stroke="#00C851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M6 4h12M6 20h12M4 9h16M4 15h16M6 4v16M18 4v16M9 9v6M15 9v6"></path></svg>
-                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 900; margin-bottom: 5px;">CLASE DE HOY</h3>
-                    <span style="color: var(--text-muted); font-size: 0.8rem;">Consulta el WOD y prepárate</span>
-                </a>
-            </div>
-
-            <!-- TARJETA: ENTRENAMIENTO PROVISIONAL / VIAJES -->
-                <a href="/perfil/rutina-provisional" class="modern-row" style="grid-column: 1 / -1; flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #00bcd4; background: linear-gradient(145deg, rgba(0, 188, 212, 0.05), transparent); position: relative; overflow: hidden;">
+                <!-- TARJETA: ENTRENAMIENTO PROVISIONAL / VIAJES -->
+                <a href="/perfil/rutina-provisional" class="modern-row" style="flex-direction: column; justify-content: center; text-align: center; padding: 25px 15px; margin: 0; text-decoration: none; border-color: #00bcd4; background: linear-gradient(145deg, rgba(0, 188, 212, 0.05), transparent); position: relative; overflow: hidden;">
                     <div style="position: absolute; top: 10px; right: 10px; background: #00bcd4; color: black; font-size: 0.6rem; font-weight: 900; padding: 3px 8px; border-radius: 4px; letter-spacing: 1px;">COACH IA</div>
-                    
+
                     <div style="background-color: rgba(0, 188, 212, 0.1); border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     </div>
@@ -268,22 +281,23 @@
                     <span style="color: var(--text-muted); font-size: 0.8rem;">Crea tu rutina provisional para casa o viaje</span>
                 </a>
 
-            <a href="/mis-pagos" class="modern-row" style="display: flex; align-items: center; padding: 20px; text-decoration: none; cursor: pointer;">
-                <div style="background-color: rgba(128,128,128,0.1); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                </div>
-                <div style="flex: 1;">
-                    <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 800; margin: 0 0 4px 0;">Mis Pagos y Recibos</h3>
-                    <span style="color: var(--text-muted); font-size: 0.8rem;">Consulta tu historial de suscripciones.</span>
-                </div>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </a>
+                <!-- TARJETA: MIS PAGOS -->
+                <a href="/mis-pagos" class="modern-row" style="display: flex; align-items: center; padding: 20px; margin: 0; text-decoration: none; cursor: pointer; border-color: rgba(128,128,128,0.2);">
+                    <div style="background-color: rgba(128,128,128,0.1); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="color: var(--text-main); font-size: 1rem; font-weight: 800; margin: 0 0 4px 0;">Mis Pagos y Recibos</h3>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">Consulta tu historial de suscripciones.</span>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
 
+            </div>
         </div>
     }
 
     <!-- Menú de Navegación Inferior -->
-    <!-- ... SE QUEDA EXACTAMENTE IGUAL ... -->
     <nav class="bottom-nav">
         <a href="/inicio" class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span><span class="nav-text">Inicio</span></a>
         <a href="/acciones" class="nav-item active"><img src="images/logo-nomada.png" alt="Nómada" class="nav-logo" /><span class="nav-text">Box</span></a>
@@ -324,6 +338,7 @@
     // AVISOS
     private List<AvisoBoxDto> avisosPizarron = new();
     private int indiceAvisoActual = 0;
+
     // Variables Código de Clase
     private string codigoIngresado = "";
     private bool isJoiningCode = false;
@@ -372,21 +387,21 @@
         }
     }
 
-   private async Task CargarMapaCalor(string userId)
+    private async Task CargarMapaCalor(string userId)
     {
         try
         {
             // Una sola llamada rápida y segura
             dataRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"api/recuperacion/{gymCode}/{userId}");
-            
+
             if (dataRecuperacion != null)
             {
                 sexoUsuario = dataRecuperacion.Sexo;
             }
         }
-        catch (Exception ex) 
-        { 
-            Console.WriteLine("Error cargando mapa: " + ex.Message); 
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando mapa: " + ex.Message);
         }
         finally
         {
@@ -408,7 +423,6 @@
 
             if (res.IsSuccessStatusCode)
             {
-                // Extraemos el mensaje personalizado de la API (Ej: "Has sido anotado en la clase de 7:00 AM")
                 var respuesta = await res.Content.ReadFromJsonAsync<RespuestaCodigo>();
 
                 codigoExitoso = true;
@@ -422,7 +436,6 @@
             }
             else
             {
-                // Si falla, mostramos el error (Ej. "Código inválido")
                 codigoExitoso = false;
                 mensajeCodigo = await res.Content.ReadAsStringAsync();
 
@@ -442,7 +455,6 @@
             isJoiningCode = false;
         }
     }
-
 
     private void ToggleMenu()
     {

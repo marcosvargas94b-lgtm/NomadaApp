@@ -6,227 +6,275 @@
 @inject NavigationManager NavManager
 
 <div class="app-container font-modern">
-    <div class="feed-content">
+    <div class="feed-content" style="padding-top: 10px; padding-bottom: 80px;">
 
-        <!-- HEADER IDÉNTICO AL RANKING DE LIKES -->
-        <div style="display: flex; align-items: center; margin-bottom: 25px;">
-            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/comunidad")' style="background: none; border: none; color: var(--text-main); margin-right: 15px; cursor: pointer; padding: 0;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+        <!-- ================= HEADER PREMIUM ================= -->
+        <div class="resumen-header" style="display: flex; justify-content: center; align-items: center; padding: 20px 0; margin-bottom: 25px; position: relative;">
+            <button class="back-btn" @onclick='() => NavManager.NavigateTo("/comunidad")' style="position: absolute; left: 20px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
-            <h2 class="greeting-title" style="margin: 0; font-size: 1.4rem;">Leaderboard</h2>
+            <h2 class="greeting-title adaptive-shadow" style="margin: 0; font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-main);">LEADERBOARD</h2>
         </div>
 
         @if (isLoading)
         {
-            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner"></span></div>
+            <div style="display: flex; justify-content: center; padding: 50px;"><span class="spinner" style="width: 40px; height: 40px; border-width: 4px; border-top-color: #33b5e5;"></span></div>
         }
         else if (dataRanking != null && dataRanking.RequiereCapturaManual)
         {
             <!-- ESTADO 1: BLOQUEO POR CAPTURA MANUAL PENDIENTE -->
-            <div class="modern-row fade-in-up" style="flex-direction: column; align-items: center; text-align: center; padding: 30px 20px; border-color: #33b5e5;">
+            <div class="modern-row fade-in-up" style="flex-direction: column; align-items: center; text-align: center; padding: 35px 20px; border-color: #33b5e5; background: var(--card-bg); box-shadow: 0 5px 20px rgba(51, 181, 229, 0.15); margin: 0 15px;">
                 <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#33b5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                <h3 style="color: var(--text-main); font-weight: 900; margin-bottom: 10px;">¡INGRESA TU SCORE!</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Debes registrar tu resultado para poder ver la tabla de posiciones.</p>
-                
-                <span style="background: rgba(51,181,229,0.1); color: #33b5e5; font-weight: 800; font-size: 0.8rem; padding: 5px 12px; border-radius: 8px; margin-bottom: 25px; border: 1px dashed rgba(51,181,229,0.5);">
+                <h3 style="color: var(--text-main); font-weight: 900; margin-bottom: 10px; font-size: 1.2rem; letter-spacing: 1px;">¡INGRESA TU SCORE!</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; font-weight: 600;">Debes registrar tu resultado para poder ver la tabla de posiciones.</p>
+
+                <span style="background: rgba(51,181,229,0.1); color: #33b5e5; font-weight: 900; font-size: 0.85rem; padding: 6px 15px; border-radius: 8px; margin-bottom: 30px; border: 1px dashed rgba(51,181,229,0.4);">
                     @dataRanking.TituloWodPendiente?.ToUpper()
                 </span>
 
-                <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 12px; width: 100%; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px;">
-                    <span style="color: #33b5e5; font-weight: 900; display: block; margin-bottom: 15px; text-transform: uppercase;">MÉTRICA: @dataRanking.TipoScoreEsperado</span>
+                <div style="background: rgba(128,128,128,0.05); padding: 25px 20px; border-radius: 12px; width: 100%; border: 1px solid rgba(128,128,128,0.1); margin-bottom: 30px;">
+                    <span style="color: #33b5e5; font-weight: 900; display: block; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">MÉTRICA: @dataRanking.TipoScoreEsperado</span>
 
                     @if (dataRanking.TipoScoreEsperado == "Tiempo")
                     {
-                        <input type="text" @bind="inputTiempo" class="ink-input-score font-digital" placeholder="MM:SS" style="width: 100%; font-size: 1.5rem;" />
+                        <input type="text" @bind="inputTiempo" class="ink-input-score font-digital" placeholder="MM:SS" style="width: 100%; font-size: 1.8rem; letter-spacing: 2px;" />
                     }
                     else if (dataRanking.TipoScoreEsperado == "Rondas")
                     {
                         <div style="display: flex; gap: 15px;">
                             <div style="flex: 1;">
-                                <label style="color: #888; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block;">RONDAS</label>
-                                <input type="number" @bind="inputRondas" class="ink-input-score" style="width: 100%;" min="0" />
+                                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; margin-bottom: 8px; display: block; letter-spacing: 1px;">RONDAS</label>
+                                <input type="number" @bind="inputRondas" class="ink-input-score font-digital" style="width: 100%; font-size: 1.5rem;" min="0" />
                             </div>
                             <div style="flex: 1;">
-                                <label style="color: #888; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block;">REPS EXTRA</label>
-                                <input type="number" @bind="inputReps" class="ink-input-score" style="width: 100%;" min="0" />
+                                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; margin-bottom: 8px; display: block; letter-spacing: 1px;">REPS EXTRA</label>
+                                <input type="number" @bind="inputReps" class="ink-input-score font-digital" style="width: 100%; font-size: 1.5rem;" min="0" />
                             </div>
                         </div>
                     }
                     else if (dataRanking.TipoScoreEsperado == "Reps")
                     {
-                        <label style="color: #888; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block;">REPETICIONES TOTALES</label>
-                        <input type="number" @bind="inputReps" class="ink-input-score" style="width: 100%; font-size: 1.5rem;" min="0" />
+                        <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: 900; margin-bottom: 8px; display: block; letter-spacing: 1px;">REPETICIONES TOTALES</label>
+                        <input type="number" @bind="inputReps" class="ink-input-score font-digital" style="width: 100%; font-size: 1.8rem; letter-spacing: 2px;" min="0" />
                     }
                 </div>
 
-                <button class="ink-btn bg-blue" style="width: 100%; padding: 15px; font-weight: 900;" @onclick="SubirMiScore" disabled="@isSubmitting">
-                    @if (isSubmitting) { <span class="spinner" style="width: 15px; height: 15px; border-width: 2px;"></span> }
-                    else { <span>ENVIAR RESULTADO</span> }
+                <button class="ink-btn bg-blue glow-btn" style="width: 100%; padding: 18px; font-weight: 900; font-size: 1.1rem; border: none; box-shadow: 0 4px 15px rgba(51, 181, 229, 0.4);" @onclick="SubirMiScore" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner" style="border-top-color: white;"></span>
+                    }
+                    else
+                    {
+
+                        <span>ENVIAR RESULTADO</span>
+                    }
                 </button>
             </div>
         }
         else if (!wodsDisponibles.Any())
         {
-            <div style="text-align: center; padding: 50px 20px;">
+            <div class="fade-in-up" style="text-align: center; padding: 50px 20px; background: rgba(128,128,128,0.05); border-radius: 16px; border: 1px dashed rgba(128,128,128,0.2); margin: 0 15px;">
                 <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 15px; opacity: 0.5;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-                <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 700;">Aún no hay resultados registrados de WODs el día de hoy.</p>
+                <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 800; margin: 0;">Aún no hay resultados registrados de WODs el día de hoy.</p>
             </div>
         }
         else
         {
             <!-- ESTADO 2: EL LEADERBOARD OFICIAL -->
 
-            <!-- SELECTOR DE WOD -->
-            @if (wodsDisponibles.Count > 1)
-            {
-                <div style="margin-bottom: 20px;">
-                    <select class="search-input" style="font-weight: 800; color: #33b5e5; border-color: #33b5e5; font-size: 0.9rem;" @bind="wodActivoId" @bind:after="ActualizarPestanasPorWod">
-                        @foreach(var w in wodsDisponibles)
-                        {
-                            <option value="@w.Id">@w.Titulo (By @w.NombreCoach)</option>
-                        }
-                    </select>
-                </div>
-            }
-            else
-            {
-                <h4 style="color: #33b5e5; text-transform: uppercase; font-weight: 900; margin: 0 0 20px 0; font-size: 1rem; border-left: 4px solid #33b5e5; padding-left: 10px;">
-                    @wodsDisponibles.First().Titulo 
-                    <span style="color: #888; font-size: 0.75rem; text-transform: none; font-weight: 700; display: block; margin-top: 4px;">
-                        By Coach @wodsDisponibles.First().NombreCoach
-                    </span>
-                </h4>
-            }
-
-            <!-- Tabs por Tipo de Score (Tiempo, Rondas, Reps) -->
-            @if (tiposScoreDisponibles.Any())
-            {
-                <div class="tabs-container" style="display: flex; gap: 10px; margin-bottom: 25px;">
-                    @foreach (var tipo in tiposScoreDisponibles)
-                    {
-                        <button class="tab-btn @(tipoScoreActivo == tipo ? "active" : "")" @onclick="() => CambiarTipoScore(tipo)">
-                            @tipo.ToUpper()
-                        </button>
-                    }
-                </div>
-            }
-
-            <!-- Agrupación por Categoría -->
-            <div>
-                @foreach (var categoriaGroup in atletasAgrupadosPorCat)
+            <div class="fade-in-up" style="padding: 0 15px;">
+                <!-- SELECTOR DE WOD -->
+                @if (wodsDisponibles.Count > 1)
                 {
-                    var atletasCat = categoriaGroup.Value;
+                    <div style="margin-bottom: 25px;">
+                        <select class="search-input" style="font-weight: 900; color: #33b5e5; border-color: rgba(51,181,229,0.3); background: rgba(51,181,229,0.05); font-size: 0.95rem; padding: 10px 15px; outline: none;" @bind="wodActivoId" @bind:after="ActualizarPestanasPorWod">
+                            @foreach (var w in wodsDisponibles)
+                            {
+                                <option value="@w.Id" style="color: black;">@w.Titulo (By @w.NombreCoach)</option>
+                            }
+                        </select>
+                    </div>
+                }
+                else
+                {
+                    <div style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed rgba(128,128,128,0.2);">
+                        <h4 style="color: #33b5e5; text-transform: uppercase; font-weight: 900; margin: 0; font-size: 1.1rem; border-left: 4px solid #33b5e5; padding-left: 10px; letter-spacing: 1px;">
+                            @wodsDisponibles.First().Titulo
+                            <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: none; font-weight: 700; display: block; margin-top: 6px;">
+                                By Coach @wodsDisponibles.First().NombreCoach
+                            </span>
+                        </h4>
+                    </div>
+                }
 
-                    <div class="categoria-section" style="margin-bottom: 40px;">
-                        <div class="categoria-header" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px 12px 0 0; border-bottom: 2px solid #33b5e5; display: flex; align-items: center; justify-content: center;">
-                            <h4 style="margin: 0; color: white; font-weight: 900; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px;">
-                                @(categoriaGroup.Key == "General" ? "GENERAL" : (categoriaGroup.Key == "Rx" ? "RX" : categoriaGroup.Key.ToUpper()))
-                            </h4>
-                        </div>
-                        
-                        <div class="categoria-body" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.05); border-top: none; border-radius: 0 0 12px 12px; padding: 20px 10px;">
-                            
-                            <!-- PODIUM ESTILO RANKING LIKES (TOP 3) -->
-                            <div class="podium-container" style="display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin-bottom: 30px;">
-                                <!-- PLATA (Posición 2) -->
-                                @if (atletasCat.Count > 1)
-                                {
-                                    <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 30%;">
-                                        <div class="user-avatar" style="width: 50px; height: 50px; margin: 0 0 10px 0; border: 3px solid #C0C0C0; box-shadow: 0 0 15px rgba(192, 192, 192, 0.5); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #222;">
-                                            @if (!string.IsNullOrEmpty(atletasCat[1].FotoPerfil)) { <img src="@atletasCat[1].FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" /> }
-                                            else { <span style="font-weight: 800; font-size: 1rem; color: #fff;">@atletasCat[1].Nombre.Substring(0, 1)</span> }
-                                        </div>
-                                        <span style="color: var(--text-main); font-size: 0.75rem; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@atletasCat[1].Nombre</span>
-                                        <span class="font-digital" style="color: #33b5e5; font-size: 0.8rem; font-weight: 900; margin-bottom: 2px;">@GenerarTextoScore(atletasCat[1])</span>
-                                        
-                                        <!-- Marca de agua de horario -->
-                                        @if(!string.IsNullOrEmpty(atletasCat[1].HoraClase)) { <span style="color: rgba(255,255,255,0.2); font-size: 0.65rem; font-weight: 800; margin-bottom: 5px;">@atletasCat[1].HoraClase</span> }
+                <!-- Tabs por Tipo de Score (Tiempo, Rondas, Reps) -->
+                @if (tiposScoreDisponibles.Any())
+                {
+                    <div class="tabs-container" style="display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 5px;">
+                        @foreach (var tipo in tiposScoreDisponibles)
+                        {
+                            <button class="tab-btn @(tipoScoreActivo == tipo ? "active" : "")" @onclick="() => CambiarTipoScore(tipo)">
+                                @tipo.ToUpper()
+                            </button>
+                        }
+                    </div>
+                }
 
-                                        <div style="background: linear-gradient(180deg, #e0e0e0, #a0a0a0); width: 100%; height: 60px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px;">
-                                            <span style="color: black; font-weight: 900; font-size: 1.2rem;">2</span>
-                                        </div>
-                                    </div>
-                                }
+                <!-- Agrupación por Categoría -->
+                <div>
+                    @foreach (var categoriaGroup in atletasAgrupadosPorCat)
+                    {
+                        var atletasCat = categoriaGroup.Value;
 
-                                <!-- ORO (Posición 1) -->
-                                @if (atletasCat.Count > 0)
-                                {
-                                    <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 34%; z-index: 10;">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 5px; filter: drop-shadow(0 0 8px rgba(255,215,0,0.8));"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                        
-                                        <div class="user-avatar" style="width: 65px; height: 65px; margin: 0 0 10px 0; border: 4px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #222;">
-                                            @if (!string.IsNullOrEmpty(atletasCat[0].FotoPerfil)) { <img src="@atletasCat[0].FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" /> }
-                                            else { <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">@atletasCat[0].Nombre.Substring(0, 1)</span> }
-                                        </div>
-                                        <span style="color: var(--text-main); font-size: 0.85rem; font-weight: 900; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@atletasCat[0].Nombre</span>
-                                        <span class="font-digital" style="color: #33b5e5; font-size: 0.9rem; font-weight: 900; margin-bottom: 2px;">@GenerarTextoScore(atletasCat[0])</span>
-                                        
-                                        <!-- Marca de agua de horario -->
-                                        @if(!string.IsNullOrEmpty(atletasCat[0].HoraClase)) { <span style="color: rgba(255,255,255,0.2); font-size: 0.65rem; font-weight: 800; margin-bottom: 5px;">@atletasCat[0].HoraClase</span> }
-
-                                        <div style="background: linear-gradient(180deg, #ffe066, #ffb300); width: 100%; height: 90px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px; box-shadow: 0 -5px 15px rgba(255, 215, 0, 0.3);">
-                                            <span style="color: black; font-weight: 900; font-size: 1.5rem;">1</span>
-                                        </div>
-                                    </div>
-                                }
-
-                                <!-- BRONCE (Posición 3) -->
-                                @if (atletasCat.Count > 2)
-                                {
-                                    <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 30%;">
-                                        <div class="user-avatar" style="width: 45px; height: 45px; margin: 0 0 10px 0; border: 3px solid #CD7F32; box-shadow: 0 0 15px rgba(205, 127, 50, 0.5); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #222;">
-                                            @if (!string.IsNullOrEmpty(atletasCat[2].FotoPerfil)) { <img src="@atletasCat[2].FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" /> }
-                                            else { <span style="font-weight: 800; font-size: 0.9rem; color: #fff;">@atletasCat[2].Nombre.Substring(0, 1)</span> }
-                                        </div>
-                                        <span style="color: var(--text-main); font-size: 0.75rem; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@atletasCat[2].Nombre</span>
-                                        <span class="font-digital" style="color: #33b5e5; font-size: 0.8rem; font-weight: 900; margin-bottom: 2px;">@GenerarTextoScore(atletasCat[2])</span>
-                                        
-                                        <!-- Marca de agua de horario -->
-                                        @if(!string.IsNullOrEmpty(atletasCat[2].HoraClase)) { <span style="color: rgba(255,255,255,0.2); font-size: 0.65rem; font-weight: 800; margin-bottom: 5px;">@atletasCat[2].HoraClase</span> }
-
-                                        <div style="background: linear-gradient(180deg, #e6a87c, #b36b39); width: 100%; height: 45px; border-top-left-radius: 8px; border-top-right-radius: 8px; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px;">
-                                            <span style="color: black; font-weight: 900; font-size: 1rem;">3</span>
-                                        </div>
-                                    </div>
-                                }
+                        <div class="categoria-section fade-in-up" style="margin-bottom: 45px; animation-delay: 0.1s;">
+                            <div class="categoria-header" style="background: rgba(128,128,128,0.05); padding: 15px; border-radius: 12px 12px 0 0; border-bottom: 3px solid #33b5e5; display: flex; align-items: center; justify-content: center;">
+                                <h4 style="margin: 0; color: var(--text-main); font-weight: 900; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px;">
+                                    @(categoriaGroup.Key == "General" ? "GENERAL" : (categoriaGroup.Key == "Rx" ? "RX" : categoriaGroup.Key.ToUpper()))
+                                </h4>
                             </div>
 
-                            <!-- RESTO DE USUARIOS (Del 4 en adelante) -->
-                            @if (atletasCat.Count > 3)
-                            {
-                                <div class="user-list">
-                                    @for (int i = 3; i < atletasCat.Count; i++)
+                            <div class="categoria-body" style="background: var(--card-bg); border: 1px solid rgba(128,128,128,0.1); border-top: none; border-radius: 0 0 12px 12px; padding: 25px 15px;">
+
+                                <!-- PODIUM ESTILO RANKING LIKES (TOP 3) -->
+                                <div class="podium-container" style="display: flex; justify-content: center; align-items: flex-end; gap: 12px; margin-bottom: 35px;">
+
+                                    <!-- PLATA (Posición 2) -->
+                                    @if (atletasCat.Count > 1)
                                     {
-                                        var atleta = atletasCat[i];
-                                        <div class="modern-row" style="padding: 12px 15px; margin-bottom: 12px; display: flex; align-items: center;">
-                                            
-                                            <span style="font-weight: 900; color: var(--text-muted); width: 25px; text-align: center; flex-shrink: 0;">@(i + 1)</span>
-                                            
-                                            <div class="user-avatar" style="width: 35px; height: 35px; border-radius: 50%; margin: 0 15px; background: rgba(128,128,128,0.1); border: 1px solid rgba(128,128,128,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                                @if (!string.IsNullOrEmpty(atleta.FotoPerfil)) { <img src="@atleta.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" /> }
-                                                else { <span style="font-size: 0.75rem; font-weight: bold; color: white;">@atleta.Nombre.Substring(0, 1)</span> }
-                                            </div>
-                                            
-                                            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-                                                <span class="user-name" style="font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@atleta.NombreCompleto</span>
-                                                <!-- Marca de agua sutil del Horario en la lista -->
-                                                @if(!string.IsNullOrEmpty(atleta.HoraClase))
+                                        <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 30%;">
+                                            <div class="user-avatar" style="width: 50px; height: 50px; margin: 0 0 10px 0; border: 3px solid #C0C0C0; box-shadow: 0 0 15px rgba(192, 192, 192, 0.4); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(128,128,128,0.1);">
+                                                @if (!string.IsNullOrEmpty(atletasCat[1].FotoPerfil))
                                                 {
-                                                    <span style="color: rgba(255,255,255,0.2); font-size: 0.65rem; font-weight: 800; margin-top: 2px;">• @atleta.HoraClase</span>
+                                                    <img src="@atletasCat[1].FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                                }
+                                                else
+                                                {
+
+                                                    <span style="font-weight: 900; font-size: 1rem; color: var(--text-muted);">@atletasCat[1].Nombre.Substring(0, 1)</span>
                                                 }
                                             </div>
-                                            
-                                            <span class="font-digital" style="font-weight: 900; color: #33b5e5; font-size: 1rem; flex-shrink: 0; margin-left: 15px;">
-                                                @GenerarTextoScore(atleta)
-                                            </span>
+                                            <span style="color: var(--text-main); font-size: 0.8rem; font-weight: 900; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@atletasCat[1].Nombre</span>
+                                            <span class="font-digital" style="color: #33b5e5; font-size: 0.9rem; font-weight: 900; margin-bottom: 2px;">@GenerarTextoScore(atletasCat[1])</span>
 
+                                            <!-- Marca de agua de horario -->
+                                            @if (!string.IsNullOrEmpty(atletasCat[1].HoraClase))
+                                            {
+                                                <span style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; margin-bottom: 5px;">@atletasCat[1].HoraClase</span>
+                                            }
+
+                                            <div style="background: linear-gradient(180deg, #e0e0e0, #a0a0a0); width: 100%; height: 65px; border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 12px; box-shadow: inset 0 2px 5px rgba(255,255,255,0.5);">
+                                                <span style="color: #333; font-weight: 900; font-size: 1.3rem;">2</span>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- ORO (Posición 1) -->
+                                    @if (atletasCat.Count > 0)
+                                    {
+                                        <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 34%; z-index: 10;">
+                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="#FFD700" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px; filter: drop-shadow(0 0 10px rgba(255,215,0,0.6));"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+
+                                            <div class="user-avatar" style="width: 70px; height: 70px; margin: 0 0 10px 0; border: 4px solid #FFD700; box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(128,128,128,0.1);">
+                                                @if (!string.IsNullOrEmpty(atletasCat[0].FotoPerfil))
+                                                {
+                                                    <img src="@atletasCat[0].FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                                }
+                                                else
+                                                {
+
+                                                    <span style="font-weight: 900; font-size: 1.3rem; color: var(--text-muted);">@atletasCat[0].Nombre.Substring(0, 1)</span>
+                                                }
+                                            </div>
+                                            <span style="color: var(--text-main); font-size: 0.9rem; font-weight: 900; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@atletasCat[0].Nombre</span>
+                                            <span class="font-digital" style="color: #33b5e5; font-size: 1rem; font-weight: 900; margin-bottom: 2px;">@GenerarTextoScore(atletasCat[0])</span>
+
+                                            <!-- Marca de agua de horario -->
+                                            @if (!string.IsNullOrEmpty(atletasCat[0].HoraClase))
+                                            {
+                                                <span style="color: var(--text-muted); font-size: 0.7rem; font-weight: 800; margin-bottom: 5px;">@atletasCat[0].HoraClase</span>
+                                            }
+
+                                            <div style="background: linear-gradient(180deg, #ffe066, #ffb300); width: 100%; height: 100px; border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 15px; box-shadow: inset 0 2px 5px rgba(255,255,255,0.6), 0 -5px 20px rgba(255, 215, 0, 0.2);">
+                                                <span style="color: #333; font-weight: 900; font-size: 1.6rem;">1</span>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!-- BRONCE (Posición 3) -->
+                                    @if (atletasCat.Count > 2)
+                                    {
+                                        <div class="podium-step" style="display: flex; flex-direction: column; align-items: center; width: 30%;">
+                                            <div class="user-avatar" style="width: 45px; height: 45px; margin: 0 0 10px 0; border: 3px solid #CD7F32; box-shadow: 0 0 15px rgba(205, 127, 50, 0.4); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(128,128,128,0.1);">
+                                                @if (!string.IsNullOrEmpty(atletasCat[2].FotoPerfil))
+                                                {
+                                                    <img src="@atletasCat[2].FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                                }
+                                                else
+                                                {
+
+                                                    <span style="font-weight: 900; font-size: 0.9rem; color: var(--text-muted);">@atletasCat[2].Nombre.Substring(0, 1)</span>
+                                                }
+                                            </div>
+                                            <span style="color: var(--text-main); font-size: 0.75rem; font-weight: 900; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">@atletasCat[2].Nombre</span>
+                                            <span class="font-digital" style="color: #33b5e5; font-size: 0.85rem; font-weight: 900; margin-bottom: 2px;">@GenerarTextoScore(atletasCat[2])</span>
+
+                                            <!-- Marca de agua de horario -->
+                                            @if (!string.IsNullOrEmpty(atletasCat[2].HoraClase))
+                                            {
+                                                <span style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; margin-bottom: 5px;">@atletasCat[2].HoraClase</span>
+                                            }
+
+                                            <div style="background: linear-gradient(180deg, #e6a87c, #b36b39); width: 100%; height: 50px; border-radius: 12px 12px 0 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 10px; box-shadow: inset 0 2px 5px rgba(255,255,255,0.4);">
+                                                <span style="color: #333; font-weight: 900; font-size: 1.1rem;">3</span>
+                                            </div>
                                         </div>
                                     }
                                 </div>
-                            }
+
+                                <!-- RESTO DE USUARIOS (Del 4 en adelante) -->
+                                @if (atletasCat.Count > 3)
+                                {
+                                    <div class="user-list">
+                                        @for (int i = 3; i < atletasCat.Count; i++)
+                                        {
+                                            var atleta = atletasCat[i];
+                                            <div class="modern-row" style="padding: 12px 15px; margin-bottom: 12px; display: flex; align-items: center; background: rgba(128,128,128,0.03); border: 1px solid rgba(128,128,128,0.1);">
+
+                                                <span style="font-weight: 900; color: var(--text-muted); width: 25px; text-align: center; flex-shrink: 0;">@(i + 1)</span>
+
+                                                <div class="user-avatar" style="width: 35px; height: 35px; border-radius: 50%; margin: 0 15px; background: rgba(128,128,128,0.1); border: 1px solid rgba(128,128,128,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                                    @if (!string.IsNullOrEmpty(atleta.FotoPerfil))
+                                                    {
+                                                        <img src="@atleta.FotoPerfil" style="width: 100%; height: 100%; object-fit: cover;" />
+                                                    }
+                                                    else
+                                                    {
+
+                                                        <span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted);">@atleta.Nombre.Substring(0, 1)</span>
+                                                    }
+                                                </div>
+
+                                                <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                                                    <span class="user-name" style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">@atleta.NombreCompleto</span>
+                                                    @if (!string.IsNullOrEmpty(atleta.HoraClase))
+                                                    {
+                                                        <span style="color: var(--text-muted); font-size: 0.65rem; font-weight: 700; margin-top: 2px;">• @atleta.HoraClase</span>
+                                                    }
+                                                </div>
+
+                                                <span class="font-digital" style="font-weight: 900; color: #33b5e5; font-size: 1rem; flex-shrink: 0; margin-left: 15px; text-shadow: 0 0 5px rgba(51,181,229,0.2);">
+                                                    @GenerarTextoScore(atleta)
+                                                </span>
+
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
-                    </div>
-                }
+                    }
+                </div>
             </div>
         }
     </div>
@@ -234,18 +282,86 @@
 
 <style>
     @@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap');
-    .font-modern { font-family: 'Montserrat', sans-serif; }
-    .font-digital { font-family: 'Orbitron', monospace; }
-    
-    .tab-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #888; font-weight: 800; font-size: 0.8rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .tab-btn.active { background: #33b5e5; color: #000; border-color: #33b5e5; box-shadow: 0 4px 15px rgba(51,181,229,0.3); }
 
-    .ink-input-score { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 15px; border-radius: 8px; font-weight: 800; font-size: 1.2rem; text-align: center; outline: none; transition: 0.2s; box-sizing: border-box; }
-    .ink-input-score:focus { border-color: #33b5e5; background: rgba(51,181,229,0.1); }
-    
-    .bg-blue { background: linear-gradient(135deg, #33b5e5, #0099CC); border: none; color: white; border-radius: 12px; cursor: pointer; box-shadow: 0 5px 15px rgba(51,181,229,0.3); }
-    .fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) both; }
-    @@keyframes fadeInUp { 0% { opacity: 0; transform: translateY(50px); } 100% { opacity: 1; transform: translateY(0); } }
+    .font-modern {
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .font-digital {
+        font-family: 'Orbitron', monospace;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 12px 10px;
+        background: rgba(128,128,128,0.05);
+        border: 1px solid rgba(128,128,128,0.1);
+        color: var(--text-muted);
+        font-weight: 900;
+        font-size: 0.85rem;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        letter-spacing: 1px;
+    }
+
+        .tab-btn.active {
+            background: #33b5e5;
+            color: white;
+            border-color: #33b5e5;
+            box-shadow: 0 4px 15px rgba(51,181,229,0.3);
+        }
+
+    .ink-input-score {
+        background: rgba(128,128,128,0.1);
+        border: 1px solid rgba(128,128,128,0.2);
+        color: var(--text-main);
+        padding: 15px;
+        border-radius: 12px;
+        font-weight: 800;
+        text-align: center;
+        outline: none;
+        transition: 0.2s;
+        box-sizing: border-box;
+    }
+
+        .ink-input-score:focus {
+            border-color: #33b5e5;
+            background: rgba(51,181,229,0.05);
+            box-shadow: 0 0 10px rgba(51,181,229,0.2);
+        }
+
+    .bg-blue {
+        background: linear-gradient(135deg, #33b5e5, #0099CC);
+        color: white;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+    }
+
+    @@keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .adaptive-shadow {
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.15);
+    }
+
+    @@media (prefers-color-scheme: dark) {
+        .adaptive-shadow {
+            text-shadow: 2px 2px 15px rgba(255,255,255,0.2);
+        }
+    }
 </style>
 
 @code {
@@ -270,7 +386,7 @@
         public string NombreCoach { get; set; } = "";
         public string HoraClase { get; set; } = "";
         public string NombreCompleto { get; set; } = "";
-        public string Nombre { get; set; } = ""; 
+        public string Nombre { get; set; } = "";
         public string? FotoPerfil { get; set; }
         public string TipoScore { get; set; } = "";
         public string Categoria { get; set; } = "";
@@ -288,7 +404,7 @@
     }
 
     private RankingResponseDto? dataRanking;
-    
+
     private string inputTiempo = "";
     private int inputRondas = 0;
     private int inputReps = 0;
@@ -296,10 +412,10 @@
     // Listas para control de Selectors
     private List<WodDisponibleDto> wodsDisponibles = new();
     private int wodActivoId = 0;
-    
+
     private List<string> tiposScoreDisponibles = new();
     private string tipoScoreActivo = "";
-    
+
     private Dictionary<string, List<ScoreDetalleDto>> atletasAgrupadosPorCat = new();
 
     protected override async Task OnInitializedAsync()
@@ -321,9 +437,10 @@
 
             if (dataRanking != null && !dataRanking.RequiereCapturaManual && dataRanking.Resultados.Any())
             {
-                foreach(var r in dataRanking.Resultados) {
+                foreach (var r in dataRanking.Resultados)
+                {
                     var partes = r.NombreCompleto.Split(' ');
-                    r.Nombre = partes.Length > 0 ? partes[0] : "A"; 
+                    r.Nombre = partes.Length > 0 ? partes[0] : "A";
                 }
 
                 // Extraer lista única de WODs
@@ -382,7 +499,7 @@
             .ToList();
 
         if (tipoScoreActivo == "Tiempo")
-            scoresDelTipo = scoresDelTipo.OrderBy(s => s.TiempoSegundos ?? 999999).ToList(); 
+            scoresDelTipo = scoresDelTipo.OrderBy(s => s.TiempoSegundos ?? 999999).ToList();
         else if (tipoScoreActivo == "Rondas")
             scoresDelTipo = scoresDelTipo.OrderByDescending(s => s.Rondas ?? 0).ThenByDescending(s => s.Repeticiones ?? 0).ToList();
         else if (tipoScoreActivo == "Reps")
@@ -390,7 +507,7 @@
 
         atletasAgrupadosPorCat = scoresDelTipo
             .GroupBy(s => s.Categoria)
-            .OrderBy(g => OrdenCategoria(g.Key)) 
+            .OrderBy(g => OrdenCategoria(g.Key))
             .ToDictionary(g => g.Key, g => g.ToList());
     }
 
